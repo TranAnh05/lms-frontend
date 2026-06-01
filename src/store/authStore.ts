@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { type UserProfile, type AuthTokens } from '@/types/auth';
-import { setTokens, clearTokens } from '@/utils/storage';
+import {type UserProfile, type AuthResponseData, type PermissionCode } from '../types/auth';
+import { setTokens, clearTokens } from '../utils/storage';
 
 interface AuthState {
   user: UserProfile | null;
+  permissions: PermissionCode[]; 
   isAuthenticated: boolean;
-  loginSuccess: (user: UserProfile, tokens: AuthTokens) => void;
+  loginSuccess: (data: AuthResponseData) => void; 
   logout: () => void;
 }
 
@@ -14,23 +15,29 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      permissions: [],
       isAuthenticated: false,
 
-      loginSuccess: (user, tokens) => {
-        setTokens(tokens.accessToken, tokens.refreshToken);
-        set({ user, isAuthenticated: true });
+      loginSuccess: (data) => {
+        setTokens(data.accessToken, data.refreshToken);
+        
+        set({ 
+          user: data.user, 
+          permissions: data.permissions, 
+          isAuthenticated: true 
+        });
       },
 
       logout: () => {
         clearTokens();
-        set({ user: null, isAuthenticated: false });
+        set({ user: null, permissions: [], isAuthenticated: false });
       },
     }),
     {
-      name: 'lms_auth_store', 
-      
+      name: 'lms_auth_store',
       partialize: (state) => ({ 
         user: state.user, 
+        permissions: state.permissions,
         isAuthenticated: state.isAuthenticated 
       }),
     }

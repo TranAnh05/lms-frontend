@@ -26,31 +26,23 @@ export type PermissionCode =
   // SEMESTER_MGT
   | 'SEMESTER_VIEW' | 'SEMESTER_CREATE' | 'SEMESTER_UPDATE' | 'SEMESTER_DELETE' | 'SEMESTER_FINISH';
 
-export interface Role {
-  code: string;
-  name: string;
-}
-
 export interface UserProfile {
-  id: string; 
-  email: string;
+  id: number; 
+  username: string; 
   fullName: string;
-  avatar: string;
-  role: Role; 
-  permissions: PermissionCode[]; 
+  avatarUrl: string; 
+  roles: string[]; 
 }
 
-export interface AuthTokens {
+export interface AuthResponseData {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
+  user: UserProfile;
+  permissions: PermissionCode[];
 }
 
 export interface LoginResponse {
-  status: string;
+  code: number; 
   message: string;
-  data: {
-    tokens: AuthTokens;
-    user: UserProfile;
-  };
+  data: AuthResponseData;
 }
