@@ -1,5 +1,22 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import { MainLayout } from '@/layouts/MainLayout/MainLayout';
+import { useAuthStore } from '@/store/authStore';
+import { getDefaultPathByRole } from '@/config/menu.config';
+
+const RoleBasedRedirect = () => {
+  const { user } = useAuthStore();
+  const targetPath = getDefaultPathByRole(user?.roles);
+  
+  return <Navigate to={targetPath} replace />;
+};
+
+const UserManagementPage    = () => <div className="text-xl font-bold text-gray-800">Giao diện Quản lý Người dùng</div>;
+const MajorManagementPage   = () => <div className="text-xl font-bold text-gray-800">Giao diện Quản lý Ngành học</div>;
+const SubjectManagementPage = () => <div className="text-xl font-bold text-gray-800">Giao diện Quản lý Môn học</div>;
+const CourseManagementPage  = () => <div className="text-xl font-bold text-gray-800">Giao diện Quản lý Học phần</div>;
+const TimetablePage         = () => <div className="text-xl font-bold text-gray-800">Giao diện Thời khóa biểu</div>;
+const ProfilePage           = () => <div className="text-xl font-bold text-gray-800">Giao diện Hồ sơ cá nhân</div>;
 
 export const router = createBrowserRouter([
   {
@@ -12,10 +29,40 @@ export const router = createBrowserRouter([
   },
   {
     path: '/dashboard',
-    element: (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 text-2xl font-bold text-blue-800">
-        Chào mừng bạn đến với Dashboard! (Giao diện đang xây dựng...)
-      </div>
-    ),
-  }
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: <RoleBasedRedirect />,
+      },
+      {
+        path: 'users',
+        element: <UserManagementPage />,
+      },
+      {
+        path: 'majors',
+        element: <MajorManagementPage />,
+      },
+      {
+        path: 'subjects',
+        element: <SubjectManagementPage />,
+      },
+      {
+        path: 'courses',
+        element: <CourseManagementPage />,
+      },
+      {
+        path: 'timetable',
+        element: <TimetablePage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
+      },
+    ],
+  },
+  {
+    path: '*',
+    element: <Navigate to="/login" replace />,
+  },
 ]);
