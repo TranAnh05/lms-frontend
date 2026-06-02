@@ -3,8 +3,9 @@ import { LoginPage } from "../features/auth/pages/LoginPage";
 import { MainLayout } from "@/layouts/MainLayout/MainLayout";
 import { useAuthStore } from "@/store/authStore";
 import { getDefaultPathByRole } from "@/config/menu.config";
-
 import { MajorPage } from "@/features/major/pages/MajorPage";
+import { UserPage } from "@/features/users/pages/UserPage";
+import { PermissionPage } from "@/features/permissions/pages/PermissionPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -13,26 +14,24 @@ const RoleBasedRedirect = () => {
     return <Navigate to={targetPath} replace />;
 };
 
-const UserManagementPage = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện Quản lý Người dùng
-    </div>
-);
 const SubjectManagementPage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Quản lý Môn học
     </div>
 );
+
 const CourseManagementPage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Quản lý Học phần
     </div>
 );
+
 const TimetablePage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Thời khóa biểu
     </div>
 );
+
 const ProfilePage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Hồ sơ cá nhân
@@ -58,7 +57,11 @@ export const router = createBrowserRouter([
             },
             {
                 path: "users",
-                element: <UserManagementPage />,
+                element: <UserPage />,
+            },
+            {
+                path: "permissions",
+                element: <PermissionPage />,
             },
             {
                 path: "majors",
