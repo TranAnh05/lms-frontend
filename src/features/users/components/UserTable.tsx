@@ -191,8 +191,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                     <tbody className="divide-y divide-gray-100">
                         {users.length === 0 ? (
                             <tr>
+                                {/* Đã cập nhật colSpan thành 6 do thêm cột "Đơn vị" */}
                                 <td
-                                    colSpan={5}
+                                    colSpan={6}
                                     className="px-6 py-12 text-center text-gray-500"
                                 >
                                     Không tìm thấy người dùng nào khớp với bộ
@@ -212,7 +213,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                 <img
                                                     src={user.avatarUrl}
                                                     alt={user.username}
-                                                    className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                                    className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
                                                 />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold border border-blue-200 shrink-0">
@@ -223,9 +224,12 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="font-semibold text-gray-900">
+                                                <p className="font-semibold text-gray-900 leading-snug">
                                                     {user.fullName ||
                                                         "Chưa cập nhật tên"}
+                                                </p>
+                                                <p className="text-[11px] text-gray-500 mt-0.5 tracking-wide">
+                                                    @{user.username}
                                                 </p>
                                             </div>
                                         </div>
@@ -233,10 +237,10 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                                     {/* Cột: Liên hệ (Email + Số điện thoại) */}
                                     <td className="px-6 py-4">
-                                        <p className="text-gray-900 text-xs">
+                                        <p className="text-gray-900 font-medium text-xs">
                                             {user.email}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-0.5">
+                                        <p className="text-[11px] text-gray-500 mt-0.5">
                                             {user.phone ? (
                                                 user.phone
                                             ) : (
@@ -265,7 +269,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                         <span
                                                             key={roleCode}
                                                             className={clsx(
-                                                                "px-2 py-0.5 rounded text-xs font-medium border",
+                                                                "px-2 py-0.5 rounded text-[11px] font-medium border",
                                                                 config.colorClass,
                                                             )}
                                                         >
@@ -274,7 +278,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                     );
                                                 })
                                             ) : (
-                                                <span className="text-xs text-gray-400 italic">
+                                                <span className="text-[11px] text-gray-400 italic">
                                                     Chưa cấp quyền
                                                 </span>
                                             )}
@@ -285,7 +289,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                                     <td className="px-6 py-4">
                                         <span
                                             className={clsx(
-                                                "inline-block px-2 py-0.5 rounded text-xs font-medium border",
+                                                "inline-flex items-center px-2 py-1 rounded text-[11px] font-medium border",
                                                 user.isActive
                                                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                                     : "bg-red-50 text-red-700 border-red-200",
