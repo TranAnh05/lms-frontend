@@ -37,6 +37,11 @@ export interface User {
     avatarUrl: string | null;
     address: string | null;
     roles: string[];
+
+    departmentId?: number | null;
+    departmentName?: string | null;
+    majorId?: number | null;
+    majorName?: string | null;
 }
 
 export interface UserFilterParams {
