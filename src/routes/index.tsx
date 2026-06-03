@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { MainLayout } from "@/layouts/MainLayout/MainLayout";
@@ -87,6 +88,10 @@ export const router = createBrowserRouter([
             {
                 path: "semester",
                 element: <SemesterManagement />,
+            },
+            {
+                path: "course-approvals",
+                element: <CourseProposalPage />,
             },
         ],
     },

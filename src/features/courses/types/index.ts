@@ -46,14 +46,14 @@ export interface Department {
     managerFullName: string | null;
 }
 
-export interface CourseProposalPayload {
+export interface CreateCourseProposalPayload {
     departmentId: number;
     code: string;
     name: string;
     credits: number;
     theoreticalHours: number;
     practicalHours: number;
-    description: string;
+    description?: string;
 }
 
 export interface CourseProposalFilterParams {

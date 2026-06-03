@@ -3,7 +3,8 @@ import {
     type Course,
     type CourseFilterParams,
     type CourseProposalFilterParams,
-    type CourseProposalPayload,
+    type CreateCourseProposalPayload,
+    type Department,
     type PageResponse,
 } from "../types";
 
@@ -18,6 +19,20 @@ export const courseService = {
         );
 
         return (await apiClient.get("/courses", {
+            params: cleanParams,
+        })) as PageResponse<Course>;
+    },
+
+    getApprovalCourses: async (
+        params: CourseFilterParams,
+    ): Promise<PageResponse<Course>> => {
+        const cleanParams = Object.fromEntries(
+            Object.entries(params).filter(
+                ([value]) => value !== null && value !== "",
+            ),
+        );
+
+        return (await apiClient.get("/courses/approved", {
             params: cleanParams,
         })) as PageResponse<Course>;
     },
@@ -41,8 +56,14 @@ export const courseService = {
     },
 
     createCourseProposal: async (
-        payload: CourseProposalPayload,
+        payload: CreateCourseProposalPayload,
     ): Promise<Course> => {
-        return (await apiClient.post("/courses", payload)) as Course;
+        return (await apiClient.post("/courses/propose", payload)) as Course;
+    },
+
+    getDepartments: async (): Promise<Department[]> => {
+        return (await apiClient.get("/departments", {
+            params: { isActive: true },
+        })) as Department[];
     },
 };
