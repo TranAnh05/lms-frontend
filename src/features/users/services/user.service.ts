@@ -5,6 +5,8 @@ import {
     type Department,
     type UserFilterParams,
     type PageResponse,
+    type CreateUserPayload,
+    type ApiResponse,
 } from "../types";
 
 interface ServerResponse<T> {
@@ -38,5 +40,14 @@ export const userService = {
         return (await apiClient.get("/departments", {
             params: { keyword, isActive },
         })) as Department[];
+    },
+
+    createUser: async (
+        payload: CreateUserPayload,
+    ): Promise<ApiResponse<string>> => {
+        return (await apiClient.post(
+            "/users/create-with-roles",
+            payload,
+        )) as ApiResponse<string>;
     },
 };

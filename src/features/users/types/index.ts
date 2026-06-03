@@ -55,3 +55,17 @@ export interface UserFilterParams {
     sortBy?: string;
     sortDirection?: string;
 }
+
+export interface CreateUserPayload {
+    username: string;
+    password?: string;
+    email: string;
+    fullName: string;
+    roleIds: number[];
+}
+
+export interface ApiResponse<T> {
+    code: number;
+    message: string;
+    data: T;
+}

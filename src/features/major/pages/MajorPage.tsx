@@ -8,22 +8,24 @@ import { type Major, type Department } from "../types";
 import { MajorFilter } from "../components/MajorFilter";
 import { MajorTable } from "../components/MajorTable";
 import { MajorDetailModal } from "../components/MajorDetailModal";
+import { useAuthStore } from "@/store/authStore";
 
 export const MajorPage: React.FC = () => {
     const [majors, setMajors] = useState<Major[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    // State cho Bộ lọc
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
-    // State cho Quản lý phân trang
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
-    // State quản lý Modal Xem chi tiết
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [selectedMajorId, setSelectedMajorId] = useState<number | null>(null);
+    const { user } = useAuthStore();
 
+    const isTrainingDept = user?.roles?.includes("TRAINING_DEPT");
+    const hasAddEditPermission = !isTrainingDept;
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
+
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
@@ -70,8 +72,9 @@ export const MajorPage: React.FC = () => {
     }, []);
 
     const handleAddClick = useCallback(() => {
+        if (!hasAddEditPermission) return;
         toast.info("Chức năng thêm mới đang được phát triển.");
-    }, []);
+    }, [hasAddEditPermission]);
 
     const handleView = useCallback((id: number) => {
         setSelectedMajorId(id);
@@ -83,15 +86,25 @@ export const MajorPage: React.FC = () => {
         setSelectedMajorId(null);
     }, []);
 
-    const handleEdit = useCallback((id: number) => {
-        toast.info(`Đang chỉnh sửa ngành học có ID: ${id}`);
-    }, []);
+    const handleEdit = useCallback(
+        (id: number) => {
+            if (!hasAddEditPermission) return;
+            toast.info(`Đang chỉnh sửa ngành học có ID: ${id}`);
+        },
+        [hasAddEditPermission],
+    );
 
-    const handleDelete = useCallback((id: number) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa ngành học này không?")) {
-            toast.success(`Đã gửi yêu cầu xóa ngành học ID: ${id}`);
-        }
-    }, []);
+    const handleDelete = useCallback(
+        (id: number) => {
+            if (!hasAddEditPermission) return;
+            if (
+                window.confirm("Bạn có chắc chắn muốn xóa ngành học này không?")
+            ) {
+                toast.success(`Đã gửi yêu cầu xóa ngành học ID: ${id}`);
+            }
+        },
+        [hasAddEditPermission],
+    );
 
     return (
         <div className="flex flex-col h-full space-y-6">
@@ -111,7 +124,8 @@ export const MajorPage: React.FC = () => {
                 departments={departments}
                 selectedDeptId={selectedDeptId}
                 onDeptChange={setSelectedDeptId}
-                onAddClick={handleAddClick}
+                onAddClick={hasAddEditPermission ? handleAddClick : undefined}
+                canCreate={hasAddEditPermission}
             />
 
             <div className="flex-1 relative">
@@ -134,6 +148,8 @@ export const MajorPage: React.FC = () => {
                     onView={handleView}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    canEdit={hasAddEditPermission}
+                    canDelete={hasAddEditPermission}
                 />
             </div>
 
