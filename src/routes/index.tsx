@@ -8,6 +8,7 @@ import { UserPage } from "@/features/users/pages/UserPage";
 import { PermissionPage } from "@/features/permissions/pages/PermissionPage";
 import { CourseManagementPage } from "@/features/courses/pages/CourseManagementPage";
 import { CourseProposalPage } from "@/features/courses/pages/CourseProposalPage";
+import { SemesterManagement } from "@/features/semesters/pages/SemesterManagement";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
             {
                 path: "course-suggest",
                 element: <CourseProposalPage />,
+            },
+            {
+                path: "semester",
+                element: <SemesterManagement />,
             },
         ],
     },

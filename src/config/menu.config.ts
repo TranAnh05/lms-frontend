@@ -11,6 +11,7 @@ import {
     FileText,
     ShieldAlert,
     CheckSquare,
+    GraduationCap,
     type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +52,11 @@ const ALL_MENUS = {
         title: "Quản lý môn học",
         path: "/dashboard/subjects",
         icon: Bookmark,
+    },
+    SEMESTER_MGMT: {
+        title: "Quản lý học kỳ",
+        path: "/dashboard/semester",
+        icon: GraduationCap,
     },
     COURSE_MGMT: {
         title: "Quản lý học phần",
@@ -142,6 +148,7 @@ export const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
         ALL_MENUS.SUBJECT_MGMT,
         ALL_MENUS.COURSE_APPROVAL_MGMT,
         ALL_MENUS.COURSE_MGMT,
+        ALL_MENUS.SEMESTER_MGMT,
         // ALL_MENUS.STUDENT_MGMT,
         // ALL_MENUS.TEACHER_MGMT,
         ALL_MENUS.PROFILE,
