@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -6,24 +8,23 @@ import { type User, type Role, type Department } from "../types";
 import { UserFilter } from "../components/UserFilter";
 import { UserTable } from "../components/UserTable";
 import { UserDetailModal } from "../components/UserDetailModal";
+import { UserFormModal } from "../components/UserFormModal";
+import { Plus } from "lucide-react";
 
 export const UserPage: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedRoleCode, setSelectedRoleCode] = useState<string>("");
     const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
-
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const pageSize = 10;
-
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
     useEffect(() => {
@@ -100,6 +101,19 @@ export const UserPage: React.FC = () => {
         setSelectedUserId(null);
     }, []);
 
+    const handleOpenCreateModal = useCallback(() => {
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleCloseCreateModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleCreateSuccess = useCallback(() => {
+        setCurrentPage(0);
+        fetchUsers();
+    }, [fetchUsers]);
+
     const handleEditUser = useCallback((id: number) => {
         toast.info(`Đang mở form cập nhật người dùng có ID: ${id}`);
     }, []);
@@ -127,14 +141,24 @@ export const UserPage: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                    Quản lý Tài khoản
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                    Xem danh sách, kiểm tra thông tin hồ sơ và quản lý trạng
-                    thái kích hoạt của người dùng toàn hệ thống.
-                </p>
+            <div className="flex flex-col sm:flex-row justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                        Quản lý Tài khoản
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Xem danh sách, kiểm tra thông tin hồ sơ và quản lý trạng
+                        thái kích hoạt của người dùng toàn hệ thống.
+                    </p>
+                </div>
+
+                <button
+                    onClick={handleOpenCreateModal}
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 h-10 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 shrink-0"
+                >
+                    <Plus className="w-4 h-4" />
+                    Thêm tài khoản
+                </button>
             </div>
 
             <UserFilter
@@ -171,11 +195,16 @@ export const UserPage: React.FC = () => {
                 />
             </div>
 
-            {/* Modal Xem chi tiết */}
             <UserDetailModal
                 isOpen={isViewModalOpen}
                 onClose={handleCloseViewModal}
                 userId={selectedUserId}
+            />
+
+            <UserFormModal
+                isOpen={isCreateModalOpen}
+                onClose={handleCloseCreateModal}
+                onSuccess={handleCreateSuccess}
             />
         </div>
     );

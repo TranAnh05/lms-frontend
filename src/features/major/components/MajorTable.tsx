@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { type Major } from "../types";
 import clsx from "clsx";
+
 const ActionMenu: React.FC<{
     major: Major;
     index: number;
@@ -17,7 +18,18 @@ const ActionMenu: React.FC<{
     onView: (id: number) => void;
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
-}> = ({ major, index, total, onView, onEdit, onDelete }) => {
+    canEdit?: boolean;
+    canDelete?: boolean;
+}> = ({
+    major,
+    index,
+    total,
+    onView,
+    onEdit,
+    onDelete,
+    canEdit = true,
+    canDelete = true,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -71,27 +83,31 @@ const ActionMenu: React.FC<{
                         Xem chi tiết
                     </button>
 
-                    <button
-                        onClick={() => {
-                            setIsOpen(false);
-                            onEdit(major.id);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 transition-colors text-left"
-                    >
-                        <Edit className="w-4 h-4" />
-                        Chỉnh sửa ngành
-                    </button>
+                    {canEdit && (
+                        <button
+                            onClick={() => {
+                                setIsOpen(false);
+                                onEdit(major.id);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 transition-colors text-left"
+                        >
+                            <Edit className="w-4 h-4" />
+                            Chỉnh sửa ngành
+                        </button>
+                    )}
 
-                    <button
-                        onClick={() => {
-                            setIsOpen(false);
-                            onDelete(major.id);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        Xóa ngành
-                    </button>
+                    {canDelete && (
+                        <button
+                            onClick={() => {
+                                setIsOpen(false);
+                                onDelete(major.id);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa ngành
+                        </button>
+                    )}
                 </div>
             )}
         </div>
@@ -106,6 +122,8 @@ interface MajorTableProps {
     onView: (id: number) => void;
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
+    canEdit?: boolean;
+    canDelete?: boolean;
 }
 
 export const MajorTable: React.FC<MajorTableProps> = ({
@@ -116,6 +134,8 @@ export const MajorTable: React.FC<MajorTableProps> = ({
     onView,
     onEdit,
     onDelete,
+    canEdit = true,
+    canDelete = true,
 }) => {
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -211,6 +231,8 @@ export const MajorTable: React.FC<MajorTableProps> = ({
                                             onView={onView}
                                             onEdit={onEdit}
                                             onDelete={onDelete}
+                                            canEdit={canEdit}
+                                            canDelete={canDelete}
                                         />
                                     </td>
                                 </tr>

@@ -6,6 +6,8 @@ import { getDefaultPathByRole } from "@/config/menu.config";
 import { MajorPage } from "@/features/major/pages/MajorPage";
 import { UserPage } from "@/features/users/pages/UserPage";
 import { PermissionPage } from "@/features/permissions/pages/PermissionPage";
+import { CourseManagementPage } from "@/features/courses/pages/CourseManagementPage";
+import { CourseProposalPage } from "@/features/courses/pages/CourseProposalPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -14,15 +16,9 @@ const RoleBasedRedirect = () => {
     return <Navigate to={targetPath} replace />;
 };
 
-const SubjectManagementPage = () => (
+const ClassManagementPage = () => (
     <div className="text-xl font-bold text-gray-800">
-        Giao diện Quản lý Môn học
-    </div>
-);
-
-const CourseManagementPage = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện Quản lý Học phần
+        Giao diện Quản lý Học phần (Lớp học phần)
     </div>
 );
 
@@ -69,11 +65,11 @@ export const router = createBrowserRouter([
             },
             {
                 path: "subjects",
-                element: <SubjectManagementPage />,
+                element: <CourseManagementPage />,
             },
             {
                 path: "courses",
-                element: <CourseManagementPage />,
+                element: <ClassManagementPage />,
             },
             {
                 path: "timetable",
@@ -82,6 +78,10 @@ export const router = createBrowserRouter([
             {
                 path: "profile",
                 element: <ProfilePage />,
+            },
+            {
+                path: "course-suggest",
+                element: <CourseProposalPage />,
             },
         ],
     },
