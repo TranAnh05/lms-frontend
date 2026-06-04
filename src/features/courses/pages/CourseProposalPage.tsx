@@ -2,13 +2,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { FileEdit, AlertTriangle, X } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 import { courseService } from "../services/course.service";
 import { type Course } from "../types";
 import { CourseProposalFilter } from "../components/CourseProposalFilter";
 import { CourseProposalTable } from "../components/CourseProposalTable";
-import { CourseDetailModal } from "../components/CourseDetailModal";
+import { SuggestCourseDetailModal } from "../components/SuggestCourseDetailModal";
+import { CourseProposalFormModal } from "../components/CourseProposalFormModal";
 
 export const CourseProposalPage: React.FC = () => {
+    const { user } = useAuthStore();
+    const isTrainingDept = user?.roles?.includes("TRAINING_DEPT");
+    const isPrincipal = user?.roles?.includes("PRINCIPAL");
     const [courses, setCourses] = useState<Course[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [statusFilter, setStatusFilter] = useState<string>("");
@@ -20,6 +25,7 @@ export const CourseProposalPage: React.FC = () => {
         null,
     );
     const [rejectReason, setRejectReason] = useState<string | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
 
     const fetchProposals = useCallback(async () => {
         setIsLoading(true);
@@ -58,7 +64,7 @@ export const CourseProposalPage: React.FC = () => {
     };
 
     const handleAddProposalClick = useCallback(() => {
-        toast.info("Đang mở form tạo đề xuất môn học mới...");
+        setIsCreateModalOpen(true);
     }, []);
 
     const handleViewDetail = useCallback((id: number) => {
@@ -97,7 +103,7 @@ export const CourseProposalPage: React.FC = () => {
             <CourseProposalFilter
                 selectedStatus={statusFilter}
                 onStatusChange={handleStatusChange}
-                onAddClick={handleAddProposalClick}
+                onAddClick={isTrainingDept ? handleAddProposalClick : undefined}
             />
 
             <div className="flex-1 relative">
@@ -122,10 +128,11 @@ export const CourseProposalPage: React.FC = () => {
                 />
             </div>
 
-            <CourseDetailModal
+            <SuggestCourseDetailModal
                 isOpen={isViewModalOpen}
                 onClose={handleCloseDetailModal}
                 courseId={selectedCourseId}
+                canApprove={!!isPrincipal}
             />
 
             {rejectReason !== null && (
@@ -164,6 +171,15 @@ export const CourseProposalPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <CourseProposalFormModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={() => {
+                    setCurrentPage(0);
+                    fetchProposals();
+                }}
+            />
         </div>
     );
 };

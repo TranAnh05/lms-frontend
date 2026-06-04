@@ -4,7 +4,7 @@ import { Filter, Plus } from "lucide-react";
 interface CourseProposalFilterProps {
     selectedStatus: string;
     onStatusChange: (status: string) => void;
-    onAddClick: () => void;
+    onAddClick?: () => void;
 }
 
 export const CourseProposalFilter: React.FC<CourseProposalFilterProps> = ({
@@ -40,13 +40,15 @@ export const CourseProposalFilter: React.FC<CourseProposalFilterProps> = ({
                 </div>
             </div>
 
-            <button
-                onClick={onAddClick}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus:ring-4 focus:ring-blue-500/20 w-full sm:w-auto shrink-0"
-            >
-                <Plus className="w-4 h-4" />
-                Đề xuất môn học
-            </button>
+            {onAddClick && (
+                <button
+                    onClick={onAddClick}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus:ring-4 focus:ring-blue-500/20 w-full sm:w-auto shrink-0"
+                >
+                    <Plus className="w-4 h-4" />
+                    Đề xuất môn học
+                </button>
+            )}
         </div>
     );
 };

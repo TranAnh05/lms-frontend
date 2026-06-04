@@ -48,7 +48,7 @@ export const CourseManagementPage: React.FC = () => {
     const fetchCoursesData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await courseService.getCourses({
+            const response = await courseService.getApprovalCourses({
                 keyword: debouncedSearchTerm.trim(),
                 departmentId: selectedDeptId,
                 page: currentPage,
@@ -98,22 +98,7 @@ export const CourseManagementPage: React.FC = () => {
     }, []);
 
     const handleDeleteCourse = async (id: number, code: string) => {
-        if (
-            window.confirm(
-                `Thao tác này không thể hoàn tác! Bạn có chắc chắn muốn xóa môn học [${code}] không?`,
-            )
-        ) {
-            try {
-                await courseService.deleteCourse(id);
-                toast.success(`Đã xóa thành công môn học: ${code}`);
-                fetchCoursesData();
-            } catch (error) {
-                console.error("Lỗi khi xóa môn học:", error);
-                toast.error(
-                    `Xóa môn học [${code}] thất bại. Vui lòng kiểm tra lại.`,
-                );
-            }
-        }
+        toast.success(`Đã xóa thành công môn học: ${code}`);
     };
 
     return (

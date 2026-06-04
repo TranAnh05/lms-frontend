@@ -73,6 +73,16 @@ const ALL_MENUS = {
         path: "/dashboard/course-suggest",
         icon: CheckSquare,
     },
+    APPROVAL_CLASS: {
+        title: "Duyệt đề xuất lớp",
+        path: "/dashboard/approval-classes",
+        icon: CheckSquare,
+    },
+    SUGGEST_CLASS: {
+        title: "Đề xuất học phần",
+        path: "/dashboard/approval-classes",
+        icon: CheckSquare,
+    },
     // STUDENT_MGMT:    { title: 'Quản lý sinh viên', path: '/dashboard/students', icon: GraduationCap },
     // TEACHER_MGMT:    { title: 'Quản lý giảng viên', path: '/dashboard/teachers', icon: Users },
     TIMETABLE: {
@@ -144,19 +154,19 @@ export const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
 
     [ROLES.TRAINING_DEPT]: [
         ALL_MENUS.USER_MGMT,
-        ALL_MENUS.MAJOR_MGMT,
         ALL_MENUS.SUBJECT_MGMT,
         ALL_MENUS.COURSE_APPROVAL_MGMT,
         ALL_MENUS.COURSE_MGMT,
         ALL_MENUS.SEMESTER_MGMT,
+        ALL_MENUS.APPROVAL_CLASS,
         // ALL_MENUS.STUDENT_MGMT,
         // ALL_MENUS.TEACHER_MGMT,
         ALL_MENUS.PROFILE,
     ],
 
     [ROLES.HEAD_OF_DEPT]: [
-        ALL_MENUS.SUBJECT_MGMT,
         ALL_MENUS.COURSE_MGMT,
+        ALL_MENUS.SUGGEST_CLASS,
         // ALL_MENUS.STUDENT_MGMT,
         // ALL_MENUS.TEACHER_MGMT,
         ALL_MENUS.PROFILE,
