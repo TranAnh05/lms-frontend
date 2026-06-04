@@ -11,6 +11,7 @@ import { CourseManagementPage } from "@/features/courses/pages/CourseManagementP
 import { CourseProposalPage } from "@/features/courses/pages/CourseProposalPage";
 import { SemesterManagement } from "@/features/semesters/pages/SemesterManagement";
 import { ClassManagementPage } from "@/features/classes/pages/ClassManagementPage";
+import { ClassRequestPage } from "@/features/class-requests/pages/ClassRequestPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -28,11 +29,6 @@ const TimetablePage = () => (
 const ProfilePage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Hồ sơ cá nhân
-    </div>
-);
-const DuyetDeXuatHocPhan = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện Duyệt Đề xuất học phần
     </div>
 );
 
@@ -99,7 +95,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: "approval-classes",
-                element: <DuyetDeXuatHocPhan />
+                element: <ClassRequestPage />
             }
         ],
     },
