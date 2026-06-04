@@ -10,6 +10,7 @@ import { PermissionPage } from "@/features/permissions/pages/PermissionPage";
 import { CourseManagementPage } from "@/features/courses/pages/CourseManagementPage";
 import { CourseProposalPage } from "@/features/courses/pages/CourseProposalPage";
 import { SemesterManagement } from "@/features/semesters/pages/SemesterManagement";
+import { ClassManagementPage } from "@/features/classes/pages/ClassManagementPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -17,12 +18,6 @@ const RoleBasedRedirect = () => {
 
     return <Navigate to={targetPath} replace />;
 };
-
-const ClassManagementPage = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện Quản lý Học phần (Lớp học phần)
-    </div>
-);
 
 const TimetablePage = () => (
     <div className="text-xl font-bold text-gray-800">
@@ -33,6 +28,11 @@ const TimetablePage = () => (
 const ProfilePage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Hồ sơ cá nhân
+    </div>
+);
+const DuyetDeXuatHocPhan = () => (
+    <div className="text-xl font-bold text-gray-800">
+        Giao diện Duyệt Đề xuất học phần
     </div>
 );
 
@@ -93,6 +93,14 @@ export const router = createBrowserRouter([
                 path: "course-approvals",
                 element: <CourseProposalPage />,
             },
+            {
+                path: "courses",
+                element: <ClassManagementPage />,
+            },
+            {
+                path: "approval-classes",
+                element: <DuyetDeXuatHocPhan />
+            }
         ],
     },
     {
