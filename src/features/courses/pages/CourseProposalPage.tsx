@@ -133,6 +133,9 @@ export const CourseProposalPage: React.FC = () => {
                 onClose={handleCloseDetailModal}
                 courseId={selectedCourseId}
                 canApprove={!!isPrincipal}
+                onSuccess={() => {
+                    fetchProposals();
+                }}
             />
 
             {rejectReason !== null && (

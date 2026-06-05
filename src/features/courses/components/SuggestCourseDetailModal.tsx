@@ -56,6 +56,7 @@ interface CourseDetailModalProps {
     onClose: () => void;
     courseId: number | null;
     canApprove?: boolean;
+    onSuccess?: () => void;
 }
 
 export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
@@ -63,6 +64,7 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
     onClose,
     courseId,
     canApprove = false,
+    onSuccess
 }) => {
     const [course, setCourse] = useState<Course | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -99,13 +101,17 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
     }, [isOpen, courseId, onClose]);
 
     const handleApprove = async () => {
+        if (!courseId) return;
+
         setIsProcessing(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            await courseService.approveCourse({ courseId });
 
             toast.success("Đã phê duyệt đề xuất môn học thành công!");
+            if (onSuccess) onSuccess(); // Gọi reload bảng
             onClose();
         } catch (error) {
+            console.error("Lỗi khi duyệt môn học:", error);
             toast.error("Đã xảy ra lỗi khi phê duyệt môn học.");
         } finally {
             setIsProcessing(false);
@@ -118,6 +124,8 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
     };
 
     const handleConfirmReject = async () => {
+        if (!courseId) return;
+
         if (rejectReasonInput.trim() === "") {
             toast.warning("Bạn phải nhập lý do khi từ chối đề xuất!");
             return;
@@ -125,12 +133,17 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
 
         setIsProcessing(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            await courseService.rejectCourse({ 
+                courseId, 
+                rejectReason: rejectReasonInput.trim() 
+            });
 
             toast.success("Đã từ chối đề xuất môn học.");
             setIsRejectModalOpen(false);
+            if (onSuccess) onSuccess(); 
             onClose();
         } catch (error) {
+            console.error("Lỗi khi từ chối môn học:", error);
             toast.error("Đã xảy ra lỗi khi từ chối môn học.");
         } finally {
             setIsProcessing(false);

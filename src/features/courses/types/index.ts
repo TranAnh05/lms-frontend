@@ -63,3 +63,12 @@ export interface CourseProposalFilterParams {
     sortBy?: string;
     sortDirection?: string;
 }
+
+export interface CourseApprovePayload {
+    courseId: number;
+}
+
+export interface CourseRejectPayload {
+    courseId: number;
+    rejectReason: string;
+}

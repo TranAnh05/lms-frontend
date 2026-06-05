@@ -1,8 +1,10 @@
 import apiClient from "@/services/apiClient";
 import {
     type Course,
+    type CourseApprovePayload,
     type CourseFilterParams,
     type CourseProposalFilterParams,
+    type CourseRejectPayload,
     type CreateCourseProposalPayload,
     type Department,
     type PageResponse,
@@ -65,5 +67,13 @@ export const courseService = {
         return (await apiClient.get("/departments", {
             params: { isActive: true },
         })) as Department[];
+    },
+    
+    approveCourse: async (payload: CourseApprovePayload): Promise<Course> => {
+        return (await apiClient.post("/courses/approve", payload)) as Course;
+    },
+
+    rejectCourse: async (payload: CourseRejectPayload): Promise<Course> => {
+        return (await apiClient.post("/courses/reject", payload)) as Course;
     },
 };
