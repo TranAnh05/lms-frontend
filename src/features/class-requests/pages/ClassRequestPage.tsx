@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { CheckSquare, Plus } from "lucide-react";
@@ -15,16 +16,21 @@ import { CreateClassFromRequestModal } from "../components/CreateClassFromReques
 import { CreateRequestModal } from "../components/CreateRequestModal";
 
 export const ClassRequestPage: React.FC = () => {
-    // Quyền hạn
+    // ========================================================================
+    // QUẢN LÝ QUYỀN HẠN
+    // ========================================================================
     const user = useAuthStore((state) => state.user);
     const isTrainingDept = user?.roles.includes("TRAINING_DEPT") ?? false;
     const isHeadOfDept = user?.roles.includes("HEAD_OF_DEPT") ?? false;
 
-    // State Dữ liệu & Bộ lọc
+    // ========================================================================
+    // STATE QUẢN LÝ DỮ LIỆU & BỘ LỌC
+    // ========================================================================
+    // Dùng ClassOpeningResponseDto chuẩn từ BE
     const [data, setData] = useState<PageResponse<ClassOpeningResponseDto> | null>(null);
     const [semesters, setSemesters] = useState<{ id: number; name: string }[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
     
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedSemester, setSelectedSemester] = useState<string>("");
     const [selectedStatus, setSelectedStatus] = useState<string>("");
@@ -34,17 +40,22 @@ export const ClassRequestPage: React.FC = () => {
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
     const [selectedRequest, setSelectedRequest] = useState<ClassOpeningResponseDto | null>(null);
 
-    // State Modals
+    // ========================================================================
+    // STATE QUẢN LÝ MODALS
+    // ========================================================================
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
     const [isCreateClassModalOpen, setIsCreateClassModalOpen] = useState<boolean>(false);
     const [isCreateRequestModalOpen, setIsCreateRequestModalOpen] = useState<boolean>(false);
 
-    // Lấy danh mục Học kỳ
+    // ========================================================================
+    // GỌI API LẤY DANH MỤC HỌC KỲ
+    // ========================================================================
     useEffect(() => {
         const fetchSemesters = async () => {
             try {
                 const response = await classRequestService.getSemesters();
+                // Map dữ liệu API về format { id, name } để truyền vào các Component Dropdown cũ
                 const formattedSemesters = response.map((sem) => ({
                     id: sem.id,
                     name: `${sem.semesterCode} (${sem.academicYear})`,
@@ -55,19 +66,24 @@ export const ClassRequestPage: React.FC = () => {
                 toast.error("Không thể tải dữ liệu học kỳ.");
             }
         };
+
         fetchSemesters();
     }, []);
 
-    // Lấy danh sách Đề xuất
+    // ========================================================================
+    // GỌI API LẤY DANH SÁCH ĐỀ XUẤT
+    // ========================================================================
     const fetchRequests = useCallback(async () => {
         setIsLoading(true);
         try {
+            // Sử dụng payload chuẩn của RequestFilterParams
             const response = await classRequestService.getPendingRequests({
                 search: debouncedSearchTerm.trim() || undefined,
                 semesterId: selectedSemester ? Number(selectedSemester) : undefined,
                 status: (selectedStatus as any) || undefined,
                 page: currentPage,
                 size: pageSize,
+                // Không truyền mockRequesterId nữa vì BE tự phân quyền theo Token
             });
             setData(response);
         } catch (error) {
@@ -76,13 +92,20 @@ export const ClassRequestPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [debouncedSearchTerm, selectedSemester, selectedStatus, currentPage]);
+    }, [
+        debouncedSearchTerm,
+        selectedSemester,
+        selectedStatus,
+        currentPage,
+    ]);
 
     useEffect(() => {
         fetchRequests();
     }, [fetchRequests]);
 
-    // Handlers cập nhật bộ lọc
+    // ========================================================================
+    // HANDLERS BỘ LỌC
+    // ========================================================================
     const handleSearchChange = (value: string) => {
         setSearchTerm(value);
         setCurrentPage(0);
@@ -98,7 +121,9 @@ export const ClassRequestPage: React.FC = () => {
         setCurrentPage(0);
     };
 
-    // Handlers mở Modals
+    // ========================================================================
+    // HANDLERS MỞ MODAL & THAO TÁC
+    // ========================================================================
     const handleViewDetail = (request: any) => {
         setSelectedRequest(request);
         setIsDetailModalOpen(true);
@@ -114,44 +139,40 @@ export const ClassRequestPage: React.FC = () => {
         setIsCreateClassModalOpen(true);
     };
 
-    // Tích hợp API Từ chối
     const handleConfirmReject = async (requestId: number, reason: string) => {
         try {
-            await classRequestService.reviewRequest(requestId, {
-                status: "REJECTED",
-                rejectReason: reason,
-            });
+            await classRequestService.rejectRequest(requestId, reason);
             toast.success("Đã từ chối đề xuất mở lớp.");
-            fetchRequests();
+            fetchRequests(); // Reload bảng
         } catch (error) {
             toast.error("Có lỗi xảy ra khi từ chối đề xuất.");
             throw error;
         }
     };
 
-    // Tích hợp API Duyệt & Tạo lớp
-    const handleConfirmCreateClasses = async (requestId: number, reviewData: any) => {
+    const handleConfirmCreateClasses = async (payload: any) => {
         try {
-            await classRequestService.reviewRequest(requestId, {
-                status: "APPROVED",
-                ...reviewData,
-            });
-            toast.success("Đã phê duyệt và khởi tạo lớp học phần thành công!");
-            fetchRequests();
+            await classRequestService.approveAndCreateClasses(payload);
+            fetchRequests(); // Reload bảng
         } catch (error) {
             toast.error("Có lỗi xảy ra trong quá trình phê duyệt và tạo lớp.");
             throw error;
         }
     };
 
+    const handleCreateRequestClick = () => {
+        setIsCreateRequestModalOpen(true);
+    };
+
     const handleCreateRequestSuccess = () => {
         setIsCreateRequestModalOpen(false);
-        setCurrentPage(0);
+        setCurrentPage(0); // Về trang 1 để thấy data mới
         fetchRequests();
     };
 
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
+            {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
@@ -167,7 +188,7 @@ export const ClassRequestPage: React.FC = () => {
 
                 {isHeadOfDept && (
                     <button
-                        onClick={() => setIsCreateRequestModalOpen(true)}
+                        onClick={handleCreateRequestClick}
                         className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 shrink-0"
                     >
                         <Plus className="w-4 h-4" />
@@ -176,29 +197,32 @@ export const ClassRequestPage: React.FC = () => {
                 )}
             </div>
 
+            {/* BỘ LỌC */}
             <RequestFilter
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
-                semesters={semesters}
+                semesters={semesters} // Dữ liệu động từ API
                 selectedSemester={selectedSemester}
                 onSemesterChange={handleSemesterChange}
                 selectedStatus={selectedStatus}
                 onStatusChange={handleStatusChange}
             />
 
+            {/* BẢNG DỮ LIỆU */}
             <div className="flex-1 relative">
                 {isLoading && data !== null && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-[1px] z-10 rounded-xl border border-transparent"></div>
                 )}
 
                 <RequestTable
-                    data={data as any}
+                    data={data as any} // Cast tương thích type với component con
                     isLoading={isLoading && data === null}
                     onPageChange={setCurrentPage}
                     onViewDetail={handleViewDetail}
                 />
             </div>
 
+            {/* MODALS */}
             <RequestDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
@@ -231,7 +255,7 @@ export const ClassRequestPage: React.FC = () => {
                     isOpen={isCreateRequestModalOpen}
                     onClose={() => setIsCreateRequestModalOpen(false)}
                     onSuccess={handleCreateRequestSuccess}
-                    semesters={semesters}
+                    semesters={semesters} // Truyền dữ liệu API xuống form
                 />
             )}
         </div>

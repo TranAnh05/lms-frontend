@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { Layers, Plus } from "lucide-react";
+import { Layers } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { classService } from "../services/class.service";
@@ -202,7 +202,6 @@ export const ClassManagementPage: React.FC = () => {
                     onPageChange={handlePageChange}
                     onViewDetail={handleViewDetail}
                     onAssignLecturer={handleAssignLecturer}
-                    isHeadOfDept={isHeadOfDept}
                 />
             </div>
 
