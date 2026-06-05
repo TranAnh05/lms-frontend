@@ -1,0 +1,242 @@
+import React, { useState, useEffect } from "react";
+import { X, Settings, ListChecks, ChevronRight } from "lucide-react";
+import clsx from "clsx";
+import { toast } from "react-toastify";
+
+import { type SemesterBasic, type DepartmentBasic } from "../../types";
+import { type CourseWithClasses } from "../../types/registration.types";
+import { registrationService } from "../../services/registration.service";
+
+import { WizardStep1Config, type Step1FormState } from "./WizardStep1Config";
+import { WizardStep2Classes } from "./WizardStep2Classes";
+
+interface RegistrationWizardModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+    semesters: SemesterBasic[];
+    departments: DepartmentBasic[];
+}
+
+const INITIAL_STEP1_STATE: Step1FormState = {
+    name: "",
+    semesterId: "",
+    type: "NORMAL",
+    startTime: "",
+    endTime: "",
+    targetCohorts: [],
+    targetDepartments: [],
+};
+
+export const RegistrationWizardModal: React.FC<
+    RegistrationWizardModalProps
+> = ({ isOpen, onClose, onSuccess, semesters, departments }) => {
+    const [step, setStep] = useState<1 | 2>(1);
+    const [step1Data, setStep1Data] =
+        useState<Step1FormState>(INITIAL_STEP1_STATE);
+    const [groupedClasses, setGroupedClasses] = useState<CourseWithClasses[]>(
+        [],
+    );
+    const [isFetchingClasses, setIsFetchingClasses] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setStep(1);
+            setStep1Data(INITIAL_STEP1_STATE);
+            setGroupedClasses([]);
+        }
+    }, [isOpen]);
+
+    const handleClose = () => {
+        if (isSubmitting) return;
+        onClose();
+    };
+
+    const handleNextToStep2 = async () => {
+        if (!step1Data.semesterId) return;
+
+        setStep(2);
+        setIsFetchingClasses(true);
+
+        try {
+            const data =
+                await registrationService.getEligibleClassesForRegistration(
+                    Number(step1Data.semesterId),
+                    step1Data.targetDepartments,
+                );
+            setGroupedClasses(data);
+        } catch (error) {
+            console.error(error);
+            toast.error(
+                "Không thể lấy danh sách lớp học phần. Vui lòng thử lại.",
+            );
+            setStep(1);
+        } finally {
+            setIsFetchingClasses(false);
+        }
+    };
+
+    const handleBackToStep1 = () => {
+        setStep(1);
+    };
+
+    const handleSubmit = async () => {
+        if (groupedClasses.length === 0) {
+            toast.warning(
+                "Không có lớp học phần nào hợp lệ để tạo đợt đăng ký.",
+            );
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await registrationService.createRegistrationPeriod({
+                semesterId: Number(step1Data.semesterId),
+                name: step1Data.name,
+                type: step1Data.type,
+                startTime: step1Data.startTime,
+                endTime: step1Data.endTime,
+                targetCohorts: step1Data.targetCohorts,
+                targetDepartments: step1Data.targetDepartments,
+            });
+
+            toast.success("Đã tạo đợt đăng ký và mở lớp thành công!");
+            onSuccess();
+            handleClose();
+        } catch (error) {
+            console.error(error);
+            toast.error("Đã xảy ra lỗi trong quá trình tạo đợt đăng ký.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="absolute inset-0" onClick={handleClose}></div>
+            <div className="relative w-full max-w-5xl bg-gray-50/50 rounded-2xl shadow-2xl flex flex-col h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden">
+                <div className="bg-white border-b border-gray-100 shrink-0 rounded-t-2xl z-10 shadow-sm">
+                    <div className="flex items-center justify-between p-5 border-b border-gray-50">
+                        <h3 className="text-xl font-bold text-gray-900">
+                            Mở Đợt đăng ký học phần mới
+                        </h3>
+                        <button
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none disabled:opacity-50"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="px-8 py-4 flex items-center justify-center">
+                        <div className="flex items-center w-full max-w-2xl">
+                            {/* Step 1 */}
+                            <div
+                                className={clsx(
+                                    "flex items-center gap-3 transition-colors duration-300",
+                                    step === 1
+                                        ? "text-blue-600"
+                                        : "text-gray-500",
+                                )}
+                            >
+                                <div
+                                    className={clsx(
+                                        "w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-colors",
+                                        step === 1
+                                            ? "border-blue-600 bg-blue-50"
+                                            : "border-gray-300 bg-white",
+                                    )}
+                                >
+                                    <Settings className="w-5 h-5" />
+                                </div>
+                                <div className="hidden sm:block">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                                        Bước 1
+                                    </p>
+                                    <p className="text-sm font-semibold">
+                                        Cấu hình đợt
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="flex-1 mx-4 sm:mx-6 flex items-center">
+                                <div
+                                    className={clsx(
+                                        "h-0.5 w-full transition-colors duration-500",
+                                        step === 2
+                                            ? "bg-blue-600"
+                                            : "bg-gray-200",
+                                    )}
+                                ></div>
+                                <ChevronRight
+                                    className={clsx(
+                                        "w-5 h-5 -ml-3 transition-colors duration-500",
+                                        step === 2
+                                            ? "text-blue-600"
+                                            : "text-gray-300",
+                                    )}
+                                />
+                            </div>
+
+                            {/* Step 2 */}
+                            <div
+                                className={clsx(
+                                    "flex items-center gap-3 transition-colors duration-300",
+                                    step === 2
+                                        ? "text-blue-600"
+                                        : "text-gray-400",
+                                )}
+                            >
+                                <div
+                                    className={clsx(
+                                        "w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-colors",
+                                        step === 2
+                                            ? "border-blue-600 bg-blue-50"
+                                            : "border-gray-300 bg-white",
+                                    )}
+                                >
+                                    <ListChecks className="w-5 h-5" />
+                                </div>
+                                <div className="hidden sm:block">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                                        Bước 2
+                                    </p>
+                                    <p className="text-sm font-semibold">
+                                        Xem trước lớp học phần
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-hidden p-6">
+                    {step === 1 ? (
+                        <WizardStep1Config
+                            formData={step1Data}
+                            onChange={(newData) =>
+                                setStep1Data({ ...step1Data, ...newData })
+                            }
+                            onNext={handleNextToStep2}
+                            semesters={semesters}
+                            departments={departments}
+                        />
+                    ) : (
+                        <WizardStep2Classes
+                            groupedClasses={groupedClasses}
+                            onBack={handleBackToStep1}
+                            onSubmit={handleSubmit}
+                            isLoading={isFetchingClasses}
+                            isSubmitting={isSubmitting}
+                        />
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};

@@ -1,8 +1,9 @@
 import {
-    type ClassResponse,
+    type ClassDetailResponse,
     type DepartmentBasic,
     type LecturerBasic,
 } from "../types";
+import { type RegistrationPeriodResponse } from "../types/registration.types";
 
 export const mockDepartments: DepartmentBasic[] = [
     { id: 1, name: "Khoa Công nghệ thông tin" },
@@ -48,7 +49,44 @@ export const mockLecturers: LecturerBasic[] = [
     },
 ];
 
-export const mockClasses: ClassResponse[] = [
+export const mockRegistrationPeriods: RegistrationPeriodResponse[] = [
+    {
+        id: 1,
+        semester: {
+            id: 1,
+            semesterCode: "HK1_2025",
+            academicYear: "2025-2026",
+        },
+        name: "Đợt đăng ký chính thức HK1 (Khóa 15, 16)",
+        type: "NORMAL",
+        startTime: "2025-08-01T08:00:00Z",
+        endTime: "2025-08-15T17:00:00Z",
+        targetCohorts: [15, 16],
+        targetDepartments: [1, 2, 3],
+        status: "CLOSED",
+        createdAt: "2025-07-20T08:00:00Z",
+        updatedAt: "2025-07-20T08:00:00Z",
+    },
+    {
+        id: 2,
+        semester: {
+            id: 2,
+            semesterCode: "HK2_2025",
+            academicYear: "2025-2026",
+        },
+        name: "Đợt đăng ký HK2 (Dành cho Khoa CNTT)",
+        type: "NORMAL",
+        startTime: "2026-06-01T08:00:00Z",
+        endTime: "2026-06-15T17:00:00Z",
+        targetCohorts: [15, 16, 17],
+        targetDepartments: [1],
+        status: "ACTIVE",
+        createdAt: "2025-11-20T08:00:00Z",
+        updatedAt: "2025-11-20T08:00:00Z",
+    },
+];
+
+export const mockClasses: ClassDetailResponse[] = [
     {
         id: 1,
         code: "SWE101-01",
@@ -71,10 +109,44 @@ export const mockClasses: ClassResponse[] = [
         status: "ONGOING",
         createdAt: "2025-09-01T08:00:00Z",
         updatedAt: "2025-09-01T08:00:00Z",
+        schedules: [
+            {
+                id: 1,
+                dayOfWeek: 2,
+                shift: {
+                    id: 1,
+                    name: "Ca 1",
+                    startTime: "07:00",
+                    endTime: "09:15",
+                },
+                room: {
+                    id: 1,
+                    name: "Phòng Lý Thuyết A101",
+                    type: "THEORY",
+                    capacity: 50,
+                },
+            },
+            {
+                id: 2,
+                dayOfWeek: 4,
+                shift: {
+                    id: 2,
+                    name: "Ca 2",
+                    startTime: "09:30",
+                    endTime: "11:45",
+                },
+                room: {
+                    id: 1,
+                    name: "Phòng Lý Thuyết A101",
+                    type: "THEORY",
+                    capacity: 50,
+                },
+            },
+        ],
     },
     {
         id: 2,
-        code: "WEB201-02",
+        code: "WEB201-01",
         course: {
             id: 102,
             code: "WEB201",
@@ -94,6 +166,55 @@ export const mockClasses: ClassResponse[] = [
         status: "PENDING",
         createdAt: "2025-12-10T10:30:00Z",
         updatedAt: "2025-12-10T10:30:00Z",
+        schedules: [],
+    },
+    {
+        id: 6,
+        code: "WEB201-02",
+        course: {
+            id: 102,
+            code: "WEB201",
+            name: "Phát triển Ứng dụng Web Front-end (React)",
+            credits: 4,
+            departmentId: 1,
+        },
+        semester: {
+            id: 2,
+            semesterCode: "HK2_2025",
+            academicYear: "2025-2026",
+        },
+        manager: { id: 2, fullName: "Nguyễn Quản Lý" },
+        lecturer: null,
+        maxStudents: 35,
+        currentStudents: 0,
+        status: "PENDING",
+        createdAt: "2025-12-11T08:00:00Z",
+        updatedAt: "2025-12-11T08:00:00Z",
+        schedules: [],
+    },
+    {
+        id: 7,
+        code: "SWE101-02",
+        course: {
+            id: 101,
+            code: "SWE101",
+            name: "Nhập môn Kỹ thuật phần mềm",
+            credits: 3,
+            departmentId: 1,
+        },
+        semester: {
+            id: 2,
+            semesterCode: "HK2_2025",
+            academicYear: "2025-2026",
+        },
+        manager: { id: 2, fullName: "Nguyễn Quản Lý" },
+        lecturer: null,
+        maxStudents: 40,
+        currentStudents: 0,
+        status: "PENDING",
+        createdAt: "2025-12-12T09:00:00Z",
+        updatedAt: "2025-12-12T09:00:00Z",
+        schedules: [],
     },
     {
         id: 3,
@@ -117,6 +238,24 @@ export const mockClasses: ClassResponse[] = [
         status: "REGISTRATION",
         createdAt: "2025-12-15T09:00:00Z",
         updatedAt: "2025-12-15T09:00:00Z",
+        schedules: [
+            {
+                id: 4,
+                dayOfWeek: 5,
+                shift: {
+                    id: 1,
+                    name: "Ca 1",
+                    startTime: "07:00",
+                    endTime: "09:15",
+                },
+                room: {
+                    id: 4,
+                    name: "Phòng Máy Tính LAB 2",
+                    type: "LAB",
+                    capacity: 40,
+                },
+            },
+        ],
     },
     {
         id: 4,
@@ -140,29 +279,23 @@ export const mockClasses: ClassResponse[] = [
         status: "COMPLETED",
         createdAt: "2025-08-20T14:00:00Z",
         updatedAt: "2026-01-10T16:00:00Z",
-    },
-    {
-        id: 5,
-        code: "JAV202-03",
-        course: {
-            id: 105,
-            code: "JAV202",
-            name: "Lập trình Backend (Java Spring Boot)",
-            credits: 4,
-            departmentId: 1,
-        },
-        semester: {
-            id: 2,
-            semesterCode: "HK2_2025",
-            academicYear: "2025-2026",
-        },
-        manager: { id: 2, fullName: "Nguyễn Quản Lý" },
-        lecturer: { id: 10, fullName: "ThS. Trần Giảng Viên" },
-        maxStudents: 40,
-        currentStudents: 5,
-        status: "CANCELED",
-        lockReason: "Không đủ số lượng sinh viên mở lớp",
-        createdAt: "2025-12-01T08:00:00Z",
-        updatedAt: "2026-02-01T10:00:00Z",
+        schedules: [
+            {
+                id: 5,
+                dayOfWeek: 6,
+                shift: {
+                    id: 4,
+                    name: "Ca 4",
+                    startTime: "15:30",
+                    endTime: "17:45",
+                },
+                room: {
+                    id: 2,
+                    name: "Phòng Lý Thuyết A102",
+                    type: "THEORY",
+                    capacity: 50,
+                },
+            },
+        ],
     },
 ];

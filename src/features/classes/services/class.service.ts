@@ -8,51 +8,119 @@ import {
 } from "../types";
 import { mockClasses, mockDepartments, mockLecturers } from "../data/mockData";
 
+const applyCommonFilters = (data: ClassResponse[], params: ClassListParams) => {
+    let filteredData = [...data];
+
+    if (params.keyword) {
+        const lowerKey = params.keyword.toLowerCase();
+        filteredData = filteredData.filter(
+            (cls) =>
+                cls.code.toLowerCase().includes(lowerKey) ||
+                cls.course.name.toLowerCase().includes(lowerKey),
+        );
+    }
+
+    if (params.semesterId) {
+        filteredData = filteredData.filter(
+            (cls) => cls.semester.id === Number(params.semesterId),
+        );
+    }
+
+    if (params.status) {
+        filteredData = filteredData.filter(
+            (cls) => cls.status === params.status,
+        );
+    }
+
+    return filteredData;
+};
+
+const paginateData = (
+    data: ClassResponse[],
+    page: number,
+    size: number,
+): PageResponse<ClassResponse> => {
+    const totalElements = data.length;
+    const totalPages = Math.ceil(totalElements / size);
+    const start = page * size;
+    const end = start + size;
+    const paginatedContent = data.slice(start, end);
+
+    return {
+        content: paginatedContent,
+        totalElements,
+        totalPages,
+        size,
+        number: page,
+    };
+};
+
 export const classService = {
-    getClasses: async (
-        params: ClassListParams,
+    getAllClasses: async (
+        params: ClassListParams & { departmentId?: string },
     ): Promise<PageResponse<ClassResponse>> => {
         return new Promise((resolve) => {
             setTimeout(() => {
-                let filteredData = [...mockClasses];
-
-                if (params.keyword) {
-                    const lowerKey = params.keyword.toLowerCase();
+                let filteredData = applyCommonFilters(mockClasses, params);
+                if (params.departmentId) {
                     filteredData = filteredData.filter(
                         (cls) =>
-                            cls.code.toLowerCase().includes(lowerKey) ||
-                            cls.course.name.toLowerCase().includes(lowerKey),
+                            cls.course.departmentId ===
+                            Number(params.departmentId),
                     );
                 }
 
-                if (params.semesterId) {
-                    filteredData = filteredData.filter(
-                        (cls) => cls.semester.id === Number(params.semesterId),
-                    );
-                }
+                resolve(
+                    paginateData(
+                        filteredData,
+                        params.page || 0,
+                        params.size || 10,
+                    ),
+                );
+            }, 800);
+        });
+    },
 
-                if (params.status) {
-                    filteredData = filteredData.filter(
-                        (cls) => cls.status === params.status,
-                    );
-                }
+    getClassesByMyDepartment: async (
+        params: ClassListParams,
+        mockDepartmentId: number,
+    ): Promise<PageResponse<ClassResponse>> => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                let filteredData = applyCommonFilters(mockClasses, params);
+                filteredData = filteredData.filter(
+                    (cls) => cls.course.departmentId === mockDepartmentId,
+                );
 
-                const page = params.page || 0;
-                const size = params.size || 10;
-                const totalElements = filteredData.length;
-                const totalPages = Math.ceil(totalElements / size);
+                resolve(
+                    paginateData(
+                        filteredData,
+                        params.page || 0,
+                        params.size || 10,
+                    ),
+                );
+            }, 800);
+        });
+    },
 
-                const start = page * size;
-                const end = start + size;
-                const paginatedContent = filteredData.slice(start, end);
+    getMyTeachingClasses: async (
+        params: ClassListParams,
+        mockLecturerId: number,
+    ): Promise<PageResponse<ClassResponse>> => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                let filteredData = applyCommonFilters(mockClasses, params);
+                filteredData = filteredData.filter(
+                    (cls) => cls.lecturer?.id === mockLecturerId,
+                );
 
-                resolve({
-                    content: paginatedContent,
-                    totalElements,
-                    totalPages,
-                    size,
-                    number: page,
-                });
+                resolve(
+                    paginateData(
+                        filteredData,
+                        params.page || 0,
+                        params.size || 10,
+                    ),
+                );
             }, 800);
         });
     },

@@ -12,6 +12,7 @@ import { CourseProposalPage } from "@/features/courses/pages/CourseProposalPage"
 import { SemesterManagement } from "@/features/semesters/pages/SemesterManagement";
 import { ClassManagementPage } from "@/features/classes/pages/ClassManagementPage";
 import { ClassRequestPage } from "@/features/class-requests/pages/ClassRequestPage";
+import { RegistrationPeriodsPage } from "@/features/classes/pages/RegistrationPeriodsPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -26,11 +27,23 @@ const TimetablePage = () => (
     </div>
 );
 
+const HeadQuanLyLopHoc = () => (
+    <div className="text-xl font-bold text-gray-800">
+        Giao diện Quản lý lớp học cho trưởng khoa
+    </div>
+);
+
 const ProfilePage = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Hồ sơ cá nhân
     </div>
 );
+
+const DotDangKy = () => (
+    <div className="text-xl font-bold text-gray-800">
+        Giao diện quản lý đợt đăng ký
+    </div>
+)
 
 export const router = createBrowserRouter([
     {
@@ -96,6 +109,14 @@ export const router = createBrowserRouter([
             {
                 path: "approval-classes",
                 element: <ClassRequestPage />
+            },
+            {
+                path: "head-classes",
+                element: <HeadQuanLyLopHoc />
+            },
+            {
+                path:"registration",
+                element: <RegistrationPeriodsPage />
             }
         ],
     },

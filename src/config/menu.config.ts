@@ -83,6 +83,16 @@ const ALL_MENUS = {
         path: "/dashboard/approval-classes",
         icon: CheckSquare,
     },
+    REGISTRATION_MGMT: {
+        title: "Quản lý đợt đăng ký",
+        path: "/dashboard/registration",
+        icon: Layers,
+    },
+    // HEAD_CLASS_MGMT: {
+    //     title: "Quản lý lớp học",
+    //     path: "/dashboard/head-classes",
+    //     icon: Calendar,
+    // },
     // STUDENT_MGMT:    { title: 'Quản lý sinh viên', path: '/dashboard/students', icon: GraduationCap },
     // TEACHER_MGMT:    { title: 'Quản lý giảng viên', path: '/dashboard/teachers', icon: Users },
     TIMETABLE: {
@@ -159,6 +169,7 @@ export const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
         ALL_MENUS.COURSE_MGMT,
         ALL_MENUS.SEMESTER_MGMT,
         ALL_MENUS.APPROVAL_CLASS,
+        ALL_MENUS.REGISTRATION_MGMT,
         // ALL_MENUS.STUDENT_MGMT,
         // ALL_MENUS.TEACHER_MGMT,
         ALL_MENUS.PROFILE,
@@ -195,7 +206,7 @@ export const ROLE_DEFAULT_PATHS: Record<string, string> = {
     [ROLES.PRINCIPAL]: "/dashboard/users",
     [ROLES.HR]: "/dashboard/users",
     [ROLES.TRAINING_DEPT]: "/dashboard/majors",
-    [ROLES.HEAD_OF_DEPT]: "/dashboard/subjects",
+    [ROLES.HEAD_OF_DEPT]: "/dashboard/approval-classes",
     [ROLES.INSTRUCTOR]: "/dashboard/timetable",
     [ROLES.STUDENT]: "/dashboard/timetable",
 };

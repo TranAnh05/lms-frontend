@@ -32,7 +32,9 @@ const ActionMenu: React.FC<{
     total: number;
     onViewDetail: (id: number) => void;
     onAssignLecturer: (id: number) => void;
-}> = ({ classItem, index, total, onViewDetail, onAssignLecturer }) => {
+    // 🆕 THÊM MỚI: Truyền cờ isHeadOfDept xuống Menu để ẩn nút Phân công
+    isHeadOfDept?: boolean;
+}> = ({ classItem, index, total, onViewDetail, onAssignLecturer, isHeadOfDept }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +89,9 @@ const ActionMenu: React.FC<{
                     </button>
 
                     {/* Chỉ hiển thị nút phân công giảng viên nếu lớp chưa kết thúc/hủy */}
-                    {classItem.status !== "COMPLETED" &&
+                    {/* 🆕 THÊM MỚI: Bổ sung điều kiện !isHeadOfDept để ẩn nút Phân công đối với Trưởng khoa */}
+                    {!isHeadOfDept && 
+                        classItem.status !== "COMPLETED" &&
                         classItem.status !== "CANCELED" && (
                             <button
                                 onClick={() => {
@@ -112,6 +116,8 @@ interface ClassTableProps {
     onViewDetail: (id: number) => void;
     onAssignLecturer: (id: number) => void;
     onPageChange: (page: number) => void;
+    // 🆕 THÊM MỚI: Nhận prop từ Page để biết User đang đăng nhập là ai
+    isHeadOfDept?: boolean;
 }
 
 export const ClassTable: React.FC<ClassTableProps> = ({
@@ -120,6 +126,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({
     onViewDetail,
     onAssignLecturer,
     onPageChange,
+    isHeadOfDept, // 🆕 THÊM MỚI: Khai báo biến từ props
 }) => {
     const skeletonRows = Array(5).fill(0);
 
@@ -301,6 +308,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({
                                                 onAssignLecturer={
                                                     onAssignLecturer
                                                 }
+                                                isHeadOfDept={isHeadOfDept} // 🆕 THÊM MỚI: Chuyền cờ xuống Menu
                                             />
                                         </td>
                                     </tr>
