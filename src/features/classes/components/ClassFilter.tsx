@@ -5,7 +5,6 @@ import {
     Calendar,
     SlidersHorizontal,
     Building2,
-    UserCircle,
     ChevronDown,
 } from "lucide-react";
 import clsx from "clsx";
@@ -26,9 +25,6 @@ interface ClassFilterProps {
     departments?: FilterOption[];
     selectedDepartment?: string;
     onDepartmentChange?: (value: string) => void;
-    lecturers?: FilterOption[];
-    selectedLecturer?: string;
-    onLecturerChange?: (value: string) => void;
     onAddClick?: () => void;
 }
 
@@ -43,15 +39,13 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
     departments = [],
     selectedDepartment = "",
     onDepartmentChange,
-    lecturers = [],
-    selectedLecturer = "",
-    onLecturerChange,
 }) => {
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+    
+    // Đã fix: Chỉ đếm 'selectedDepartment' nếu prop 'onDepartmentChange' tồn tại (Phòng ĐT đang xem)
     const activeAdvancedFiltersCount = [
         selectedStatus,
-        selectedDepartment,
-        selectedLecturer,
+        onDepartmentChange ? selectedDepartment : "",
     ].filter((val) => val !== "").length;
 
     const selectStyles =
@@ -205,48 +199,6 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
                                                 value={dept.id}
                                             >
                                                 {dept.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {onLecturerChange && (
-                            <div className="relative w-full sm:w-56 flex-1 min-w-[200px] max-w-sm">
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">
-                                    Giảng viên
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <UserCircle className="w-4 h-4 text-gray-400" />
-                                    </div>
-                                    <select
-                                        value={selectedLecturer}
-                                        onChange={(e) =>
-                                            onLecturerChange(e.target.value)
-                                        }
-                                        className={selectStyles}
-                                        style={{
-                                            backgroundImage: selectBgImage,
-                                            backgroundPosition:
-                                                "right 0.75rem center",
-                                            backgroundSize: "1rem",
-                                            backgroundRepeat: "no-repeat",
-                                        }}
-                                    >
-                                        <option value="">
-                                            Tất cả Giảng viên
-                                        </option>
-                                        <option
-                                            value="UNASSIGNED"
-                                            className="text-amber-600 font-medium"
-                                        >
-                                            -- Chưa phân công --
-                                        </option>
-                                        {lecturers.map((lec) => (
-                                            <option key={lec.id} value={lec.id}>
-                                                {lec.name}
                                             </option>
                                         ))}
                                     </select>

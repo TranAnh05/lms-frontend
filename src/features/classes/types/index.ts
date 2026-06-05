@@ -51,6 +51,31 @@ export interface ClassResponse {
     updatedAt: string;
 }
 
+export interface ScheduleBasic {
+    id: number;
+    dayOfWeek: number;
+    shift: {
+        id: number;
+        name: string;
+        startTime: string;
+        endTime: string;
+    };
+    room: {
+        id: number;
+        name: string;
+        type: "THEORY" | "LAB" | "HALL";
+        capacity: number;
+    };
+}
+
+export interface ClassDetailResponse extends ClassResponse {
+    registrationPeriod?: {
+        id: number;
+        name: string;
+    };
+    schedules: ScheduleBasic[];
+}
+
 export interface ClassListParams {
     keyword?: string;
     semesterId?: number;

@@ -3,11 +3,18 @@ import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { Layers, Plus } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAuthStore } from "@/store/authStore";
 import { classService } from "../services/class.service";
-import { type ClassResponse, type PageResponse } from "../types";
+import {
+    type ClassResponse,
+    type PageResponse,
+    type ClassDetailResponse,
+} from "../types";
 import { ClassFilter } from "../components/ClassFilter";
 import { ClassTable } from "../components/ClassTable";
 import { AssignLecturerModal } from "../components/AssignLecturerModal";
+import { ClassDetailModal } from "../components/ClassDetailModal";
+
 const MOCK_SEMESTERS = [
     { id: 1, name: "Học kỳ 1 (2025-2026)" },
     { id: 2, name: "Học kỳ 2 (2025-2026)" },
@@ -20,31 +27,34 @@ const MOCK_DEPARTMENTS = [
     { id: 3, name: "Khoa Kinh tế" },
 ];
 
-const MOCK_LECTURERS = [
-    { id: 10, name: "ThS. Trần Giảng Viên" },
-    { id: 11, name: "TS. Lê Data" },
-    { id: 12, name: "ThS. Phạm Cloud" },
-];
-
 export const ClassManagementPage: React.FC = () => {
+    const user = useAuthStore((state) => state.user);
+    const userId = user?.id;
+    const isHeadOfDept = user?.roles.includes("HEAD_OF_DEPT") ?? false;
+    const mockDepartmentId = userId === 5 ? 1 : 2;
     const [data, setData] = useState<PageResponse<ClassResponse> | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedSemester, setSelectedSemester] = useState<string>("");
     const [selectedStatus, setSelectedStatus] = useState<string>("");
     const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-    const [selectedLecturer, setSelectedLecturer] = useState<string>("");
     const [currentPage, setCurrentPage] = useState<number>(0);
     const pageSize = 10;
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
+
     const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
     const [selectedClassForAssign, setSelectedClassForAssign] =
         useState<ClassResponse | null>(null);
 
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+    const [selectedClassDetail, setSelectedClassDetail] =
+        useState<ClassDetailResponse | null>(null);
+    const [isFetchingDetail, setIsFetchingDetail] = useState<boolean>(false);
+
     const fetchClasses = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await classService.getClasses({
+            const params = {
                 keyword: debouncedSearchTerm.trim() || undefined,
                 semesterId: selectedSemester
                     ? Number(selectedSemester)
@@ -52,7 +62,20 @@ export const ClassManagementPage: React.FC = () => {
                 status: selectedStatus || undefined,
                 page: currentPage,
                 size: pageSize,
-            });
+            };
+
+            let response;
+            if (isHeadOfDept) {
+                response = await classService.getClassesByMyDepartment(
+                    params,
+                    mockDepartmentId,
+                );
+            } else {
+                response = await classService.getAllClasses({
+                    ...params,
+                    departmentId: selectedDepartment || undefined,
+                });
+            }
             setData(response);
         } catch (error) {
             console.error("Lỗi khi tải danh sách lớp học phần:", error);
@@ -62,7 +85,15 @@ export const ClassManagementPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [debouncedSearchTerm, selectedSemester, selectedStatus, currentPage]);
+    }, [
+        debouncedSearchTerm,
+        selectedSemester,
+        selectedStatus,
+        currentPage,
+        isHeadOfDept,
+        mockDepartmentId,
+        selectedDepartment,
+    ]);
 
     useEffect(() => {
         fetchClasses();
@@ -88,21 +119,24 @@ export const ClassManagementPage: React.FC = () => {
         setCurrentPage(0);
     };
 
-    const handleLecturerChange = (lecturerId: string) => {
-        setSelectedLecturer(lecturerId);
-        setCurrentPage(0);
-    };
-
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
 
-    const handleAddClick = () => {
-        toast.info("Tính năng Mở lớp học phần đang được xây dựng.");
-    };
-
-    const handleViewDetail = (id: number) => {
-        toast.info(`Xem chi tiết lớp học phần ID: ${id}`);
+    const handleViewDetail = async (id: number) => {
+        setIsDetailModalOpen(true);
+        setIsFetchingDetail(true);
+        try {
+            const detail = (await classService.getClassById(
+                id,
+            )) as ClassDetailResponse;
+            setSelectedClassDetail(detail);
+        } catch (error) {
+            toast.error("Không thể tải thông tin chi tiết lớp học.");
+            setIsDetailModalOpen(false);
+        } finally {
+            setIsFetchingDetail(false);
+        }
     };
 
     const handleAssignLecturer = (id: number) => {
@@ -135,18 +169,11 @@ export const ClassManagementPage: React.FC = () => {
                         học phần
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        Quản lý danh sách lớp, sĩ số, phân công giảng viên và
-                        theo dõi tiến độ đào tạo.
+                        {isHeadOfDept
+                            ? "Xem danh sách lớp học phần, theo dõi sĩ số và giảng viên phụ trách thuộc khoa của bạn."
+                            : "Quản lý danh sách lớp, sĩ số, phân công giảng viên và theo dõi tiến độ đào tạo."}
                     </p>
                 </div>
-
-                <button
-                    onClick={handleAddClick}
-                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 shrink-0"
-                >
-                    <Plus className="w-4 h-4" />
-                    Mở lớp học phần
-                </button>
             </div>
 
             <ClassFilter
@@ -157,12 +184,11 @@ export const ClassManagementPage: React.FC = () => {
                 onSemesterChange={handleSemesterChange}
                 selectedStatus={selectedStatus}
                 onStatusChange={handleStatusChange}
-                departments={MOCK_DEPARTMENTS}
+                departments={isHeadOfDept ? undefined : MOCK_DEPARTMENTS}
                 selectedDepartment={selectedDepartment}
-                onDepartmentChange={handleDepartmentChange}
-                lecturers={MOCK_LECTURERS}
-                selectedLecturer={selectedLecturer}
-                onLecturerChange={handleLecturerChange}
+                onDepartmentChange={
+                    isHeadOfDept ? undefined : handleDepartmentChange
+                }
             />
 
             <div className="flex-1 relative">
@@ -176,8 +202,16 @@ export const ClassManagementPage: React.FC = () => {
                     onPageChange={handlePageChange}
                     onViewDetail={handleViewDetail}
                     onAssignLecturer={handleAssignLecturer}
+                    isHeadOfDept={isHeadOfDept}
                 />
             </div>
+
+            <ClassDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                classDetail={selectedClassDetail}
+                isLoading={isFetchingDetail}
+            />
 
             <AssignLecturerModal
                 isOpen={isAssignModalOpen}
