@@ -12,14 +12,14 @@ import {
     Ban,
     Layers,
 } from "lucide-react";
-import { type ClassRequestResponse } from "../types";
+import { type ClassOpeningResponseDto } from "../types";
 
 interface RequestDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    request: ClassRequestResponse | null;
-    onRejectClick: (request: ClassRequestResponse) => void;
-    onCreateClassClick: (request: ClassRequestResponse) => void;
+    request: ClassOpeningResponseDto | null;
+    onRejectClick: (request: ClassOpeningResponseDto) => void;
+    onCreateClassClick: (request: ClassOpeningResponseDto) => void;
     canApprove: boolean;
 }
 
@@ -33,7 +33,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 }) => {
     if (!isOpen || !request) return null;
 
-    const renderStatusBadge = (status: ClassRequestResponse["status"]) => {
+    const renderStatusBadge = (status: ClassOpeningResponseDto["status"]) => {
         switch (status) {
             case "PENDING":
                 return (
@@ -110,32 +110,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                                     <BookOpen className="w-3.5 h-3.5" /> Môn học
                                 </label>
                                 <p className="text-sm font-bold text-gray-900 leading-snug">
-                                    {request.course.name}
+                                    {request.courseName}
                                 </p>
-                                <div className="flex flex-wrap items-baseline gap-2 mt-2">
-                                    <span className="inline-flex items-baseline text-xs text-gray-700 bg-gray-50 px-2.5 py-1 rounded border border-gray-200">
-                                        <span className="text-gray-500 mr-1.5">
-                                            Mã môn:
-                                        </span>
-                                        <strong className="font-mono">
-                                            {request.course.code}
-                                        </strong>
-                                    </span>
-                                    <span className="inline-flex items-baseline text-xs text-gray-700 bg-gray-50 px-2.5 py-1 rounded border border-gray-200">
-                                        <span className="text-gray-500 mr-1.5">
-                                            Số tín chỉ:
-                                        </span>
-                                        <strong className="font-mono">
-                                            {request.course.credits} TC
-                                        </strong>
-                                    </span>
-                                </div>
                             </div>
 
                             <div>
                                 <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                                    <Users className="w-3.5 h-3.5" /> Sĩ số dự
-                                    kiến
+                                    <Users className="w-3.5 h-3.5" /> Sĩ số dự kiến
                                 </label>
                                 <p className="text-base font-bold text-blue-600">
                                     {request.expectedStudents}{" "}
@@ -149,25 +130,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         <div className="space-y-5">
                             <div>
                                 <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                                    <Calendar className="w-3.5 h-3.5" /> Học kỳ
-                                    áp dụng
+                                    <Calendar className="w-3.5 h-3.5" /> Học kỳ áp dụng
                                 </label>
                                 <p className="text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg inline-block">
-                                    {request.semester.semesterCode}{" "}
-                                    <span className="text-gray-400 mx-1">
-                                        |
-                                    </span>{" "}
-                                    {request.semester.academicYear}
+                                    {request.semesterCode}
                                 </p>
                             </div>
 
                             <div>
                                 <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                                    <User className="w-3.5 h-3.5" /> Người đề
-                                    xuất
+                                    <User className="w-3.5 h-3.5" /> Người đề xuất
                                 </label>
                                 <p className="text-sm font-medium text-gray-900">
-                                    {request.requester.fullName}
+                                    {request.requesterName}
                                 </p>
                             </div>
                         </div>

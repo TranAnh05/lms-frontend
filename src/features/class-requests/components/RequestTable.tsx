@@ -1,13 +1,13 @@
 import React from "react";
 import { Inbox } from "lucide-react";
 import clsx from "clsx";
-import { type ClassRequestResponse, type PageResponse } from "../types";
+import { type ClassOpeningResponseDto, type PageResponse } from "../types";
 
 interface RequestTableProps {
-    data: PageResponse<ClassRequestResponse> | null;
+    data: PageResponse<ClassOpeningResponseDto> | null;
     isLoading: boolean;
     onPageChange: (page: number) => void;
-    onViewDetail: (request: ClassRequestResponse) => void;
+    onViewDetail: (request: ClassOpeningResponseDto) => void;
 }
 
 export const RequestTable: React.FC<RequestTableProps> = ({
@@ -16,7 +16,7 @@ export const RequestTable: React.FC<RequestTableProps> = ({
     onPageChange,
     onViewDetail,
 }) => {
-    const renderStatusBadge = (status: ClassRequestResponse["status"]) => {
+    const renderStatusBadge = (status: ClassOpeningResponseDto["status"]) => {
         const baseClass =
             "inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border whitespace-nowrap";
         switch (status) {
@@ -65,7 +65,7 @@ export const RequestTable: React.FC<RequestTableProps> = ({
         );
     }
 
-    if (!data || data.content.length === 0) {
+    if (!data || !data?.content || data.content.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-14 px-4 bg-white border border-gray-100 rounded-xl shadow-sm">
                 <div className="p-4 bg-gray-50 text-gray-400 rounded-full mb-4">
@@ -82,7 +82,9 @@ export const RequestTable: React.FC<RequestTableProps> = ({
         );
     }
 
-    const { content, totalPages, number: currentPage } = data;
+    const content = data.content || [];
+    const totalPages = data.totalPages || 0;
+    const currentPage = data.number || 0;
 
     return (
         <div className="w-full bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col relative z-0">
@@ -113,27 +115,30 @@ export const RequestTable: React.FC<RequestTableProps> = ({
                     <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
                         {content.map((req) => (
                             <tr
-                                key={req.id}
+                                key={req.requestId} // SỬA: Dùng requestId làm key
                                 className="hover:bg-blue-50/30 transition-colors group cursor-pointer bg-white"
                                 onClick={() => onViewDetail(req)}
                             >
                                 <td className="py-3.5 px-5 max-w-[280px]">
                                     <p
                                         className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate"
-                                        title={req.course.name}
+                                        title={req.courseName}
                                     >
-                                        {req.course.name}
+                                        {/* SỬA: Gọi biến thẳng thay vì nested */}
+                                        {req.courseName || "N/A"}
                                     </p>
                                 </td>
                                 <td className="py-3.5 px-5 text-gray-600 font-medium whitespace-nowrap">
-                                    {req.semester.semesterCode}
+                                    {/* SỬA: Gọi biến thẳng */}
+                                    {req.semesterCode || "N/A"}
                                 </td>
                                 <td className="py-3.5 px-5 text-gray-600 max-w-[180px]">
                                     <p
                                         className="truncate font-medium"
-                                        title={req.requester.fullName}
+                                        title={req.requesterName}
                                     >
-                                        {req.requester.fullName}
+                                        {/* SỬA: Gọi biến thẳng */}
+                                        {req.requesterName || "N/A"}
                                     </p>
                                 </td>
                                 <td className="py-3.5 px-5 text-center font-semibold text-gray-900 whitespace-nowrap">

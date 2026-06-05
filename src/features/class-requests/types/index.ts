@@ -1,3 +1,4 @@
+// Basic Types
 export interface CourseBasic {
     id: number;
     code: string;
@@ -17,46 +18,50 @@ export interface UserBasic {
     fullName: string;
 }
 
-export interface ClassRequestResponse {
+export interface SemesterResponse {
     id: number;
-    semester: SemesterBasic;
-    course: CourseBasic;
-    requester: UserBasic;
+    semesterCode: string;
+    academicYear: string;
+    semesterNumber: number;
+    startDate: string;
+    endDate: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+// Class Requests
+export interface ClassOpeningRequestPayload {
+    semesterId: number;
+    courseId: number;
+    expectedStudents: number;
+    note?: string;
+}
+
+export interface RequestFilterParams {
+    page?: number;
+    size?: number;
+    status?: "PENDING" | "APPROVED" | "REJECTED" | "";
+    search?: string;
+    semesterId?: number;
+}
+
+export interface ClassOpeningResponseDto {
+    requestId: number;
+    courseId: number;
+    courseName: string;
+    requesterId: number;
+    requesterName: string;
+    semesterCode: string;
     expectedStudents: number;
     note?: string;
     status: "PENDING" | "APPROVED" | "REJECTED";
     rejectReason?: string;
     createdAt: string;
-    updatedAt: string;
+    updatedAt?: string;
 }
 
-export interface ClassRequestListParams {
-    keyword?: string;
-    semesterId?: number;
-    status?: string;
-    page: number;
-    size: number;
-    mockRequesterId?: number;
-}
-
-export interface ClassSchedulePayload {
-    dayOfWeek: number;
-    shiftId: number;
-    roomId: number;
-}
-
-export interface CreateClassPayload {
-    code: string;
-    maxStudents: number;
-    lecturerId?: number | null;
-    schedules: ClassSchedulePayload[];
-}
-
-export interface ApproveAndCreateClassesPayload {
-    requestId: number;
-    classes: CreateClassPayload[];
-}
-
+// Pagination & Generic
 export interface PageResponse<T> {
     content: T[];
     totalElements: number;
@@ -65,9 +70,17 @@ export interface PageResponse<T> {
     number: number;
 }
 
-export interface CreateClassRequestPayload {
-    semesterId: number;
-    courseId: number;
-    expectedStudents: number;
-    note: string;
+export interface DropdownResponseDto {
+    id: number;
+    name: string;
+}
+
+// Review Request
+export interface ApproveClassRequestDto {
+    status: "APPROVED" | "REJECTED";
+    rejectReason?: string;
+    managerId?: number;
+    roomId?: number;
+    shiftId?: number;
+    dayOfWeek?: number;
 }

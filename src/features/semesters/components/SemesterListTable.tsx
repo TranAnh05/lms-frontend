@@ -135,6 +135,14 @@ export const SemesterListTable: React.FC<SemesterListTableProps> = ({
         return `${day}/${month}/${year}`;
     };
 
+    // Bóc tách dữ liệu an toàn với Fallback
+    const content = data?.content || [];
+    const totalPages = data?.totalPages || 0;
+    const currentPage = data?.number || 0;
+    const totalElements = data?.totalElements || 0;
+    const pageSize = data?.size || 10;
+    const isEmpty = content.length === 0;
+
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden w-full flex flex-col">
             <div className="overflow-x-auto custom-scrollbar">
@@ -197,7 +205,7 @@ export const SemesterListTable: React.FC<SemesterListTableProps> = ({
                                     </td>
                                 </tr>
                             ))
-                        ) : !data || data.content.length === 0 ? (
+                        ) : isEmpty ? (
                             <tr>
                                 <td
                                     colSpan={6}
@@ -213,7 +221,7 @@ export const SemesterListTable: React.FC<SemesterListTableProps> = ({
                                 </td>
                             </tr>
                         ) : (
-                            data.content.map((semester, index) => (
+                            content.map((semester, index) => (
                                 <tr
                                     key={semester.id}
                                     className="hover:bg-blue-50/20 bg-white transition-colors"
@@ -258,7 +266,7 @@ export const SemesterListTable: React.FC<SemesterListTableProps> = ({
                                         <ActionMenu
                                             semester={semester}
                                             index={index}
-                                            total={data.content.length}
+                                            total={content.length}
                                             onViewDetail={onViewDetail}
                                             onUpdate={onUpdate}
                                             onToggleStatus={onToggleStatus}
@@ -271,44 +279,44 @@ export const SemesterListTable: React.FC<SemesterListTableProps> = ({
                 </table>
             </div>
 
-            {data && data.totalPages > 1 && (
+            {totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 bg-gray-50/50 border-t border-gray-100 text-sm">
                     <span className="text-gray-500">
                         Hiển thị hàng{" "}
                         <span className="font-semibold text-gray-900">
-                            {data.number * data.size + 1}
+                            {currentPage * pageSize + 1}
                         </span>{" "}
                         đến{" "}
                         <span className="font-semibold text-gray-900">
                             {Math.min(
-                                (data.number + 1) * data.size,
-                                data.totalElements,
+                                (currentPage + 1) * pageSize,
+                                totalElements,
                             )}
                         </span>{" "}
                         trong tổng số{" "}
                         <span className="font-semibold text-gray-900">
-                            {data.totalElements}
+                            {totalElements}
                         </span>{" "}
                         học kỳ
                     </span>
 
                     <div className="inline-flex items-center -space-x-px gap-1">
                         <button
-                            onClick={() => onPageChange(data.number - 1)}
-                            disabled={data.number === 0 || isLoading}
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 0 || isLoading}
                             className="px-3 py-1.5 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Trước
                         </button>
 
-                        {Array.from({ length: data.totalPages }).map((_, i) => (
+                        {Array.from({ length: totalPages }).map((_, i) => (
                             <button
                                 key={i}
                                 onClick={() => onPageChange(i)}
                                 disabled={isLoading}
                                 className={clsx(
                                     "px-3 py-1.5 leading-tight border transition-colors",
-                                    data.number === i
+                                    currentPage === i
                                         ? "z-10 text-blue-600 bg-blue-50 border-blue-300 font-medium"
                                         : "text-gray-500 bg-white border-gray-300 hover:bg-gray-100 hover:text-gray-700",
                                 )}
@@ -318,9 +326,9 @@ export const SemesterListTable: React.FC<SemesterListTableProps> = ({
                         ))}
 
                         <button
-                            onClick={() => onPageChange(data.number + 1)}
+                            onClick={() => onPageChange(currentPage + 1)}
                             disabled={
-                                data.number === data.totalPages - 1 || isLoading
+                                currentPage === totalPages - 1 || isLoading
                             }
                             className="px-3 py-1.5 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
