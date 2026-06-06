@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
@@ -11,6 +9,7 @@ import {
     type ClassDetailResponse,
     type PageResponse,
     type DepartmentBasic,
+    type SemesterBasic,
 } from "../types";
 import { ClassFilter } from "../components/ClassFilter";
 import { ClassTable } from "../components/ClassTable";
@@ -31,6 +30,7 @@ export const ClassManagementPage: React.FC = () => {
 
     const [data, setData] = useState<PageResponse<ClassDetailResponse> | null>(null);
     const [departments, setDepartments] = useState<DepartmentBasic[]>([]);
+    const [semesters, setSemesters] = useState<SemesterBasic[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -54,13 +54,23 @@ export const ClassManagementPage: React.FC = () => {
                 const res = await classService.getDepartments();
                 setDepartments(res);
             } catch {
-                toast.error("Không thể tải danh sách Khoa/Bộ môn.");
+                toast.error("Không thể tải danh sách Khoa.");
             }
         };
-        if (!isHeadOfDept) {
-            fetchDepartments();
-        }
+        if (!isHeadOfDept) fetchDepartments();
     }, [isHeadOfDept]);
+
+    useEffect(() => {
+        const fetchSemesters = async () => {
+        try {
+            const res = await classService.getSemesters();
+            setSemesters(res);
+        } catch {
+            toast.error("Không thể tải danh sách học kỳ.");
+        }
+    };
+    fetchSemesters();
+    }, [])
 
     const fetchClasses = useCallback(async () => {
         setIsLoading(true);
@@ -78,8 +88,8 @@ export const ClassManagementPage: React.FC = () => {
 
             const response = await classService.getClasses(params);
             setData(response);
-        } catch (error) {
-            toast.error("Không thể tải dữ liệu lớp học phần. Vui lòng thử lại.");
+        } catch {
+            toast.error("Không thể tải danh sách lớp học.");
         } finally {
             setIsLoading(false);
         }
@@ -96,7 +106,7 @@ export const ClassManagementPage: React.FC = () => {
             const detail = await classService.getClassById(id);
             setSelectedClassDetail(detail);
         } catch {
-            toast.error("Không thể tải thông tin chi tiết lớp học.");
+            toast.error("Không thể tải thông tin chi tiết.");
             setIsDetailModalOpen(false);
         } finally {
             setIsFetchingDetail(false);
@@ -108,8 +118,6 @@ export const ClassManagementPage: React.FC = () => {
         if (classItem) {
             setSelectedClassForAssign(classItem);
             setIsAssignModalOpen(true);
-        } else {
-            toast.error("Không tìm thấy thông tin lớp học phần này.");
         }
     };
 
@@ -117,21 +125,16 @@ export const ClassManagementPage: React.FC = () => {
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Layers className="w-7 h-7 text-blue-600" /> Quản lý Lớp học phần
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        {isHeadOfDept
-                            ? "Xem danh sách lớp học phần, theo dõi sĩ số và giảng viên phụ trách thuộc khoa của bạn."
-                            : "Quản lý danh sách lớp, sĩ số, phân công giảng viên và theo dõi tiến độ đào tạo."}
-                    </p>
                 </div>
             </div>
 
             <ClassFilter
                 searchTerm={searchTerm}
                 onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(0); }}
-                semesters={MOCK_SEMESTERS}
+                semesters={semesters}
                 selectedSemester={selectedSemester}
                 onSemesterChange={(v) => { setSelectedSemester(v); setCurrentPage(0); }}
                 selectedStatus={selectedStatus}
@@ -142,16 +145,13 @@ export const ClassManagementPage: React.FC = () => {
             />
 
             <div className="flex-1 relative">
-                {isLoading && data !== null && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-[1px] z-10 rounded-xl border border-transparent"></div>
-                )}
-
                 <ClassTable
                     data={data}
                     isLoading={isLoading && data === null}
                     onPageChange={setCurrentPage}
                     onViewDetail={handleViewDetail}
                     onAssignLecturer={handleAssignLecturer}
+                    isHead={isHeadOfDept}
                 />
             </div>
 
@@ -173,8 +173,7 @@ export const ClassManagementPage: React.FC = () => {
                     setSelectedClassForAssign(null);
                     fetchClasses();
                 }}
-                classItem={selectedClassForAssign as any} 
-                departments={departments}
+                classItem={selectedClassForAssign}
             />
         </div>
     );

@@ -1,116 +1,59 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { classService } from "../services/class.service";
-import { type LecturerBasic } from "../types";
+import { type DropdownResponseDto } from "../types";
 
 interface UseAssignLecturerProps {
     classId?: number;
-    initialDepartmentId?: number;
     onSuccess: () => void;
 }
 
-export const useAssignLecturer = ({
-    classId,
-    initialDepartmentId,
-    onSuccess,
-}: UseAssignLecturerProps) => {
-    const [selectedDepartmentId, setSelectedDepartmentId] =
-        useState<string>("");
+export const useAssignLecturer = ({ classId, onSuccess }: UseAssignLecturerProps) => {
     const [selectedLecturerId, setSelectedLecturerId] = useState<string>("");
-    const [lecturers, setLecturers] = useState<LecturerBasic[]>([]);
-    const [isFetchingLecturers, setIsFetchingLecturers] =
-        useState<boolean>(false);
+    const [instructors, setInstructors] = useState<DropdownResponseDto[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     useEffect(() => {
-        if (initialDepartmentId) {
-            setSelectedDepartmentId(initialDepartmentId.toString());
-        } else {
-            setSelectedDepartmentId("");
-        }
-        setSelectedLecturerId("");
-    }, [initialDepartmentId, classId]);
-
-    useEffect(() => {
-        const fetchLecturersByDepartment = async () => {
-            if (!selectedDepartmentId) {
-                setLecturers([]);
-                return;
-            }
-
-            setIsFetchingLecturers(true);
+        const fetchInstructors = async () => {
+            if (!classId) return;
+            setIsLoading(true);
             try {
-                const data = await classService.getLecturers(
-                    Number(selectedDepartmentId),
-                );
-                setLecturers(data);
-            } catch (error) {
-                console.error("Lỗi khi tải danh sách giảng viên:", error);
-                toast.error(
-                    "Không thể lấy danh sách giảng viên. Vui lòng thử lại.",
-                );
-                setLecturers([]);
+                const data = await classService.getInstructorsDropdown(classId);
+                setInstructors(data);
+            } catch {
+                toast.error("Không thể tải danh sách giảng viên.");
             } finally {
-                setIsFetchingLecturers(false);
+                setIsLoading(false);
             }
         };
-
-        fetchLecturersByDepartment();
-    }, [selectedDepartmentId]);
-
-    const handleDepartmentChange = useCallback((departmentId: string) => {
-        setSelectedDepartmentId(departmentId);
-        setSelectedLecturerId("");
-    }, []);
-
-    const handleLecturerChange = useCallback((lecturerId: string) => {
-        setSelectedLecturerId(lecturerId);
-    }, []);
+        fetchInstructors();
+    }, [classId]);
 
     const handleSubmitAssign = useCallback(async () => {
-        if (!classId) {
-            toast.error("Lỗi hệ thống: Không xác định được lớp học phần.");
-            return;
-        }
-
-        if (!selectedLecturerId) {
-            toast.warning("Vui lòng chọn một giảng viên để phân công.");
-            return;
-        }
+        if (!classId || !selectedLecturerId) return;
 
         setIsSubmitting(true);
         try {
-            await classService.assignLecturer({
-                classId: classId,
+            await classService.assignLecturer(classId, {
                 lecturerId: Number(selectedLecturerId),
             });
-
-            toast.success("Đã phân công giảng viên thành công!");
+            toast.success("Phân công giảng viên thành công!");
             onSuccess();
-        } catch (error) {
-            console.error("Lỗi khi gán giảng viên:", error);
-            toast.error("Đã xảy ra lỗi trong quá trình phân công.");
+        } catch {
+            toast.error("Lỗi khi phân công giảng viên.");
         } finally {
             setIsSubmitting(false);
         }
     }, [classId, selectedLecturerId, onSuccess]);
 
-    const handleReset = useCallback(() => {
-        setSelectedDepartmentId(initialDepartmentId?.toString() || "");
-        setSelectedLecturerId("");
-    }, [initialDepartmentId]);
-
     return {
-        selectedDepartmentId,
         selectedLecturerId,
-        lecturers,
-        isFetchingLecturers,
+        instructors,
+        isLoading,
         isSubmitting,
-        handleDepartmentChange,
-        handleLecturerChange,
+        setSelectedLecturerId, // Export hàm này để Modal sử dụng
         handleSubmitAssign,
-        handleReset,
         isSubmitDisabled: !selectedLecturerId || isSubmitting,
     };
 };

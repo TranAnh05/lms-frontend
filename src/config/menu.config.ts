@@ -205,7 +205,7 @@ export const ROLE_DEFAULT_PATHS: Record<string, string> = {
     [ROLES.ADMIN]: "/dashboard/users",
     [ROLES.PRINCIPAL]: "/dashboard/users",
     [ROLES.HR]: "/dashboard/users",
-    [ROLES.TRAINING_DEPT]: "/dashboard/majors",
+    [ROLES.TRAINING_DEPT]: "/dashboard/courses",
     [ROLES.HEAD_OF_DEPT]: "/dashboard/approval-classes",
     [ROLES.INSTRUCTOR]: "/dashboard/timetable",
     [ROLES.STUDENT]: "/dashboard/timetable",

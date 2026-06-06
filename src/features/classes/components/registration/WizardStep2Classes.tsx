@@ -1,20 +1,27 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useMemo, useEffect } from "react";
 import {
     ArrowLeft,
     CheckCircle2,
     BookOpen,
     Users,
-    User,
     ChevronDown,
     ChevronUp,
     Inbox,
     Loader2,
 } from "lucide-react";
 import clsx from "clsx";
-import { type CourseWithClasses } from "../../types/registration.types";
+import { type ClassPendingResponse } from "../../types/registration.types";
+
+interface CourseGroup {
+    courseId: number;
+    courseCode: string;
+    courseName: string;
+    classes: ClassPendingResponse[];
+}
 
 interface WizardStep2ClassesProps {
-    groupedClasses: CourseWithClasses[];
+    pendingClasses: ClassPendingResponse[];
     onBack: () => void;
     onSubmit: () => void;
     isLoading: boolean;
@@ -22,7 +29,7 @@ interface WizardStep2ClassesProps {
 }
 
 export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
-    groupedClasses,
+    pendingClasses,
     onBack,
     onSubmit,
     isLoading,
@@ -30,9 +37,25 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
 }) => {
     const [expandedCourses, setExpandedCourses] = useState<number[]>([]);
 
+    const groupedClasses = useMemo(() => {
+        const groups: Record<number, CourseGroup> = {};
+        pendingClasses.forEach((cls) => {
+            if (!groups[cls.courseId]) {
+                groups[cls.courseId] = {
+                    courseId: cls.courseId,
+                    courseCode: cls.courseCode,
+                    courseName: cls.courseName,
+                    classes: [],
+                };
+            }
+            groups[cls.courseId].classes.push(cls);
+        });
+        return Object.values(groups);
+    }, [pendingClasses]);
+
     useEffect(() => {
         if (groupedClasses.length > 0) {
-            setExpandedCourses(groupedClasses.map((g) => g.course.id));
+            setExpandedCourses(groupedClasses.map((g) => g.courseId));
         }
     }, [groupedClasses]);
 
@@ -40,20 +63,12 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
         setExpandedCourses((prev) =>
             prev.includes(courseId)
                 ? prev.filter((id) => id !== courseId)
-                : [...prev, courseId],
+                : [...prev, courseId]
         );
     };
 
-    const totalAvailableClasses = useMemo(() => {
-        return groupedClasses.reduce(
-            (acc, group) => acc + group.classes.length,
-            0,
-        );
-    }, [groupedClasses]);
-
     return (
         <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* HEADER */}
             <div className="mb-6">
                 <h2 className="text-xl font-bold text-gray-900">
                     Xem trước danh sách lớp học phần
@@ -64,15 +79,13 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
                     và Khoa ở bước trước.
                 </p>
 
-                <div className="mt-4 inline-flex items-center gap-3 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-sm font-medium text-blue-800">
+                <div className="mt-4 inline-flex items-center gap-3 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-sm font-medium text-blue-800 shadow-sm">
                     <span>
-                        Tổng số lượng: <strong>{totalAvailableClasses}</strong>{" "}
-                        lớp học phần
+                        Tổng số lượng: <strong>{pendingClasses.length}</strong> lớp học phần
                     </span>
                 </div>
             </div>
 
-            {/* BODY */}
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-6 space-y-4">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-blue-600">
@@ -97,32 +110,28 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
                     </div>
                 ) : (
                     groupedClasses.map((group) => {
-                        const isExpanded = expandedCourses.includes(
-                            group.course.id,
-                        );
+                        const isExpanded = expandedCourses.includes(group.courseId);
 
                         return (
                             <div
-                                key={group.course.id}
+                                key={group.courseId}
                                 className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-200"
                             >
                                 <div
                                     className="flex items-center justify-between px-5 py-3 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors border-b border-gray-100"
-                                    onClick={() =>
-                                        toggleCourseCollapse(group.course.id)
-                                    }
+                                    onClick={() => toggleCourseCollapse(group.courseId)}
                                 >
                                     <div className="flex items-center gap-3">
                                         <BookOpen className="w-4 h-4 text-blue-600" />
                                         <span className="font-bold text-gray-900 text-sm">
-                                            {group.course.name}{" "}
+                                            {group.courseName}{" "}
                                             <span className="text-gray-500 font-medium ml-1">
-                                                ({group.course.code})
+                                                ({group.courseCode})
                                             </span>
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+                                        <span className="text-xs font-semibold text-gray-500 bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
                                             {group.classes.length} lớp
                                         </span>
                                         {isExpanded ? (
@@ -136,9 +145,7 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
                                 <div
                                     className={clsx(
                                         "overflow-hidden transition-all duration-300 ease-in-out",
-                                        isExpanded
-                                            ? "max-h-[1000px] opacity-100"
-                                            : "max-h-0 opacity-0",
+                                        isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
                                     )}
                                 >
                                     <div className="p-0">
@@ -147,49 +154,18 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
                                                 {group.classes.map((cls) => (
                                                     <tr
                                                         key={cls.id}
-                                                        className="hover:bg-gray-50 transition-colors"
+                                                        className="hover:bg-blue-50/50 transition-colors"
                                                     >
-                                                        <td className="px-6 py-3 font-medium text-gray-900 w-1/3">
-                                                            <span className="bg-gray-100 px-2 py-1 rounded border border-gray-200 font-mono text-xs">
+                                                        <td className="px-6 py-3.5 font-medium text-gray-900 w-1/2">
+                                                            <span className="bg-gray-100 px-2.5 py-1 rounded border border-gray-200 font-mono text-xs text-gray-700">
                                                                 {cls.code}
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-3 text-gray-600 w-1/3">
-                                                            <div className="flex items-center gap-2">
-                                                                <User className="w-4 h-4 text-gray-400 shrink-0" />
-                                                                <span
-                                                                    className="truncate"
-                                                                    title={
-                                                                        cls
-                                                                            .lecturer
-                                                                            ?.fullName ||
-                                                                        "Chưa phân công"
-                                                                    }
-                                                                >
-                                                                    {cls.lecturer ? (
-                                                                        cls
-                                                                            .lecturer
-                                                                            .fullName
-                                                                    ) : (
-                                                                        <span className="text-amber-600 italic text-xs">
-                                                                            Chưa
-                                                                            phân
-                                                                            công
-                                                                        </span>
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-gray-600">
-                                                            <div className="flex items-center gap-2">
+                                                        <td className="px-6 py-3.5 text-gray-600 text-right w-1/2">
+                                                            <div className="flex items-center justify-end gap-2">
                                                                 <Users className="w-4 h-4 text-gray-400 shrink-0" />
-                                                                <span>
-                                                                    Sĩ số:{" "}
-                                                                    <strong>
-                                                                        {
-                                                                            cls.maxStudents
-                                                                        }
-                                                                    </strong>
+                                                                <span className="text-sm">
+                                                                    Sĩ số: <strong className="text-gray-900">{cls.maxStudents}</strong>
                                                                 </span>
                                                             </div>
                                                         </td>
@@ -205,20 +181,19 @@ export const WizardStep2Classes: React.FC<WizardStep2ClassesProps> = ({
                 )}
             </div>
 
-            {/* FOOTER ACTIONS */}
             <div className="pt-4 mt-2 border-t border-gray-100 flex justify-between shrink-0">
                 <button
                     onClick={onBack}
                     disabled={isSubmitting}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors focus:ring-4 focus:ring-gray-100 disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors focus:ring-4 focus:ring-gray-100 disabled:opacity-50 shadow-sm"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Quay lại
                 </button>
                 <button
                     onClick={onSubmit}
-                    disabled={totalAvailableClasses === 0 || isSubmitting}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:ring-4 focus:ring-blue-500/20 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    disabled={pendingClasses.length === 0 || isSubmitting}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:ring-4 focus:ring-blue-500/20 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed shadow-sm"
                 >
                     {isSubmitting ? (
                         <>

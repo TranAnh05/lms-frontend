@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { Layers, Calendar, BookOpen, Clock, MapPin, Users, User, CheckCircle2 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -21,7 +23,7 @@ const DAYS_OF_WEEK = [
 interface CreateClassFromRequestModalProps {
     isOpen: boolean;
     onSuccess: () => void; 
-    request: (ClassOpeningResponseDto & { semesterId?: number }) | null;
+    request: (ClassOpeningResponseDto) | null;
     onConfirm: (payload: any) => Promise<void>;
 }
 
@@ -100,8 +102,7 @@ export const CreateClassFromRequestModal: React.FC<CreateClassFromRequestModalPr
         try {
             await onConfirm({
                 requestId: request.requestId,
-                // semesterId: request.semesterId || 0,
-                semesterId: 5,
+                semesterId: request.semesterId,
                 courseId: request.courseId,
                 managerId: request.requesterId, // Lấy trực tiếp từ người đề xuất
                 classes: classesData.map(c => ({

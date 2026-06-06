@@ -1,4 +1,17 @@
-import { type SemesterBasic, type ClassResponse, type CourseBasic } from "./index";
+import { type SemesterBasic } from "./index";
+
+export interface ClassPendingResponse {
+    id: number;
+    code: string;
+    maxStudents: number;
+    status: string;
+    courseId: number;
+    courseCode: string;
+    courseName: string;
+    credits: number;
+    departmentId: number;
+    departmentName: string;
+}
 
 export interface RegistrationPeriodResponse {
     id: number;
@@ -24,7 +37,14 @@ export interface CreateRegistrationPayload {
     targetDepartments: number[];
 }
 
-export interface CourseWithClasses {
-    course: CourseBasic;
-    classes: ClassResponse[];
+export interface SemesterResponse {
+    id: number;
+    semesterCode: string;
+    academicYear: string;
+}
+
+export interface DepartmentResponse {
+    id: number;
+    code: string;
+    name: string;
 }
