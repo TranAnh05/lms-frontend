@@ -1,4 +1,21 @@
-// Basic Types
+// --- SHARED / BASIC TYPES ---
+export interface DropdownResponseDto {
+    id: number;
+    name: string;
+}
+
+export interface PageResponse<T> {
+    content: T[];
+    pageable?: {
+        pageNumber: number;
+        pageSize: number;
+    };
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
 export interface CourseBasic {
     id: number;
     code: string;
@@ -16,6 +33,20 @@ export interface SemesterBasic {
 export interface UserBasic {
     id: number;
     fullName: string;
+    email?: string;
+}
+
+export interface DepartmentBasic {
+    id: number;
+    name: string;
+}
+
+export interface LecturerBasic {
+    id: number;
+    employeeCode: string;
+    fullName: string;
+    academicTitle: string;
+    departmentId: number;
 }
 
 export interface SemesterResponse {
@@ -30,7 +61,63 @@ export interface SemesterResponse {
     updatedAt: string;
 }
 
-// Class Requests
+// --- CLASS MANAGEMENT TYPES ---
+export interface AssignLecturerPayload {
+    classId: number;
+    lecturerId: number;
+}
+
+export interface ClassResponse {
+    id: number;
+    code: string;
+    course: CourseBasic;
+    semester: SemesterBasic;
+    manager: UserBasic;
+    lecturer: UserBasic | null;
+    maxStudents: number;
+    currentStudents: number;
+    status: "PENDING" | "REGISTRATION" | "ONGOING" | "COMPLETED" | "CANCELED";
+    lockReason?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ScheduleBasic {
+    id: number;
+    dayOfWeek: number;
+    shift: {
+        id: number;
+        name: string;
+        startTime: string;
+        endTime: string;
+    };
+    room: {
+        id: number;
+        name: string;
+        type: "THEORY" | "LAB" | "HALL";
+        capacity: number;
+    };
+}
+
+export interface ClassDetailResponse extends ClassResponse {
+    registrationPeriod?: {
+        id: number;
+        name: string;
+    };
+    schedules: ScheduleBasic[];
+}
+
+export interface ClassListParams {
+    keyword?: string;
+    semesterId?: number;
+    status?: string;
+    page: number;
+    size: number;
+    sortBy?: string;
+    sortDirection?: "asc" | "desc";
+}
+
+// --- CLASS REQUEST TYPES ---
 export interface ClassOpeningRequestPayload {
     semesterId: number;
     courseId: number;
@@ -61,26 +148,20 @@ export interface ClassOpeningResponseDto {
     updatedAt?: string;
 }
 
-// Pagination & Generic
-export interface PageResponse<T> {
-    content: T[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
+export interface RejectClassRequestDto {
+    rejectReason: string;
 }
 
-export interface DropdownResponseDto {
-    id: number;
-    name: string;
+export interface ClassConfigItem {
+    roomId: number;
+    shiftId: number;
+    dayOfWeek: number;
+    maxStudents: number;
 }
 
-// Review Request
-export interface ApproveClassRequestDto {
-    status: "APPROVED" | "REJECTED";
-    rejectReason?: string;
-    managerId?: number;
-    roomId?: number;
-    shiftId?: number;
-    dayOfWeek?: number;
+export interface GenerateClassRequestDto {
+    semesterId: number;
+    courseId: number;
+    managerId: number;
+    classes: ClassConfigItem[];
 }

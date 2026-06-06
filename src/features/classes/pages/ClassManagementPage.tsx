@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
@@ -6,9 +8,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { classService } from "../services/class.service";
 import {
-    type ClassResponse,
-    type PageResponse,
     type ClassDetailResponse,
+    type PageResponse,
+    type DepartmentBasic,
 } from "../types";
 import { ClassFilter } from "../components/ClassFilter";
 import { ClassTable } from "../components/ClassTable";
@@ -21,117 +23,79 @@ const MOCK_SEMESTERS = [
     { id: 3, name: "Học kỳ Hè (2025-2026)" },
 ];
 
-const MOCK_DEPARTMENTS = [
-    { id: 1, name: "Khoa Công nghệ thông tin" },
-    { id: 2, name: "Khoa Ngôn ngữ Anh" },
-    { id: 3, name: "Khoa Kinh tế" },
-];
-
 export const ClassManagementPage: React.FC = () => {
     const user = useAuthStore((state) => state.user);
     const userId = user?.id;
     const isHeadOfDept = user?.roles.includes("HEAD_OF_DEPT") ?? false;
     const mockDepartmentId = userId === 5 ? 1 : 2;
-    const [data, setData] = useState<PageResponse<ClassResponse> | null>(null);
+
+    const [data, setData] = useState<PageResponse<ClassDetailResponse> | null>(null);
+    const [departments, setDepartments] = useState<DepartmentBasic[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [searchTerm, setSearchTerm] = useState<string>("");
-    const [selectedSemester, setSelectedSemester] = useState<string>("");
-    const [selectedStatus, setSelectedStatus] = useState<string>("");
-    const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-    const [currentPage, setCurrentPage] = useState<number>(0);
+
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedSemester, setSelectedSemester] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState("");
+    const [selectedDepartment, setSelectedDepartment] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
     const pageSize = 10;
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
-    const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
-    const [selectedClassForAssign, setSelectedClassForAssign] =
-        useState<ClassResponse | null>(null);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [selectedClassForAssign, setSelectedClassForAssign] = useState<ClassDetailResponse | null>(null);
 
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
-    const [selectedClassDetail, setSelectedClassDetail] =
-        useState<ClassDetailResponse | null>(null);
-    const [isFetchingDetail, setIsFetchingDetail] = useState<boolean>(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [selectedClassDetail, setSelectedClassDetail] = useState<ClassDetailResponse | null>(null);
+    const [isFetchingDetail, setIsFetchingDetail] = useState(false);
+
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const res = await classService.getDepartments();
+                setDepartments(res);
+            } catch {
+                toast.error("Không thể tải danh sách Khoa/Bộ môn.");
+            }
+        };
+        if (!isHeadOfDept) {
+            fetchDepartments();
+        }
+    }, [isHeadOfDept]);
 
     const fetchClasses = useCallback(async () => {
         setIsLoading(true);
         try {
             const params = {
                 keyword: debouncedSearchTerm.trim() || undefined,
-                semesterId: selectedSemester
-                    ? Number(selectedSemester)
-                    : undefined,
+                semesterId: selectedSemester ? Number(selectedSemester) : undefined,
                 status: selectedStatus || undefined,
+                departmentId: isHeadOfDept 
+                    ? mockDepartmentId 
+                    : (selectedDepartment ? Number(selectedDepartment) : undefined),
                 page: currentPage,
                 size: pageSize,
             };
 
-            let response;
-            if (isHeadOfDept) {
-                response = await classService.getClassesByMyDepartment(
-                    params,
-                    mockDepartmentId,
-                );
-            } else {
-                response = await classService.getAllClasses({
-                    ...params,
-                    departmentId: selectedDepartment || undefined,
-                });
-            }
+            const response = await classService.getClasses(params);
             setData(response);
         } catch (error) {
-            console.error("Lỗi khi tải danh sách lớp học phần:", error);
-            toast.error(
-                "Không thể tải dữ liệu lớp học phần. Vui lòng thử lại.",
-            );
+            toast.error("Không thể tải dữ liệu lớp học phần. Vui lòng thử lại.");
         } finally {
             setIsLoading(false);
         }
-    }, [
-        debouncedSearchTerm,
-        selectedSemester,
-        selectedStatus,
-        currentPage,
-        isHeadOfDept,
-        mockDepartmentId,
-        selectedDepartment,
-    ]);
+    }, [debouncedSearchTerm, selectedSemester, selectedStatus, selectedDepartment, currentPage, isHeadOfDept, mockDepartmentId]);
 
     useEffect(() => {
         fetchClasses();
     }, [fetchClasses]);
 
-    const handleSearchChange = (value: string) => {
-        setSearchTerm(value);
-        setCurrentPage(0);
-    };
-
-    const handleSemesterChange = (semesterId: string) => {
-        setSelectedSemester(semesterId);
-        setCurrentPage(0);
-    };
-
-    const handleStatusChange = (status: string) => {
-        setSelectedStatus(status);
-        setCurrentPage(0);
-    };
-
-    const handleDepartmentChange = (departmentId: string) => {
-        setSelectedDepartment(departmentId);
-        setCurrentPage(0);
-    };
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
-
     const handleViewDetail = async (id: number) => {
         setIsDetailModalOpen(true);
         setIsFetchingDetail(true);
         try {
-            const detail = (await classService.getClassById(
-                id,
-            )) as ClassDetailResponse;
+            const detail = await classService.getClassById(id);
             setSelectedClassDetail(detail);
-        } catch (error) {
+        } catch {
             toast.error("Không thể tải thông tin chi tiết lớp học.");
             setIsDetailModalOpen(false);
         } finally {
@@ -141,7 +105,6 @@ export const ClassManagementPage: React.FC = () => {
 
     const handleAssignLecturer = (id: number) => {
         const classItem = data?.content.find((item) => item.id === id);
-
         if (classItem) {
             setSelectedClassForAssign(classItem);
             setIsAssignModalOpen(true);
@@ -150,23 +113,12 @@ export const ClassManagementPage: React.FC = () => {
         }
     };
 
-    const handleCloseAssignModal = () => {
-        setIsAssignModalOpen(false);
-        setSelectedClassForAssign(null);
-    };
-
-    const handleAssignSuccess = () => {
-        handleCloseAssignModal();
-        fetchClasses();
-    };
-
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                        <Layers className="w-7 h-7 text-blue-600" /> Quản lý Lớp
-                        học phần
+                        <Layers className="w-7 h-7 text-blue-600" /> Quản lý Lớp học phần
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
                         {isHeadOfDept
@@ -178,17 +130,15 @@ export const ClassManagementPage: React.FC = () => {
 
             <ClassFilter
                 searchTerm={searchTerm}
-                onSearchChange={handleSearchChange}
+                onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(0); }}
                 semesters={MOCK_SEMESTERS}
                 selectedSemester={selectedSemester}
-                onSemesterChange={handleSemesterChange}
+                onSemesterChange={(v) => { setSelectedSemester(v); setCurrentPage(0); }}
                 selectedStatus={selectedStatus}
-                onStatusChange={handleStatusChange}
-                departments={isHeadOfDept ? undefined : MOCK_DEPARTMENTS}
+                onStatusChange={(v) => { setSelectedStatus(v); setCurrentPage(0); }}
+                departments={isHeadOfDept ? undefined : departments}
                 selectedDepartment={selectedDepartment}
-                onDepartmentChange={
-                    isHeadOfDept ? undefined : handleDepartmentChange
-                }
+                onDepartmentChange={isHeadOfDept ? undefined : (v) => { setSelectedDepartment(v); setCurrentPage(0); }}
             />
 
             <div className="flex-1 relative">
@@ -199,7 +149,7 @@ export const ClassManagementPage: React.FC = () => {
                 <ClassTable
                     data={data}
                     isLoading={isLoading && data === null}
-                    onPageChange={handlePageChange}
+                    onPageChange={setCurrentPage}
                     onViewDetail={handleViewDetail}
                     onAssignLecturer={handleAssignLecturer}
                 />
@@ -214,10 +164,17 @@ export const ClassManagementPage: React.FC = () => {
 
             <AssignLecturerModal
                 isOpen={isAssignModalOpen}
-                onClose={handleCloseAssignModal}
-                onSuccess={handleAssignSuccess}
-                classItem={selectedClassForAssign}
-                departments={MOCK_DEPARTMENTS}
+                onClose={() => {
+                    setIsAssignModalOpen(false);
+                    setSelectedClassForAssign(null);
+                }}
+                onSuccess={() => {
+                    setIsAssignModalOpen(false);
+                    setSelectedClassForAssign(null);
+                    fetchClasses();
+                }}
+                classItem={selectedClassForAssign as any} 
+                departments={departments}
             />
         </div>
     );

@@ -20,6 +20,7 @@ export interface UserBasic {
 
 export interface DepartmentBasic {
     id: number;
+    code: string;
     name: string;
 }
 
@@ -34,21 +35,6 @@ export interface LecturerBasic {
 export interface AssignLecturerPayload {
     classId: number;
     lecturerId: number;
-}
-
-export interface ClassResponse {
-    id: number;
-    code: string;
-    course: CourseBasic;
-    semester: SemesterBasic;
-    manager: UserBasic;
-    lecturer: UserBasic | null;
-    maxStudents: number;
-    currentStudents: number;
-    status: "PENDING" | "REGISTRATION" | "ONGOING" | "COMPLETED" | "CANCELED";
-    lockReason?: string;
-    createdAt: string;
-    updatedAt: string;
 }
 
 export interface ScheduleBasic {
@@ -68,17 +54,43 @@ export interface ScheduleBasic {
     };
 }
 
-export interface ClassDetailResponse extends ClassResponse {
+export interface ClassDetailResponse {
+    id: number;
+    code: string;
+    status: string;
+    maxStudents: number;
+    currentStudents: number; 
+    
+    semesterId: number;
+    semesterCode: string;
+    academicYear: string;
+    
+    courseId: number;
+    courseName: string;
+    courseCode: string;
+    
+    departmentId: number;
+    departmentName: string;
+    
+    managerId: number;
+    managerName: string;
+    lecturerId?: number;
+    lecturerName?: string;
+    
+    createdAt: string;
+
     registrationPeriod?: {
         id: number;
         name: string;
     };
-    schedules: ScheduleBasic[];
+    schedules?: ScheduleBasic[];
+    lockReason?: string;
 }
 
 export interface ClassListParams {
     keyword?: string;
     semesterId?: number;
+    departmentId?: number;
     status?: string;
     page: number;
     size: number;

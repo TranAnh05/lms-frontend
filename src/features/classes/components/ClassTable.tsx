@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Eye, MoreHorizontal, ShieldAlert, UserPlus } from "lucide-react";
 import clsx from "clsx";
-import { type ClassResponse, type PageResponse } from "../types";
+import { type ClassDetailResponse, type PageResponse } from "../types";
 
 const STATUS_UI_CONFIG: Record<string, { label: string; style: string }> = {
     PENDING: { label: "Lên kế hoạch", style: "bg-gray-100 text-gray-700 border-gray-200" },
@@ -12,7 +12,7 @@ const STATUS_UI_CONFIG: Record<string, { label: string; style: string }> = {
 };
 
 const ActionMenu: React.FC<{
-    classItem: ClassResponse;
+    classItem: ClassDetailResponse;
     index: number;
     total: number;
     onViewDetail: (id: number) => void;
@@ -84,7 +84,7 @@ const ActionMenu: React.FC<{
 };
 
 interface ClassTableProps {
-    data: PageResponse<ClassResponse> | null;
+    data: PageResponse<ClassDetailResponse> | null;
     isLoading: boolean;
     onViewDetail: (id: number) => void;
     onAssignLecturer: (id: number) => void;
@@ -151,17 +151,17 @@ export const ClassTable: React.FC<ClassTableProps> = ({
                                             </span>
                                         </td>
                                         <td className="px-5 py-4 max-w-[250px]">
-                                            <p className="font-medium text-gray-900 truncate" title={classItem.course.name}>
-                                                {classItem.course.name}
+                                            <p className="font-medium text-gray-900 truncate" title={classItem.courseName}>
+                                                {classItem.courseName}
                                             </p>
                                         </td>
                                         <td className="px-5 py-4 text-gray-600 font-medium whitespace-nowrap">
-                                            {classItem.semester.semesterCode}
+                                            {classItem.semesterCode}
                                         </td>
                                         <td className="px-5 py-4">
-                                            {classItem.lecturer ? (
-                                                <span className="text-gray-900 font-medium truncate block" title={classItem.lecturer.fullName}>
-                                                    {classItem.lecturer.fullName}
+                                            {classItem.lecturerName ? (
+                                                <span className="text-gray-900 font-medium truncate block" title={classItem.lecturerName}>
+                                                    {classItem.lecturerName}
                                                 </span>
                                             ) : (
                                                 <span className="inline-block text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200 whitespace-nowrap">

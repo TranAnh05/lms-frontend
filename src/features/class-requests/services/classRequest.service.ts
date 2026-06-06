@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
 import {
     type PageResponse,
@@ -6,17 +7,18 @@ import {
     type ClassOpeningRequestPayload,
     type SemesterResponse,
     type DropdownResponseDto,
-    type ApproveClassRequestDto,
+    type RejectClassRequestDto,
+    type GenerateClassRequestDto,
 } from "../types";
 
 export const classRequestService = {
-    // Lấy danh sách đề xuất
+    // Đề xuất mở lớp
     getPendingRequests: async (
         params: RequestFilterParams,
     ): Promise<PageResponse<ClassOpeningResponseDto>> => {
         const cleanParams = Object.fromEntries(
             Object.entries(params).filter(
-                ([_, value]) => value !== null && value !== "" && value !== undefined,
+                ([value]) => value !== null && value !== "" && value !== undefined,
             ),
         );
         const response: any = await apiClient.get("/class-requests/pending-list", {
@@ -25,17 +27,20 @@ export const classRequestService = {
         return response.data;
     },
 
-    // Tạo đề xuất mở lớp
     proposeClass: async (payload: ClassOpeningRequestPayload): Promise<void> => {
         await apiClient.post("/class-requests/propose", payload);
     },
 
-    // Duyệt hoặc từ chối đề xuất
-    reviewRequest: async (requestId: number, payload: ApproveClassRequestDto): Promise<void> => {
-        await apiClient.put(`/class-requests/${requestId}/review`, payload);
+    // Phê duyệt / Từ chối
+    approveRequest: async (requestId: number): Promise<void> => {
+        await apiClient.put(`/class-requests/${requestId}/approve`);
     },
 
-    // Lấy dữ liệu Dropdown
+    rejectRequest: async (requestId: number, payload: RejectClassRequestDto): Promise<void> => {
+        await apiClient.put(`/class-requests/${requestId}/reject`, payload);
+    },
+
+    // Dữ liệu Dropdown
     getSemesters: async (): Promise<SemesterResponse[]> => {
         const response: any = await apiClient.get("/semesters/all");
         return response.data || response;
@@ -54,5 +59,9 @@ export const classRequestService = {
     getRoomsDropdown: async (): Promise<DropdownResponseDto[]> => {
         const response: any = await apiClient.get("/class-requests/dropdown/rooms");
         return response.data;
+    },
+
+    generateClasses: async (requestId: number, payload: GenerateClassRequestDto): Promise<void> => {
+        await apiClient.post(`/class-requests/${requestId}/generate-classes`, payload);
     },
 };
