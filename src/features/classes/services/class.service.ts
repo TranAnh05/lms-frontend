@@ -5,8 +5,10 @@ import {
     type ClassListParams,
     type PageResponse,
     type DepartmentBasic,
+    type SemesterBasic,
     type LecturerBasic,
     type AssignLecturerPayload,
+    type DropdownResponseDto,
 } from "../types";
 
 export const classService = {
@@ -28,13 +30,23 @@ export const classService = {
         return response.data || response;
     },
 
+    getSemesters: async (): Promise<SemesterBasic[]> => {
+        const response: any = await apiClient.get("/semesters/all");
+        return response.data || response;
+    },
+
     getLecturers: async (departmentId?: number): Promise<LecturerBasic[]> => {
         const params = departmentId ? { departmentId } : {};
         const response: any = await apiClient.get("/lecturers", { params }).catch(() => ({ data: [] }));
         return response.data || [];
     },
 
-    assignLecturer: async (payload: AssignLecturerPayload): Promise<void> => {
-        await apiClient.post("/classes/assign-lecturer", payload);
+    getInstructorsDropdown: async (classId: number): Promise<DropdownResponseDto[]> => {
+        const response: any = await apiClient.get(`/class-requests/classes/${classId}/dropdown/instructors`);
+        return response.data;
+    },
+
+    assignLecturer: async (classId: number, payload: AssignLecturerPayload): Promise<void> => {
+        await apiClient.put(`/class-requests/classes/${classId}/assign-lecturer`, payload);
     },
 };

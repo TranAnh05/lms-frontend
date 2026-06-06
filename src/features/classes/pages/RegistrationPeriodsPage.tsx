@@ -1,51 +1,55 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { CalendarDays, Plus, Search, Filter } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { type PageResponse } from "../types";
-import { type RegistrationPeriodResponse } from "../types/registration.types";
+import { 
+    type RegistrationPeriodResponse, 
+    type SemesterResponse, 
+    type DepartmentResponse 
+} from "../types/registration.types";
 import { registrationService } from "../services/registration.service";
 import { RegistrationWizardModal } from "../components/registration/RegistrationWizardModal";
 import { RegistrationTable } from "../components/registration/RegistrationTable";
 import { RegistrationDetailModal } from "../components/registration/RegistrationDetailModal";
 
-const MOCK_SEMESTERS = [
-    {
-        id: 1,
-        name: "Học kỳ 1 (2025-2026)",
-        semesterCode: "HK1_2025",
-        academicYear: "2025-2026",
-    },
-    {
-        id: 2,
-        name: "Học kỳ 2 (2025-2026)",
-        semesterCode: "HK2_2025",
-        academicYear: "2025-2026",
-    },
-];
-
-const MOCK_DEPARTMENTS = [
-    { id: 1, name: "Khoa Công nghệ thông tin" },
-    { id: 2, name: "Khoa Ngôn ngữ Anh" },
-    { id: 3, name: "Khoa Kinh tế" },
-];
-
 export const RegistrationPeriodsPage: React.FC = () => {
     const user = useAuthStore((state) => state.user);
     const isTrainingDept = user?.roles.includes("TRAINING_DEPT") ?? false;
-    const [data, setData] =
-        useState<PageResponse<RegistrationPeriodResponse> | null>(null);
+    
+    const [data, setData] = useState<PageResponse<RegistrationPeriodResponse> | null>(null);
+    const [semesters, setSemesters] = useState<SemesterResponse[]>([]);
+    const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedSemester, setSelectedSemester] = useState<string>("");
     const [selectedStatus, setSelectedStatus] = useState<string>("");
     const [currentPage, setCurrentPage] = useState<number>(0);
     const pageSize = 10;
+    
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
     const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
     const [detailPeriodId, setDetailPeriodId] = useState<number | null>(null);
+
+    // Fetch dữ liệu bộ lọc (Học kỳ, Khoa)
+    useEffect(() => {
+        const fetchFilters = async () => {
+            try {
+                const [sems, depts] = await Promise.all([
+                    registrationService.getSemesters(),
+                    registrationService.getDepartments()
+                ]);
+                setSemesters(sems);
+                setDepartments(depts);
+            } catch {
+                toast.error("Không thể tải dữ liệu học kỳ và khoa.");
+            }
+        };
+        fetchFilters();
+    }, []);
 
     const fetchRegistrationPeriods = useCallback(async () => {
         setIsLoading(true);
@@ -58,11 +62,8 @@ export const RegistrationPeriodsPage: React.FC = () => {
                 size: pageSize,
             });
             setData(response);
-        } catch (error) {
-            console.error(error);
-            toast.error(
-                "Không thể tải danh sách đợt đăng ký. Vui lòng thử lại.",
-            );
+        } catch {
+            toast.error("Không thể tải danh sách đợt đăng ký.");
         } finally {
             setIsLoading(false);
         }
@@ -77,22 +78,15 @@ export const RegistrationPeriodsPage: React.FC = () => {
         fetchRegistrationPeriods();
     };
 
-    const handleViewDetail = (id: number) => {
-        setDetailPeriodId(id);
-    };
-
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
-            {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                        <CalendarDays className="w-7 h-7 text-blue-600" /> Quản
-                        lý Đợt đăng ký
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <CalendarDays className="w-7 h-7 text-blue-600" /> Quản lý Đợt đăng ký
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        Cấu hình và quản lý các đợt mở đăng ký học phần cho sinh
-                        viên toàn trường.
+                        Cấu hình và quản lý các đợt mở đăng ký học phần cho sinh viên toàn trường.
                     </p>
                 </div>
 
@@ -107,7 +101,6 @@ export const RegistrationPeriodsPage: React.FC = () => {
                 )}
             </div>
 
-            {/* BỘ LỌC TÌM KIẾM */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col md:flex-row items-center gap-4">
                 <div className="relative w-full md:flex-1">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -133,11 +126,17 @@ export const RegistrationPeriodsPage: React.FC = () => {
                                 setCurrentPage(0);
                             }}
                             className="bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full px-3 py-2.5 outline-none cursor-pointer appearance-none"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                                backgroundPosition: "right 0.75rem center",
+                                backgroundSize: "1rem",
+                                backgroundRepeat: "no-repeat",
+                            }}
                         >
                             <option value="">Tất cả Học kỳ</option>
-                            {MOCK_SEMESTERS.map((sem) => (
+                            {semesters.map((sem) => (
                                 <option key={sem.id} value={sem.id}>
-                                    {sem.semesterCode}
+                                    {sem.semesterCode} ({sem.academicYear})
                                 </option>
                             ))}
                         </select>
@@ -153,6 +152,12 @@ export const RegistrationPeriodsPage: React.FC = () => {
                                 setCurrentPage(0);
                             }}
                             className="bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full pl-9 pr-3 py-2.5 outline-none cursor-pointer appearance-none"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                                backgroundPosition: "right 0.75rem center",
+                                backgroundSize: "1rem",
+                                backgroundRepeat: "no-repeat",
+                            }}
                         >
                             <option value="">Tất cả trạng thái</option>
                             <option value="PENDING">Sắp diễn ra</option>
@@ -167,15 +172,15 @@ export const RegistrationPeriodsPage: React.FC = () => {
                 data={data}
                 isLoading={isLoading}
                 onPageChange={setCurrentPage}
-                onViewDetail={handleViewDetail}
+                onViewDetail={setDetailPeriodId}
             />
 
             <RegistrationWizardModal
                 isOpen={isWizardOpen}
                 onClose={() => setIsWizardOpen(false)}
                 onSuccess={handleActionSuccess}
-                semesters={MOCK_SEMESTERS}
-                departments={MOCK_DEPARTMENTS}
+                semesters={semesters}
+                departments={departments}
             />
 
             <RegistrationDetailModal

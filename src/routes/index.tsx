@@ -13,6 +13,7 @@ import { SemesterManagement } from "@/features/semesters/pages/SemesterManagemen
 import { ClassManagementPage } from "@/features/classes/pages/ClassManagementPage";
 import { ClassRequestPage } from "@/features/class-requests/pages/ClassRequestPage";
 import { RegistrationPeriodsPage } from "@/features/classes/pages/RegistrationPeriodsPage";
+import { CourseRegistrationPage } from "@/features/enrollments/pages/CourseRegistrationPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -38,12 +39,6 @@ const ProfilePage = () => (
         Giao diện Hồ sơ cá nhân
     </div>
 );
-
-const DotDangKy = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện quản lý đợt đăng ký
-    </div>
-)
 
 export const router = createBrowserRouter([
     {
@@ -117,6 +112,10 @@ export const router = createBrowserRouter([
             {
                 path:"registration",
                 element: <RegistrationPeriodsPage />
+            },
+            {
+                path: "student-registration",
+                element: <CourseRegistrationPage />
             }
         ],
     },

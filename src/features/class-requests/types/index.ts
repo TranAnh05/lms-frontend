@@ -146,6 +146,7 @@ export interface ClassOpeningResponseDto {
     rejectReason?: string;
     createdAt: string;
     updatedAt?: string;
+    semesterId: number;
 }
 
 export interface RejectClassRequestDto {

@@ -6,22 +6,10 @@ export interface CourseBasic {
     departmentId: number;
 }
 
-export interface SemesterBasic {
-    id: number;
-    semesterCode: string;
-    academicYear: string;
-}
-
 export interface UserBasic {
     id: number;
     fullName: string;
     email?: string;
-}
-
-export interface DepartmentBasic {
-    id: number;
-    code: string;
-    name: string;
 }
 
 export interface LecturerBasic {
@@ -32,8 +20,12 @@ export interface LecturerBasic {
     departmentId: number;
 }
 
+export interface DropdownResponseDto {
+    id: number;
+    name: string;
+}
+
 export interface AssignLecturerPayload {
-    classId: number;
     lecturerId: number;
 }
 
@@ -59,26 +51,20 @@ export interface ClassDetailResponse {
     code: string;
     status: string;
     maxStudents: number;
-    currentStudents: number; 
-    
+    currentStudents: number;
     semesterId: number;
     semesterCode: string;
     academicYear: string;
-    
     courseId: number;
     courseName: string;
     courseCode: string;
-    
     departmentId: number;
     departmentName: string;
-    
     managerId: number;
     managerName: string;
     lecturerId?: number;
     lecturerName?: string;
-    
     createdAt: string;
-
     registrationPeriod?: {
         id: number;
         name: string;
@@ -108,4 +94,16 @@ export interface PageResponse<T> {
     totalPages: number;
     size: number;
     number: number;
+}
+
+export interface DepartmentBasic {
+    id: number;
+    code: string;
+    name: string;
+}
+
+export interface SemesterBasic {
+    id: number;
+    semesterCode: string;
+    academicYear: string;
 }
