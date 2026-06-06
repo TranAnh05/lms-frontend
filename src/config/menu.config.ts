@@ -122,8 +122,8 @@ const ALL_MENUS = {
         icon: FolderKanban,
     },
     REGISTRATION: {
-        title: "Học phần mở đăng ký",
-        path: "/dashboard/registration",
+        title: "Đăng ký học phần",
+        path: "/dashboard/student-registration",
         icon: Layers,
     },
     RESULTS: {
