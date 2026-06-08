@@ -1,22 +1,17 @@
 import React from "react";
 import { Loader2, Inbox } from "lucide-react";
 import clsx from "clsx";
-import { type RegisteredClassDTO, type ScheduleBasic } from "../types";
+import { type EnrollmentResponse } from "../types";
 
 interface RegisteredClassesTableProps {
-    data: RegisteredClassDTO[];
+    data: EnrollmentResponse[];
     isLoading: boolean;
 }
 
-const formatSchedules = (schedules: ScheduleBasic[]) => {
-    if (!schedules || schedules.length === 0) return [];
-    return schedules.map(s => {
-        const day = s.dayOfWeek === 8 ? "CN" : `T${s.dayOfWeek}`;
-        return {
-            time: `${day} (${s.shift.name})`,
-            room: s.room.name
-        };
-    });
+const STATUS_CONFIG = {
+    REGISTERED: { label: "Ghi nhận", className: "bg-amber-50 text-amber-700 border border-amber-200" },
+    OFFICIAL: { label: "Chính thức", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+    DROPPED: { label: "Đã hủy", className: "bg-rose-50 text-rose-700 border border-rose-200" },
 };
 
 export const RegisteredClassesTable: React.FC<RegisteredClassesTableProps> = ({
@@ -67,10 +62,12 @@ export const RegisteredClassesTable: React.FC<RegisteredClassesTableProps> = ({
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                         {data.map((item) => {
-                            const parsedSchedules = formatSchedules(item.schedules);
-                            
+                            const status = STATUS_CONFIG[item.status] || STATUS_CONFIG.REGISTERED;
+                            const dayStr = item.dayOfWeek === 8 ? "CN" : `T${item.dayOfWeek}`;
+                            const timeString = item.dayOfWeek ? `${dayStr} (${item.shiftName})` : "";
+
                             return (
-                                <tr key={item.enrollmentId} className="hover:bg-gray-50/50 bg-white transition-colors">
+                                <tr key={`${item.classId}-${item.enrolledAt}`} className="hover:bg-gray-50/50 bg-white transition-colors">
                                     <td className="px-5 py-4 font-semibold text-gray-900">{item.courseCode}</td>
                                     <td className="px-5 py-4 font-bold text-gray-900">{item.courseName}</td>
                                     <td className="px-5 py-4">
@@ -79,24 +76,18 @@ export const RegisteredClassesTable: React.FC<RegisteredClassesTableProps> = ({
                                         </span>
                                     </td>
                                     <td className="px-5 py-4 text-center font-medium text-gray-700">{item.credits}</td>
-                                    <td className="px-5 py-4 text-gray-600">
-                                        {parsedSchedules.length > 0 ? (
-                                            parsedSchedules.map((s, i) => <div key={i} className="whitespace-nowrap">{s.time}</div>)
-                                        ) : <span className="italic text-gray-400">Chưa có</span>}
+                                    <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
+                                        {timeString ? timeString : <span className="italic text-gray-400">Chưa có</span>}
                                     </td>
-                                    <td className="px-5 py-4 text-gray-600">
-                                        {parsedSchedules.length > 0 ? (
-                                            parsedSchedules.map((s, i) => <div key={i} className="whitespace-nowrap">{s.room}</div>)
-                                        ) : <span className="italic text-gray-400">-</span>}
+                                    <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
+                                        {item.roomName || <span className="italic text-gray-400">-</span>}
                                     </td>
-                                    <td className="px-5 py-4 text-center">
+                                    <td className="px-5 py-4 text-center whitespace-nowrap">
                                         <span className={clsx(
                                             "text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider",
-                                            item.status === "OFFICIAL" 
-                                                ? "bg-emerald-50 text-emerald-700" 
-                                                : "bg-amber-50 text-amber-700"
+                                            status.className
                                         )}>
-                                            {item.status === "OFFICIAL" ? "Đã lưu" : "Ghi nhận"}
+                                            {status.label}
                                         </span>
                                     </td>
                                 </tr>

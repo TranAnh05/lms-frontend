@@ -1,40 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
 import {
-    type CourseWithClassesDTO,
-    type RegisteredClassDTO,
-    type RegisterClassPayload,
-    type EnrollmentFilterParams,
+    type CourseWithClassesResponse,
+    type EnrollmentResponse,
 } from "../types";
 
 export const enrollmentService = {
-    getAvailableCourses: async (
-        params?: EnrollmentFilterParams
-    ): Promise<CourseWithClassesDTO[]> => {
-        const cleanParams = params
-            ? Object.fromEntries(
-                  Object.entries(params).filter(
-                      ([v]) => v !== undefined && v !== null && v !== ""
-                  )
-              )
-            : {};
-            
-        const response: any = await apiClient.get("/enrollments/available-courses", {
-            params: cleanParams,
-        });
+    // Lấy danh sách môn học và lớp học đang mở
+    getAvailableCourses: async (): Promise<CourseWithClassesResponse[]> => {
+        const response: any = await apiClient.get("/class-requests/courses-with-classes");
         return response.data || response;
     },
 
-    getRegisteredClasses: async (): Promise<RegisteredClassDTO[]> => {
-        const response: any = await apiClient.get("/enrollments/me/classes");
+    // Lấy danh sách các học phần đã đăng ký của sinh viên
+    getRegisteredClasses: async (): Promise<EnrollmentResponse[]> => {
+        const response: any = await apiClient.get("/enrollments/my");
         return response.data || response;
     },
 
-    registerClass: async (payload: RegisterClassPayload): Promise<RegisteredClassDTO> => {
-        const response: any = await apiClient.post("/enrollments/register", payload);
+    // Đăng ký lớp học phần 
+    registerClass: async (classId: number): Promise<EnrollmentResponse> => {
+        const response: any = await apiClient.post(`/enrollments/${classId}`);
         return response.data || response;
     },
 
+    // Hủy đăng ký học phần
     cancelRegistration: async (enrollmentId: number): Promise<void> => {
         await apiClient.delete(`/enrollments/${enrollmentId}`);
     },
