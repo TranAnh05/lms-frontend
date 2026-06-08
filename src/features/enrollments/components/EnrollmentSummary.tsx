@@ -11,7 +11,7 @@ interface EnrollmentSummaryProps {
 export const EnrollmentSummary: React.FC<EnrollmentSummaryProps> = ({
     totalCredits,
     totalClasses,
-    minCredits = 14,
+    minCredits = 12,
     maxCredits = 24,
 }) => {
     const isUnderLimit = totalCredits < minCredits;

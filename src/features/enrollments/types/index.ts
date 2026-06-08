@@ -1,4 +1,3 @@
-// --- Basic Entities ---
 export interface CourseBasic {
     id: number;
     code: string;
@@ -28,7 +27,40 @@ export interface ScheduleBasic {
     };
 }
 
-// --- Left Column (Exploration) ---
+// API Responses
+export interface CourseWithClassesResponse {
+    courseId: number;
+    courseName: string;
+    credits: number;
+    classes: ClassInfo[];
+}
+
+export interface ClassInfo {
+    classId: number;
+    classCode: string;
+    lecturerName: string;
+    dayOfWeek: number;
+    shiftName: string;
+    roomName: string;
+    currentStudents: number;
+    maxStudents: number;
+}
+
+export interface EnrollmentResponse {
+    courseId: number;
+    courseCode: string;
+    courseName: string;
+    credits: number;
+    classId: number;
+    classCode: string;
+    dayOfWeek: number;
+    shiftName: string;
+    roomName: string;
+    status: "REGISTERED" | "OFFICIAL" | "DROPPED";
+    enrolledAt: string;
+}
+
+// Old DTOs (For backward compatibility)
 export interface ClassRegistrationDTO {
     id: number;
     code: string;
@@ -44,7 +76,6 @@ export interface CourseWithClassesDTO {
     classes: ClassRegistrationDTO[];
 }
 
-// --- Right Column (Cart/Registered) ---
 export interface RegisteredClassDTO {
     enrollmentId: number;
     status: "REGISTERED" | "OFFICIAL" | "DROPPED";
@@ -58,7 +89,7 @@ export interface RegisteredClassDTO {
     schedules: ScheduleBasic[];
 }
 
-// --- API Params & Payloads ---
+// Params & Payloads
 export interface RegisterClassPayload {
     classId: number;
 }

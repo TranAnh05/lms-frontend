@@ -1,14 +1,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
-import { Library } from "lucide-react";
 
 import { 
-    type CourseWithClassesDTO, 
-    type RegisteredClassDTO, 
-    type ClassRegistrationDTO, 
-    type CourseBasic 
+    type CourseWithClassesResponse, 
+    type EnrollmentResponse, 
+    type ClassInfo
 } from "../types";
 import { enrollmentService } from "../services/enrollment.service";
 
@@ -17,33 +14,32 @@ import { RegisteredClassesTable } from "../components/RegisteredClassesTable";
 import { EnrollmentSummary } from "../components/EnrollmentSummary";
 import { ClassDetailModal } from "../components/ClassDetailModal";
 
-import { mockCoursesWithClasses, mockRegisteredClasses } from "../data/mockEnrollmentData";
-
 export const CourseRegistrationPage: React.FC = () => {
-    const [courses, setCourses] = useState<CourseWithClassesDTO[]>([]);
-    const [registeredClasses, setRegisteredClasses] = useState<RegisteredClassDTO[]>([]);
+    const [courses, setCourses] = useState<CourseWithClassesResponse[]>([]);
+    const [registeredClasses, setRegisteredClasses] = useState<EnrollmentResponse[]>([]);
     
     const [isLoadingCourses, setIsLoadingCourses] = useState(true);
     const [isLoadingCart, setIsLoadingCart] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const [selectedClass, setSelectedClass] = useState<ClassRegistrationDTO | null>(null);
-    const [selectedCourseContext, setSelectedCourseContext] = useState<CourseBasic | null>(null);
+    const [selectedClass, setSelectedClass] = useState<ClassInfo | null>(null);
+    const [selectedCourseContext, setSelectedCourseContext] = useState<CourseWithClassesResponse | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+    // Lấy dữ liệu API khởi tạo
     const fetchInitialData = useCallback(async () => {
         setIsLoadingCourses(true);
         setIsLoadingCart(true);
         try {
-            // TODO: Thay bằng API thực tế
-            setTimeout(() => {
-                setCourses(mockCoursesWithClasses);
-                setRegisteredClasses(mockRegisteredClasses);
-                setIsLoadingCourses(false);
-                setIsLoadingCart(false);
-            }, 800);
+            const [coursesData, registeredData] = await Promise.all([
+                enrollmentService.getAvailableCourses(),
+                enrollmentService.getRegisteredClasses()
+            ]);
+            setCourses(coursesData);
+            setRegisteredClasses(registeredData);
         } catch (error) {
             toast.error("Lỗi khi tải dữ liệu đăng ký học phần.");
+        } finally {
             setIsLoadingCourses(false);
             setIsLoadingCart(false);
         }
@@ -67,68 +63,31 @@ export const CourseRegistrationPage: React.FC = () => {
         return registeredClasses.map(rc => rc.classId);
     }, [registeredClasses]);
 
+    // Xử lý nút Đăng ký học phần
     const handleRegisterClass = async (classId: number) => {
         if (isProcessing) return;
         setIsProcessing(true);
         try {
-            // TODO: API logic
-            const targetCourse = courses.find(c => c.classes.some(cls => cls.id === classId));
-            const targetClass = targetCourse?.classes.find(cls => cls.id === classId);
+            await enrollmentService.registerClass(classId);
             
-            if (targetCourse && targetClass) {
-                const newRegistered: RegisteredClassDTO = {
-                    enrollmentId: Date.now(),
-                    status: "REGISTERED",
-                    enrolledAt: new Date().toISOString(),
-                    classId: targetClass.id,
-                    classCode: targetClass.code,
-                    courseId: targetCourse.course.id,
-                    courseName: targetCourse.course.name,
-                    courseCode: targetCourse.course.code,
-                    credits: targetCourse.course.credits,
-                    schedules: targetClass.schedules
-                };
-                
-                setCourses(prev => prev.map(c => ({
-                    ...c,
-                    classes: c.classes.map(cls => cls.id === classId ? { ...cls, currentStudents: cls.currentStudents + 1 } : cls)
-                })));
-                
-                setRegisteredClasses(prev => [newRegistered, ...prev]);
-                toast.success(`Đăng ký thành công lớp ${targetClass.code}`);
-            }
-        } catch (error) {
-            toast.error("Đăng ký thất bại. Lớp có thể đã đầy hoặc bị trùng lịch.");
+            // Cập nhật lại giỏ hàng và danh sách (số lượng currentStudent) để đồng bộ mới nhất
+            const [coursesData, registeredData] = await Promise.all([
+                enrollmentService.getAvailableCourses(),
+                enrollmentService.getRegisteredClasses()
+            ]);
+            setCourses(coursesData);
+            setRegisteredClasses(registeredData);
+            
+            toast.success("Đăng ký lớp học phần thành công!");
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Đăng ký thất bại. Lớp có thể đã đầy hoặc bị trùng lịch.");
         } finally {
             setIsProcessing(false);
         }
     };
 
-    const handleCancelRegistration = async (targetId: number, isClassId: boolean = false) => {
-        if (isProcessing) return;
-        setIsProcessing(true);
-        try {
-            const classIdToCancel = isClassId 
-                ? targetId 
-                : registeredClasses.find(rc => rc.enrollmentId === targetId)?.classId;
-
-            if (!classIdToCancel) return;
-
-            setCourses(prev => prev.map(c => ({
-                ...c,
-                classes: c.classes.map(cls => cls.id === classIdToCancel ? { ...cls, currentStudents: cls.currentStudents - 1 } : cls)
-            })));
-
-            setRegisteredClasses(prev => prev.filter(rc => rc.classId !== classIdToCancel));
-            toast.info("Đã hủy lớp học phần.");
-        } catch (error) {
-            toast.error("Hủy đăng ký thất bại.");
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const handleViewDetail = (classData: ClassRegistrationDTO, course: CourseBasic) => {
+    // Xử lý xem chi tiết
+    const handleViewDetail = (classData: ClassInfo, course: CourseWithClassesResponse) => {
         setSelectedClass(classData);
         setSelectedCourseContext(course);
         setIsDetailModalOpen(true);
@@ -170,8 +129,8 @@ export const CourseRegistrationPage: React.FC = () => {
                 isOpen={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
                 classData={selectedClass}
-                courseName={selectedCourseContext?.name}
-                courseCode={selectedCourseContext?.code}
+                courseName={selectedCourseContext?.courseName}
+                courseCode={selectedCourseContext?.courseName} // Tạm thời dùng Name nếu backend không trả Code cho course
             />
         </div>
     );

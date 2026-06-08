@@ -3,12 +3,12 @@ import {
     X, User, Users, CalendarDays, MapPin, Clock, BookOpen, AlertCircle 
 } from "lucide-react";
 import clsx from "clsx";
-import { type ClassRegistrationDTO } from "../types";
+import { type ClassInfo } from "../types";
 
 interface ClassDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    classData: ClassRegistrationDTO | null;
+    classData: ClassInfo | null;
     courseName?: string;
     courseCode?: string;
 }
@@ -39,7 +39,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                     <div>
                         <div className="flex items-center gap-2 mb-1.5">
                             <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-md tracking-wide">
-                                {classData.code}
+                                {classData.classCode}
                             </span>
                             <span className={clsx(
                                 "text-xs font-bold px-2.5 py-1 rounded-md border",
@@ -75,7 +75,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                             <div>
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-0.5">Giảng viên</p>
                                 <p className="text-sm font-semibold text-gray-900">
-                                    {classData.lecturer?.fullName || "Chưa phân công"}
+                                    {classData.lecturerName || "Chưa phân công"}
                                 </p>
                             </div>
                         </div>
@@ -113,43 +113,39 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                             Lịch học dự kiến
                         </h3>
                         
-                        {classData.schedules.length === 0 ? (
+                        {!classData.dayOfWeek || !classData.shiftName ? (
                             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3 text-amber-800">
                                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                                 <p className="text-sm font-medium">Lớp học phần này hiện chưa có lịch học cụ thể. Vui lòng quay lại kiểm tra sau.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 gap-3">
-                                {classData.schedules.map((schedule, idx) => (
-                                    <div key={schedule.id} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:border-blue-200 transition-colors shadow-sm">
-                                        <div className="flex items-center gap-4 sm:w-1/3">
-                                            <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-black shrink-0">
-                                                {idx + 1}
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase">Ngày học</p>
-                                                <p className="text-sm font-bold text-gray-900">{formatDayOfWeek(schedule.dayOfWeek)}</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex-1 grid grid-cols-2 gap-4">
-                                            <div className="flex items-start gap-2.5">
-                                                <Clock className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase">{schedule.shift.name}</p>
-                                                    <p className="text-sm font-semibold text-gray-700">{schedule.shift.startTime} - {schedule.shift.endTime}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-start gap-2.5">
-                                                <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase">Phòng {schedule.room.type === 'LAB' ? '(Thực hành)' : ''}</p>
-                                                    <p className="text-sm font-semibold text-gray-700">{schedule.room.name}</p>
-                                                </div>
-                                            </div>
+                            <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
+                                <div className="flex items-center gap-4 sm:w-1/3">
+                                    <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-black shrink-0">
+                                        1
+                                    </span>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase">Ngày học</p>
+                                        <p className="text-sm font-bold text-gray-900">{formatDayOfWeek(classData.dayOfWeek)}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-1 grid grid-cols-2 gap-4">
+                                    <div className="flex items-start gap-2.5">
+                                        <Clock className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase">Ca học</p>
+                                            <p className="text-sm font-semibold text-gray-700">{classData.shiftName}</p>
                                         </div>
                                     </div>
-                                ))}
+                                    <div className="flex items-start gap-2.5">
+                                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-400 uppercase">Phòng học</p>
+                                            <p className="text-sm font-semibold text-gray-700">{classData.roomName || "Chưa sắp xếp"}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

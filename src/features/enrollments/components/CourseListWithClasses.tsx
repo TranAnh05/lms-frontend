@@ -2,31 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Inbox, Loader2 } from "lucide-react";
 import clsx from "clsx";
-import { 
-    type CourseWithClassesDTO, 
-    type ClassRegistrationDTO, 
-    type CourseBasic, 
-    type ScheduleBasic 
-} from "../types";
+import { type CourseWithClassesResponse, type ClassInfo } from "../types";
 
 interface CourseListWithClassesProps {
-    data: CourseWithClassesDTO[];
+    data: CourseWithClassesResponse[];
     isLoading: boolean;
     registeredClassIds: number[];
     onRegisterClass: (classId: number) => void;
-    onViewDetail: (classData: ClassRegistrationDTO, course: CourseBasic) => void;
+    onViewDetail: (classData: ClassInfo, course: CourseWithClassesResponse) => void;
 }
-
-const formatSchedules = (schedules: ScheduleBasic[]) => {
-    if (!schedules || schedules.length === 0) return [];
-    return schedules.map(s => {
-        const day = s.dayOfWeek === 8 ? "CN" : `T${s.dayOfWeek}`;
-        return {
-            time: `${day} (${s.shift.name})`,
-            room: s.room.name
-        };
-    });
-};
 
 export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
     data,
@@ -37,9 +21,10 @@ export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
 }) => {
     const [expandedCourses, setExpandedCourses] = useState<number[]>([]);
 
+    // Tự động mở rộng môn học đầu tiên khi có dữ liệu
     useEffect(() => {
         if (data.length > 0) {
-            setExpandedCourses([data[0].course.id]);
+            setExpandedCourses([data[0].courseId]);
         }
     }, [data]);
 
@@ -72,23 +57,26 @@ export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
 
     return (
         <div className="space-y-4">
-            {data.map((group) => {
-                const { course, classes } = group;
-                const isExpanded = expandedCourses.includes(course.id);
-                const registeredClassInCourse = classes.find(c => registeredClassIds.includes(c.id));
+            {data.map((courseGroup) => {
+                const { courseId, courseName, credits, classes } = courseGroup;
+                const isExpanded = expandedCourses.includes(courseId);
+                
+                // Kiểm tra xem sinh viên đã đăng ký lớp nào trong môn này chưa (để disable các lớp khác cùng môn)
+                const registeredClassInCourse = classes.find(c => registeredClassIds.includes(c.classId));
 
                 return (
-                    <div key={course.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-200">
+                    <div key={courseId} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-200">
+                        {/* Course Header */}
                         <div 
                             className={clsx(
                                 "flex items-center justify-between p-4 cursor-pointer transition-colors",
                                 isExpanded ? "bg-blue-50/20 border-b border-blue-100" : "hover:bg-gray-50"
                             )}
-                            onClick={() => toggleCourse(course.id)}
+                            onClick={() => toggleCourse(courseId)}
                         >
                             <div>
                                 <h3 className="text-base font-bold text-gray-900">
-                                    {course.code} - {course.name} - {course.credits} Tín chỉ
+                                    {courseName} - {credits} Tín chỉ
                                 </h3>
                             </div>
                             <div className="flex items-center gap-4 pl-4 border-l border-gray-100">
@@ -100,6 +88,7 @@ export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
                             </div>
                         </div>
 
+                        {/* Classes Table */}
                         <div className={clsx(
                             "overflow-hidden transition-all duration-300 ease-in-out",
                             isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
@@ -118,29 +107,29 @@ export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
                                         {classes.map((cls) => {
-                                            const isRegistered = registeredClassIds.includes(cls.id);
+                                            const isRegistered = registeredClassIds.includes(cls.classId);
                                             const isFull = cls.currentStudents >= cls.maxStudents;
+                                            
+                                            // Khóa nút đăng ký nếu lớp đã đầy hoặc môn này đã được đăng ký (tránh đăng ký 2 lớp cùng 1 môn)
                                             const isDisabled = (!isRegistered && isFull) || (!isRegistered && !!registeredClassInCourse);
-                                            const parsedSchedules = formatSchedules(cls.schedules);
+                                            
+                                            const dayStr = cls.dayOfWeek === 8 ? "CN" : `T${cls.dayOfWeek}`;
+                                            const timeString = cls.dayOfWeek ? `${dayStr} (${cls.shiftName})` : "";
 
                                             return (
-                                                <tr key={cls.id} className={clsx(
+                                                <tr key={cls.classId} className={clsx(
                                                     "transition-colors",
                                                     isRegistered ? "bg-emerald-50/40" : "hover:bg-gray-50/50 bg-white"
                                                 )}>
-                                                    <td className="px-5 py-4 font-semibold text-gray-900">{cls.code}</td>
+                                                    <td className="px-5 py-4 font-semibold text-gray-900">{cls.classCode}</td>
                                                     <td className="px-5 py-4 font-medium text-gray-700">
-                                                        {cls.lecturer?.fullName || <span className="text-gray-400 italic">Chưa phân công</span>}
+                                                        {cls.lecturerName || <span className="text-gray-400 italic">Chưa phân công</span>}
                                                     </td>
-                                                    <td className="px-5 py-4 text-gray-600">
-                                                        {parsedSchedules.length > 0 ? (
-                                                            parsedSchedules.map((s, i) => <div key={i} className="whitespace-nowrap">{s.time}</div>)
-                                                        ) : <span className="italic text-gray-400">Chưa có</span>}
+                                                    <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
+                                                        {timeString ? timeString : <span className="italic text-gray-400">Chưa có</span>}
                                                     </td>
-                                                    <td className="px-5 py-4 text-gray-600">
-                                                        {parsedSchedules.length > 0 ? (
-                                                            parsedSchedules.map((s, i) => <div key={i} className="whitespace-nowrap">{s.room}</div>)
-                                                        ) : <span className="italic text-gray-400">-</span>}
+                                                    <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
+                                                        {cls.roomName || <span className="italic text-gray-400">-</span>}
                                                     </td>
                                                     <td className="px-5 py-4 text-center whitespace-nowrap">
                                                         <span className={clsx("font-bold", isFull ? "text-rose-600" : "text-emerald-600")}>
@@ -152,14 +141,14 @@ export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-center justify-center gap-2">
                                                             <button 
-                                                                onClick={() => onViewDetail(cls, course)}
+                                                                onClick={() => onViewDetail(cls, courseGroup)}
                                                                 className="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none"
                                                             >
                                                                 Chi tiết
                                                             </button>
                                                             {!isRegistered && (
                                                                 <button
-                                                                    onClick={() => onRegisterClass(cls.id)}
+                                                                    onClick={() => onRegisterClass(cls.classId)}
                                                                     disabled={isDisabled}
                                                                     className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors focus:outline-none"
                                                                 >
