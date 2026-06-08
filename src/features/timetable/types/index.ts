@@ -8,23 +8,21 @@ export interface ShiftBasic {
 }
 
 export interface ScheduleItem {
-    id: number;           // class_schedules.id
-    classId: number;      // classes.id
-    courseName: string;   // courses.name
-    classCode: string;    // classes.code
-    roomName: string;     // rooms.name
-    dayOfWeek: number;    // 2 (Thứ 2) -> 8 (Chủ Nhật)
-    shiftId: number;      // 1 -> 4
-    
-    // Dành cho Sinh viên
-    lecturerName?: string; 
-    
-    // Dành cho Giảng viên
-    currentStudents?: number; 
-    maxStudents?: number;     
+    courseName: string;
+    classCode: string;
+    roomName: string;
+    dayOfWeek: number;    
+    shiftName: string;    
+    startTime: string;     
+    endTime: string;       
+    lecturerName?: string | null; 
+    totalWeeks: number;
+    startDate: string;
 }
 
-export interface WeeklyScheduleParams {
-    startDate: string;
-    endDate: string;
-}
+export const SHIFTS: ShiftBasic[] = [
+    { id: 1, name: "Ca 1", startTime: "07:00", endTime: "09:15" },
+    { id: 2, name: "Ca 2", startTime: "09:30", endTime: "11:45" },
+    { id: 3, name: "Ca 3", startTime: "13:00", endTime: "15:15" },
+    { id: 4, name: "Ca 4", startTime: "15:30", endTime: "17:45" },
+];

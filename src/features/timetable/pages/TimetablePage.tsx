@@ -1,10 +1,12 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { TimetableHeader } from "../components/TimetableHeader";
 import { TimetableGrid } from "../components/TimetableGrid";
 import { timetableService } from "../services/timetable.service";
 import { type ScheduleItem, type TimetableRole } from "../types";
-import { addWeeks, formatApiDate, getStartOfWeek } from "../utils/dateUtils";
+import { addWeeks } from "../utils/dateUtils";
 import { useAuthStore } from "@/store/authStore";
 
 export const TimetablePage: React.FC = () => {
@@ -18,17 +20,13 @@ export const TimetablePage: React.FC = () => {
         return user?.roles?.includes("INSTRUCTOR") ? "INSTRUCTOR" : "STUDENT";
     }, [user]);
 
-    const fetchSchedule = useCallback(async (date: Date) => {
+    const fetchSchedule = useCallback(async () => {
         setIsLoading(true);
         try {
-            const startOfWeek = getStartOfWeek(date);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-
-            const data = await timetableService.getWeeklySchedule({
-                startDate: formatApiDate(startOfWeek),
-                endDate: formatApiDate(endOfWeek),
-            });
+            const data = role === "INSTRUCTOR" 
+                ? await timetableService.getLecturerSchedule() 
+                : await timetableService.getMySchedule();
+            
             setScheduleData(data);
         } catch (error) {
             toast.error("Không thể tải thời khóa biểu. Vui lòng thử lại.");
@@ -36,15 +34,15 @@ export const TimetablePage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [role]);
 
     useEffect(() => {
-        fetchSchedule(currentDate);
-    }, [currentDate, fetchSchedule]);
+        fetchSchedule();
+    }, [fetchSchedule]);
 
-    const handlePrevWeek = useCallback(() => setCurrentDate((prev) => addWeeks(prev, -1)), []);
-    const handleNextWeek = useCallback(() => setCurrentDate((prev) => addWeeks(prev, 1)), []);
-    const handleToday = useCallback(() => setCurrentDate(new Date()), []);
+    const handlePrevWeek = () => setCurrentDate((prev) => addWeeks(prev, -1));
+    const handleNextWeek = () => setCurrentDate((prev) => addWeeks(prev, 1));
+    const handleToday = () => setCurrentDate(new Date());
 
     return (
         <div className="min-h-screen bg-gray-50/50 p-2 sm:p-2 lg:p-3">
