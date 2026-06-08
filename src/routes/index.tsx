@@ -14,6 +14,15 @@ import { ClassManagementPage } from "@/features/classes/pages/ClassManagementPag
 import { ClassRequestPage } from "@/features/class-requests/pages/ClassRequestPage";
 import { RegistrationPeriodsPage } from "@/features/classes/pages/RegistrationPeriodsPage";
 import { CourseRegistrationPage } from "@/features/enrollments/pages/CourseRegistrationPage";
+import { TimetablePage } from "@/features/timetable/pages/TimetablePage";
+
+// Imports module Teaching (Giảng viên)
+import { ClassListPage } from "@/features/teaching/pages/ClassListPage";
+import { ClassWorkspaceLayout } from "@/features/teaching/pages/ClassWorkspaceLayout";
+import { StudentManagePage } from "@/features/teaching/pages/StudentManagePage";
+import { LessonManagePage } from "@/features/teaching/pages/LessonManagePage";
+import { ExamManagePage } from "@/features/teaching/pages/ExamManagePage";
+import { GradeManagePage } from "@/features/teaching/pages/GradeManagePage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -21,12 +30,6 @@ const RoleBasedRedirect = () => {
 
     return <Navigate to={targetPath} replace />;
 };
-
-const TimetablePage = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện Thời khóa biểu
-    </div>
-);
 
 const HeadQuanLyLopHoc = () => (
     <div className="text-xl font-bold text-gray-800">
@@ -98,10 +101,6 @@ export const router = createBrowserRouter([
                 element: <CourseProposalPage />,
             },
             {
-                path: "courses",
-                element: <ClassManagementPage />,
-            },
-            {
                 path: "approval-classes",
                 element: <ClassRequestPage />
             },
@@ -110,12 +109,48 @@ export const router = createBrowserRouter([
                 element: <HeadQuanLyLopHoc />
             },
             {
-                path:"registration",
+                path: "registration",
                 element: <RegistrationPeriodsPage />
             },
             {
                 path: "student-registration",
                 element: <CourseRegistrationPage />
+            },
+            // Cấu hình Nested Routing cho Giảng viên (Teaching Module)
+            {
+                path: "teacher-classes",
+                children: [
+                    {
+                        index: true,
+                        element: <ClassListPage />
+                    },
+                    {
+                        path: ":classId",
+                        element: <ClassWorkspaceLayout />,
+                        children: [
+                            {
+                                index: true,
+                                element: <Navigate to="students" replace />
+                            },
+                            {
+                                path: "students",
+                                element: <StudentManagePage />
+                            },
+                            {
+                                path: "lessons",
+                                element: <LessonManagePage />
+                            },
+                            {
+                                path: "exams",
+                                element: <ExamManagePage />
+                            },
+                            {
+                                path: "grades",
+                                element: <GradeManagePage />
+                            }
+                        ]
+                    }
+                ]
             }
         ],
     },

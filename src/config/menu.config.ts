@@ -5,8 +5,6 @@ import {
     Layers,
     UserCircle,
     Calendar,
-    Clapperboard,
-    ClipboardCheck,
     FolderKanban,
     FileText,
     ShieldAlert,
@@ -102,18 +100,8 @@ const ALL_MENUS = {
     },
     CLASS_MGMT: {
         title: "Quản lý lớp học",
-        path: "/dashboard/classes",
+        path: "/dashboard/teacher-classes",
         icon: FolderKanban,
-    },
-    LESSON_MGMT: {
-        title: "Quản lý bài học",
-        path: "/dashboard/lessons",
-        icon: Clapperboard,
-    },
-    EXAM_MGMT: {
-        title: "Quản lý bài kiểm tra",
-        path: "/dashboard/exams",
-        icon: ClipboardCheck,
     },
 
     STUDENT_CLASSES: {
@@ -186,8 +174,6 @@ export const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
     [ROLES.INSTRUCTOR]: [
         ALL_MENUS.TIMETABLE,
         ALL_MENUS.CLASS_MGMT,
-        ALL_MENUS.LESSON_MGMT,
-        ALL_MENUS.EXAM_MGMT,
         ALL_MENUS.PROFILE,
     ],
 
