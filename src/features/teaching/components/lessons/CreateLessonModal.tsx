@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import { X, UploadCloud, FileText, Trash2, Loader2 } from "lucide-react";
-import clsx from "clsx";
 
 interface CreateLessonModalProps {
     isOpen: boolean;
@@ -10,6 +9,7 @@ interface CreateLessonModalProps {
 
 export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [title, setTitle] = useState("");
+    const [orderIndex, setOrderIndex] = useState<number>(1);
     const [description, setDescription] = useState("");
     const [isPublished, setIsPublished] = useState(true);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -32,12 +32,13 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({ isOpen, on
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim()) return;
+        if (!title.trim() || orderIndex < 1) return;
 
         setIsSubmitting(true);
         try {
             const formData = new FormData();
             formData.append("title", title);
+            formData.append("orderIndex", String(orderIndex));
             formData.append("description", description);
             formData.append("isPublished", String(isPublished));
             
@@ -47,8 +48,8 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({ isOpen, on
 
             await onSubmit(formData);
             
-            // Reset form sau khi thành công
             setTitle("");
+            setOrderIndex(1);
             setDescription("");
             setIsPublished(true);
             setSelectedFiles([]);
@@ -72,18 +73,33 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({ isOpen, on
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                            Tiêu đề bài học <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Nhập tên bài học..."
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
-                            required
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                        <div className="sm:col-span-3">
+                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                Tiêu đề bài học <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Nhập tên bài học..."
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                                required
+                            />
+                        </div>
+                        <div className="sm:col-span-1">
+                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                Thứ tự hiển thị <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                min={1}
+                                value={orderIndex}
+                                onChange={(e) => setOrderIndex(Number(e.target.value))}
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div>
