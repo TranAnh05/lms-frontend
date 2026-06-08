@@ -4,28 +4,22 @@ export type ExamType = 'REGULAR' | 'MIDTERM' | 'FINAL';
 export type ExamStatus = 'CREATED' | 'OPEN' | 'CLOSED';
 export type GradeStatus = 'PENDING' | 'PASS' | 'FAIL';
 
-export interface ClassBasic {
-    id: number;
-    code: string;
-    courseCode: string;
+export interface LecturerClassResponse {
+    classId: number;
+    classCode: string;
     courseName: string;
-    credits: number;
-    semesterCode: string;
+    status: ClassStatus;
     maxStudents: number;
     currentStudents: number;
-    status: ClassStatus;
 }
 
-export interface StudentInClass {
-    enrollmentId: number;
+export interface StudentOfClassResponse {
     studentId: number;
-    studentCode: string;
     fullName: string;
-    email: string;
     avatarUrl?: string;
-    cohort: number;
+    studentCode: string;
+    email: string;
     enrollmentStatus: EnrollmentStatus;
-    enrolledAt: string;
 }
 
 export interface LessonMaterial {

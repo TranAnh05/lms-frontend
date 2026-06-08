@@ -1,9 +1,9 @@
 import React from "react";
 import clsx from "clsx";
-import { type StudentInClass, type EnrollmentStatus } from "../../types";
+import { type StudentOfClassResponse, type EnrollmentStatus } from "../../types";
 
 interface StudentListTableProps {
-    students: StudentInClass[];
+    students: StudentOfClassResponse[];
     isLoading: boolean;
 }
 
@@ -56,7 +56,7 @@ export const StudentListTable: React.FC<StudentListTableProps> = ({ students, is
                             const initials = student.fullName.split(' ').map(n => n[0]).slice(-2).join('');
                             
                             return (
-                                <tr key={student.enrollmentId} className="hover:bg-gray-50/50 transition-colors bg-white">
+                                <tr key={student.studentId} className="hover:bg-gray-50/50 transition-colors bg-white">
                                     <td className="px-6 py-4 text-center text-gray-500 font-medium">
                                         {index + 1}
                                     </td>

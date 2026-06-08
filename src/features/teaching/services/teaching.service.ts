@@ -1,15 +1,14 @@
 import apiClient from "@/services/apiClient";
 import { 
-    type ClassBasic, 
-    type StudentInClass, 
+    type LecturerClassResponse, 
     type LessonBasic, 
     type ExamBasic, 
-    type StudentGrade 
+    type StudentGrade, 
+    type StudentOfClassResponse
 } from "../types";
 
 import { 
     MOCK_CLASSES, 
-    MOCK_STUDENTS, 
     MOCK_LESSONS, 
     MOCK_EXAMS, 
     MOCK_GRADES 
@@ -19,29 +18,24 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const teachingService = {
     // 1. Danh sách lớp học được phân công
-    getAssignedClasses: async (): Promise<ClassBasic[]> => {
-        await delay(500);
-        return MOCK_CLASSES;
-        
-        // const response = await apiClient.get<ClassBasic[]>("/teaching/classes");
-        // return response.data;
+   getAssignedClasses: async (status?: string): Promise<LecturerClassResponse[]> => {
+        const response = await apiClient.get<LecturerClassResponse[]>("/classes/my-assigned", {
+            params: { status } 
+        });
+        return response.data;
+    },
+
+    getStudentsOfClass: async (classId: number): Promise<StudentOfClassResponse[]> => {
+        const response = await apiClient.get<StudentOfClassResponse[]>(`/classes/${classId}/students`);
+        return response.data;
     },
 
     // 2. Chi tiết lớp học
-    getClassDetail: async (classId: number): Promise<ClassBasic | undefined> => {
+    getClassDetail: async (classId: number): Promise<LecturerClassResponse | undefined> => {
         await delay(300);
         return MOCK_CLASSES.find(c => c.id === classId);
 
         // const response = await apiClient.get<ClassBasic>(`/teaching/classes/${classId}`);
-        // return response.data;
-    },
-
-    // 2. Danh sách sinh viên trong lớp
-    getStudentsInClass: async (classId: number): Promise<StudentInClass[]> => {
-        await delay(400);
-        return MOCK_STUDENTS[classId] || [];
-
-        // const response = await apiClient.get<StudentInClass[]>(`/teaching/classes/${classId}/students`);
         // return response.data;
     },
 

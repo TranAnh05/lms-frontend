@@ -5,7 +5,7 @@ import { Loader2, BookMarked, Inbox } from "lucide-react";
 import { toast } from "react-toastify";
 import clsx from "clsx";
 import { teachingService } from "../services/teaching.service";
-import { type ClassBasic, type ClassStatus } from "../types";
+import { type LecturerClassResponse, type ClassStatus } from "../types";
 import { ClassCard } from "../components/ClassCard";
 
 const FILTER_OPTIONS: { value: ClassStatus | "ALL"; label: string }[] = [
@@ -18,7 +18,7 @@ const FILTER_OPTIONS: { value: ClassStatus | "ALL"; label: string }[] = [
 ];
 
 export const ClassListPage: React.FC = () => {
-    const [classes, setClasses] = useState<ClassBasic[]>([]);
+    const [classes, setClasses] = useState<LecturerClassResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedStatus, setSelectedStatus] = useState<ClassStatus | "ALL">("ALL");
     const navigate = useNavigate();
@@ -26,6 +26,7 @@ export const ClassListPage: React.FC = () => {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
+                // Lấy toàn bộ danh sách lớp và xử lý bộ lọc ở phía client
                 const data = await teachingService.getAssignedClasses();
                 setClasses(data);
             } catch (error) {
@@ -69,7 +70,6 @@ export const ClassListPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Bộ lọc trạng thái */}
             <div className="flex flex-wrap items-center gap-2 mb-8">
                 {FILTER_OPTIONS.map((option) => (
                     <button
@@ -111,7 +111,7 @@ export const ClassListPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredClasses.map((classItem) => (
                         <ClassCard 
-                            key={classItem.id} 
+                            key={classItem.classId} 
                             classData={classItem} 
                             onClick={handleClassClick} 
                         />

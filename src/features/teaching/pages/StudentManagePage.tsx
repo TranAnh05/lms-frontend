@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { teachingService } from "../services/teaching.service";
-import { type StudentInClass } from "../types";
+import { type StudentOfClassResponse } from "../types";
 import { StudentListTable } from "../components/students/StudentListTable";
 
 export const StudentManagePage: React.FC = () => {
     const { classId } = useParams<{ classId: string }>();
-    const [students, setStudents] = useState<StudentInClass[]>([]);
+    const [students, setStudents] = useState<StudentOfClassResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -16,7 +15,7 @@ export const StudentManagePage: React.FC = () => {
             if (!classId) return;
             setIsLoading(true);
             try {
-                const data = await teachingService.getStudentsInClass(Number(classId));
+                const data = await teachingService.getStudentsOfClass(Number(classId));
                 setStudents(data);
             } catch (error) {
                 toast.error("Không thể tải danh sách sinh viên.");
@@ -30,7 +29,6 @@ export const StudentManagePage: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Title Block */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                 <h2 className="text-lg font-bold text-gray-900">Quản lý Sinh viên</h2>
                 <p className="text-sm text-gray-500 mt-0.5">

@@ -1,10 +1,10 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import clsx from "clsx";
-import { type ClassBasic, type ClassStatus } from "../types";
+import { type LecturerClassResponse, type ClassStatus } from "../types";
 
 interface ClassCardProps {
-    classData: ClassBasic;
+    classData: LecturerClassResponse;
     onClick: (classId: number) => void;
 }
 
@@ -21,7 +21,7 @@ export const ClassCard: React.FC<ClassCardProps> = ({ classData, onClick }) => {
 
     return (
         <div
-            onClick={() => onClick(classData.id)}
+            onClick={() => onClick(classData.classId)}
             className="group flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer overflow-hidden"
         >
             <div className="p-5 flex-1">
@@ -38,11 +38,13 @@ export const ClassCard: React.FC<ClassCardProps> = ({ classData, onClick }) => {
                 <div className="mt-4 flex flex-col gap-1.5">
                     <div className="text-sm text-gray-600">
                         <span className="text-gray-500">Mã lớp:</span>{" "}
-                        <span className="font-semibold text-gray-900">{classData.code}</span>
+                        <span className="font-semibold text-gray-900">{classData.classCode}</span>
                     </div>
                     <div className="text-sm text-gray-600">
-                        <span className="text-gray-500">Mã môn:</span>{" "}
-                        <span className="font-semibold text-gray-900">{classData.courseCode}</span>
+                        <span className="text-gray-500">Sĩ số:</span>{" "}
+                        <span className="font-semibold text-gray-900">
+                            {classData.currentStudents} / {classData.maxStudents}
+                        </span>
                     </div>
                 </div>
             </div>
