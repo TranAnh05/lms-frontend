@@ -42,7 +42,7 @@ export const GradeManagePage: React.FC = () => {
 
     const handleGradeChange = (
         enrollmentId: number, 
-        field: "regularScore1" | "midtermScore" | "finalScore", 
+        field: "regularScore1" | "regularScore2" | "midtermScore" | "finalScore", 
         value: number | null
     ) => {
         setGrades(prev => prev.map(grade => 

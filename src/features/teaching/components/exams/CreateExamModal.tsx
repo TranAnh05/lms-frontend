@@ -11,6 +11,7 @@ interface CreateExamModalProps {
 
 interface QuestionInput {
     questionText: string;
+    orderIndex: number;
     answerA: string;
     answerB: string;
     answerC: string;
@@ -27,7 +28,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
     const [questions, setQuestions] = useState<QuestionInput[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Tự động cập nhật danh sách câu hỏi khi thay đổi số lượng câu hỏi
+    // Tự động cập nhật danh sách và thứ tự câu hỏi ngầm
     useEffect(() => {
         const count = Math.max(0, totalQuestions);
         setQuestions((prev) => {
@@ -36,6 +37,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
                 while (next.length < count) {
                     next.push({
                         questionText: "",
+                        orderIndex: next.length + 1,
                         answerA: "",
                         answerB: "",
                         answerC: "",
@@ -52,7 +54,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
 
     if (!isOpen) return null;
 
-    const handleQuestionChange = (index: number, field: keyof QuestionInput, value: string) => {
+    const handleQuestionChange = (index: number, field: keyof QuestionInput, value: string | number) => {
         setQuestions((prev) => {
             const updated = [...prev];
             updated[index] = { ...updated[index], [field]: value };
@@ -66,13 +68,24 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
 
         setIsSubmitting(true);
         try {
+            const formattedQuestions = questions.map(q => ({
+                content: q.questionText,
+                orderIndex: q.orderIndex, // orderIndex được gửi ngầm xuống backend
+                options: [
+                    { content: q.answerA, isCorrect: q.correctAnswer === "A", orderIndex: 1 },
+                    { content: q.answerB, isCorrect: q.correctAnswer === "B", orderIndex: 2 },
+                    { content: q.answerC, isCorrect: q.correctAnswer === "C", orderIndex: 3 },
+                    { content: q.answerD, isCorrect: q.correctAnswer === "D", orderIndex: 4 },
+                ]
+            }));
+
             await onSubmit({
                 title: title.trim(),
                 description: description.trim(),
                 examType,
                 timeLimit,
                 totalQuestions,
-                questions,
+                questions: formattedQuestions,
             });
             
             setTitle("");
@@ -83,7 +96,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
             setQuestions([]);
             onClose();
         } catch (error) {
-            // Error handled by parent or toast
+            // Error handled by parent
         } finally {
             setIsSubmitting(false);
         }
@@ -93,7 +106,6 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl border border-gray-200 shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
                 
-                {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Tạo đề thi mới</h2>
@@ -104,10 +116,8 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
                     </button>
                 </div>
 
-                {/* Form Content */}
                 <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                     
-                    {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="md:col-span-2">
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tiêu đề bài thi *</label>
@@ -172,15 +182,14 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
                         </div>
                     </div>
 
-                    {/* Dynamic Questions Section */}
                     {questions.length > 0 && (
                         <div className="border-t border-gray-100 pt-5 space-y-6">
                             <h3 className="text-base font-bold text-gray-900">Nội dung bộ câu hỏi ({questions.length} câu)</h3>
                             
                             {questions.map((q, idx) => (
                                 <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200/60 space-y-4">
-                                    <div className="flex items-start gap-3">
-                                        <span className="font-bold text-sm text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md shrink-0">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                        <span className="font-bold text-sm text-blue-600 bg-blue-50 px-3 py-1.5 rounded-md shrink-0">
                                             Câu {idx + 1}
                                         </span>
                                         <input
@@ -193,8 +202,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
                                         />
                                     </div>
 
-                                    {/* 4 Answers Grid */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 md:pl-12">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-0 sm:pl-[76px]">
                                         {(["A", "B", "C", "D"] as const).map((label) => {
                                             const fieldName = `answer${label}` as keyof QuestionInput;
                                             const isCorrect = q.correctAnswer === label;
@@ -234,7 +242,6 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
                     )}
                 </form>
 
-                {/* Footer Actions */}
                 <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/50 flex items-center justify-end gap-3">
                     <button
                         type="button"
