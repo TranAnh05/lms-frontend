@@ -48,16 +48,21 @@ export interface StudentExamBasic extends ExamResponseDto {
     score?: number;
 }
 
+export interface ExamAttemptResponse {
+    attemptId: number;
+    examId: number;
+    startTime: string;
+    status: AttemptStatus;
+}
+
 export interface ExamTakingOption {
-    id: number;
+    optionId: number; 
     content: string;
-    orderIndex: number;
 }
 
 export interface ExamTakingQuestion {
-    id: number;
+    questionId: number; 
     content: string;
-    orderIndex: number;
     options: ExamTakingOption[];
 }
 
@@ -84,6 +89,7 @@ export interface ExamSubmitResponse {
     correctAnswers: number;
     totalQuestions: number;
     submitTime: string;
+    status: string; 
 }
 
 export interface StudentGradeResponse {
