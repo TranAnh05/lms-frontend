@@ -1,13 +1,15 @@
-import React from "react";
-import { BookText, Download, FileText, FileArchive, File, FileCode2 } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState } from "react";
+import { BookText, Download, FileText, FileArchive, File as FileIcon, FileCode2, Loader2 } from "lucide-react";
 import clsx from "clsx";
+import { toast } from "react-toastify";
+import { studentService } from "../../services/student.service";
 import { type StudentLessonBasic, type StudentLessonMaterial } from "../../types";
 
 interface StudentLessonItemProps {
     lesson: StudentLessonBasic;
 }
 
-// Format dung lượng file (Bytes -> KB/MB)
 const formatFileSize = (bytes?: number) => {
     if (!bytes) return "0 B";
     const k = 1024;
@@ -16,9 +18,9 @@ const formatFileSize = (bytes?: number) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 };
 
-// Map icon và màu sắc theo định dạng file
 const getFileConfig = (fileType?: string) => {
     const type = fileType?.toLowerCase() || "";
+    
     if (type.includes("pdf")) {
         return { icon: FileText, color: "text-rose-500", bg: "bg-rose-50" };
     }
@@ -31,10 +33,37 @@ const getFileConfig = (fileType?: string) => {
     if (type.includes("js") || type.includes("ts") || type.includes("html") || type.includes("css")) {
         return { icon: FileCode2, color: "text-indigo-500", bg: "bg-indigo-50" };
     }
-    return { icon: File, color: "text-gray-500", bg: "bg-gray-100" };
+    
+    return { icon: FileIcon, color: "text-gray-500", bg: "bg-gray-100" };
 };
 
 export const StudentLessonItem: React.FC<StudentLessonItemProps> = ({ lesson }) => {
+    const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+    const handleDownload = async (material: StudentLessonMaterial) => {
+        if (!material.id) return;
+
+        try {
+            setDownloadingId(material.id);
+            
+            const blob = await studentService.downloadMaterial(material.id);
+            const downloadUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement("a");
+            link.href = downloadUrl;
+            link.setAttribute("download", material.fileName);
+            document.body.appendChild(link);
+            link.click();
+            
+            link.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            toast.error(`Không thể tải xuống file: ${material.fileName}`);
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 sm:p-6 flex flex-col gap-4">
             <div className="flex gap-4 items-center">
@@ -57,22 +86,26 @@ export const StudentLessonItem: React.FC<StudentLessonItemProps> = ({ lesson }) 
 
             {lesson.materials && lesson.materials.length > 0 && (
                 <div className="mt-2 space-y-2.5">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Tài liệu đính kèm ({lesson.materials.length})</h4>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                        Tài liệu đính kèm ({lesson.materials.length})
+                    </h4>
+                    
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {lesson.materials.map((material: StudentLessonMaterial) => {
-                            const { icon: FileIcon, color, bg } = getFileConfig(material.fileType);
+                            const { icon: FileIconCmp, color, bg } = getFileConfig(material.fileType);
+                            const isDownloading = downloadingId === material.id;
 
                             return (
-                                <a
+                                <button
                                     key={material.id}
-                                    href={material.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    onClick={() => handleDownload(material)}
+                                    disabled={isDownloading}
+                                    className="group w-full text-left flex items-center gap-3 p-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-70 disabled:cursor-wait"
                                 >
                                     <div className={clsx("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", bg)}>
-                                        <FileIcon className={clsx("w-5 h-5", color)} />
+                                        <FileIconCmp className={clsx("w-5 h-5", color)} />
                                     </div>
+                                    
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-gray-700 truncate group-hover:text-blue-700 transition-colors">
                                             {material.fileName}
@@ -81,10 +114,15 @@ export const StudentLessonItem: React.FC<StudentLessonItemProps> = ({ lesson }) 
                                             {formatFileSize(material.fileSize)}
                                         </p>
                                     </div>
+                                    
                                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-100 transition-colors shrink-0">
-                                        <Download className="w-4 h-4" />
+                                        {isDownloading ? (
+                                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                                        ) : (
+                                            <Download className="w-4 h-4" />
+                                        )}
                                     </div>
-                                </a>
+                                </button>
                             );
                         })}
                     </div>
