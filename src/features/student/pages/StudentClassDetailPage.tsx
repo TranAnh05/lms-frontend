@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen } from "lucide-react";
+import { toast } from "react-toastify";
+import clsx from "clsx";
 import { studentService } from "../services/student.service";
 import { type StudentClassResponse } from "../types";
 import { StudentClassTabs, type StudentTabType } from "../components/class-detail/StudentClassTabs";
@@ -21,12 +23,16 @@ export const StudentClassDetailPage: React.FC = () => {
             if (!classId) return;
             try {
                 const classes = await studentService.getMyClasses();
-                const currentClass = classes.find((c) => c.classId === Number(classId));
+                const classList = Array.isArray(classes) ? classes : (classes as any).data;
+                const currentClass = classList?.find((c: StudentClassResponse) => c.classId === Number(classId));
+                
                 if (currentClass) {
                     setClassInfo(currentClass);
+                } else {
+                    toast.error("Không tìm thấy thông tin lớp học.");
                 }
             } catch (error) {
-                console.error("Failed to fetch class info", error);
+                toast.error("Lỗi kết nối: Không thể tải thông tin lớp.");
             } finally {
                 setIsLoading(false);
             }
@@ -66,7 +72,7 @@ export const StudentClassDetailPage: React.FC = () => {
             case "EXAMS":
                 return <StudentExamList classId={Number(classId)} />;
             case "GRADES":
-                return <StudentGradeView classId={Number(classId)}/>
+                return <StudentGradeView classId={Number(classId)} />;
             default:
                 return null;
         }
@@ -84,16 +90,25 @@ export const StudentClassDetailPage: React.FC = () => {
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8 sm:px-8 sm:py-10 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                        <BookOpen className="w-48 h-48" />
+                    </div>
+
                     <div className="relative z-10">
-                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight mb-4 max-w-3xl">
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className={clsx(
+                                "px-3 py-1 text-xs font-bold rounded-lg backdrop-blur-sm border uppercase tracking-wider",
+                                classInfo.status === 'ONGOING' 
+                                    ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-50" 
+                                    : "bg-gray-500/20 border-gray-500/30 text-gray-50"
+                            )}>
+                                {classInfo.status === 'ONGOING' ? 'Đang diễn ra' : 'Đã kết thúc'}
+                            </span>
+                        </div>
+                        
+                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight max-w-3xl">
                             {classInfo.courseName}
                         </h1>
-
-                        <div className="flex flex-wrap items-center gap-6 text-blue-50 font-medium">
-                            <div className="flex items-center gap-2">
-                                <span>Giảng viên: {classInfo.lecturerName}</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

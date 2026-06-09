@@ -16,7 +16,7 @@ const TYPE_CONFIG: Record<ExamType, { label: string; color: string }> = {
 
 export const StudentExamItem: React.FC<StudentExamItemProps> = ({ exam }) => {
     const navigate = useNavigate();
-    const typeConfig = TYPE_CONFIG[exam.examType];
+    const typeConfig = TYPE_CONFIG[exam.examType] || TYPE_CONFIG.REGULAR;
 
     const isCompleted = exam.attemptStatus === "COMPLETED" || exam.attemptStatus === "FORCED";
     const isLocked = exam.status === "CREATED" || (exam.status === "CLOSED" && !isCompleted);

@@ -1,14 +1,13 @@
-export type ClassStatus = 'PENDING' | 'REGISTRATION' | 'ONGOING' | 'COMPLETED' | 'CANCELED';
+export type ClassStatus = 'ONGOING' | 'COMPLETED';
 export type ExamType = 'REGULAR' | 'MIDTERM' | 'FINAL';
 export type ExamStatus = 'CREATED' | 'OPEN' | 'CLOSED';
 export type AttemptStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FORCED';
+export type GradeStatus = 'PASS' | 'FAIL' | 'PENDING';
 
 export interface StudentClassResponse {
     classId: number;
     classCode: string;
     courseName: string;
-    credits: number;
-    lecturerName: string;
     status: ClassStatus;
 }
 
@@ -26,11 +25,12 @@ export interface StudentLessonBasic {
     title: string;
     description?: string;
     orderIndex: number;
+    isPublished: boolean;
     materials: StudentLessonMaterial[];
     createdAt: string;
 }
 
-export interface StudentExamBasic {
+export interface ExamResponseDto {
     id: number;
     classId: number;
     title: string;
@@ -39,8 +39,13 @@ export interface StudentExamBasic {
     timeLimit: number;
     totalQuestions: number;
     status: ExamStatus;
-    attemptStatus: AttemptStatus; 
-    score?: number; 
+    createdAt: string;
+    deletedAt?: string | null;
+}
+
+export interface StudentExamBasic extends ExamResponseDto {
+    attemptStatus: AttemptStatus;
+    score?: number;
 }
 
 export interface ExamTakingOption {
@@ -66,7 +71,7 @@ export interface ExamTakingResponse {
 
 export interface StudentAnswerPayload {
     questionId: number;
-    selectedOptionId: number | null; 
+    selectedOptionId: number | null;
 }
 
 export interface ExamSubmitPayload {
@@ -80,8 +85,6 @@ export interface ExamSubmitResponse {
     totalQuestions: number;
     submitTime: string;
 }
-
-export type GradeStatus = 'PASS' | 'FAIL' | 'PENDING';
 
 export interface StudentGradeResponse {
     regularScore1: number | null;

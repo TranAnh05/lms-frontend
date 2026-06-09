@@ -1,19 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, ChevronRight, Loader2, Inbox } from "lucide-react";
+import { ChevronRight, Loader2, Inbox } from "lucide-react";
 import { toast } from "react-toastify";
 import clsx from "clsx";
 import { studentService } from "../services/student.service";
 import { type StudentClassResponse, type ClassStatus } from "../types";
 
-type FilterStatus = "ALL" | "ONGOING" | "COMPLETED";
+type FilterStatus = "ONGOING" | "COMPLETED";
 
 const STATUS_CONFIG: Record<ClassStatus, { label: string; bg: string; text: string; border: string }> = {
-    PENDING: { label: "Chờ mở", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-    REGISTRATION: { label: "Đang đăng ký", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
     ONGOING: { label: "Đang diễn ra", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
     COMPLETED: { label: "Đã kết thúc", bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" },
-    CANCELED: { label: "Đã hủy", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
 };
 
 export const StudentClassListPage: React.FC = () => {
@@ -25,8 +24,9 @@ export const StudentClassListPage: React.FC = () => {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const data = await studentService.getMyClasses();
-                setClasses(data);
+                const res = await studentService.getMyClasses();
+                const classList = Array.isArray(res) ? res : (res as any).data;
+                setClasses(classList || []);
             } catch (error) {
                 toast.error("Không thể tải danh sách lớp học.");
             } finally {
@@ -36,11 +36,7 @@ export const StudentClassListPage: React.FC = () => {
         fetchClasses();
     }, []);
 
-    const filteredClasses = classes.filter((cls) => {
-        if (filter === "ONGOING") return cls.status === "ONGOING" || cls.status === "REGISTRATION" || cls.status === "PENDING";
-        if (filter === "COMPLETED") return cls.status === "COMPLETED";
-        return true;
-    });
+    const filteredClasses = classes.filter((cls) => cls.status === filter);
 
     if (isLoading) {
         return (
@@ -53,7 +49,6 @@ export const StudentClassListPage: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
-            {/* Bộ lọc trạng thái */}
             <div className="flex items-center gap-2 border-b border-gray-200 pb-1">
                 {(["ONGOING", "COMPLETED"] as const).map((status) => (
                     <button
@@ -82,7 +77,7 @@ export const StudentClassListPage: React.FC = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredClasses.map((cls) => {
-                        const statusConfig = STATUS_CONFIG[cls.status];
+                        const statusConfig = STATUS_CONFIG[cls.status] || STATUS_CONFIG.ONGOING;
 
                         return (
                             <div 
@@ -102,16 +97,9 @@ export const StudentClassListPage: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    <h3 className="text-lg font-bold text-gray-900 leading-snug mb-4 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                    <h3 className="text-lg font-bold text-gray-900 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
                                         {cls.courseName}
                                     </h3>
-
-                                    <div className="mt-auto">
-                                        <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                                            <User className="w-4 h-4 text-gray-400 shrink-0" />
-                                            <span className="truncate">{cls.lecturerName}</span>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between group-hover:bg-blue-50/30 transition-colors">

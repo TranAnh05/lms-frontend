@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Loader2, FileX } from "lucide-react";
+import { toast } from "react-toastify";
 import { studentService } from "../../services/student.service";
 import { type StudentExamBasic } from "../../types";
 import { StudentExamItem } from "./StudentExamItem";
@@ -14,20 +16,20 @@ export const StudentExamList: React.FC<StudentExamListProps> = ({ classId }) => 
 
     useEffect(() => {
         const fetchExams = async () => {
+            if (!classId) return;
+
             setIsLoading(true);
             try {
                 const data = await studentService.getExams(classId);
-                setExams(data);
+                setExams(data || []);
             } catch (error) {
-                console.error("Failed to fetch exams:", error);
+                toast.error("Không thể tải danh sách bài kiểm tra.");
             } finally {
                 setIsLoading(false);
             }
         };
 
-        if (classId) {
-            fetchExams();
-        }
+        fetchExams();
     }, [classId]);
 
     if (isLoading) {
@@ -39,7 +41,7 @@ export const StudentExamList: React.FC<StudentExamListProps> = ({ classId }) => 
         );
     }
 
-    if (!exams || exams.length === 0) {
+    if (exams.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-200 shadow-sm border-dashed mt-6">
                 <div className="p-4 bg-gray-50 rounded-full mb-4 text-gray-400">
