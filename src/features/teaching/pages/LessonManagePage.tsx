@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Plus, BookOpen } from "lucide-react";
 import { toast } from "react-toastify";
@@ -14,28 +13,32 @@ export const LessonManagePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Tách hàm fetch để tái sử dụng sau khi tạo mới bài học
+    const fetchLessons = useCallback(async () => {
+        if (!classId) return;
+        try {
+            const data = await teachingService.getLessons(Number(classId));
+            setLessons(data);
+        } catch (error) {
+            toast.error("Không thể tải danh sách bài học.");
+        }
+    }, [classId]);
+
     useEffect(() => {
-        const fetchLessons = async () => {
-            if (!classId) return;
+        const initFetch = async () => {
             setIsLoading(true);
-            try {
-                const data = await teachingService.getLessons(Number(classId));
-                setLessons(data);
-            } catch (error) {
-                toast.error("Không thể tải danh sách bài học.");
-            } finally {
-                setIsLoading(false);
-            }
+            await fetchLessons();
+            setIsLoading(false);
         };
 
-        fetchLessons();
-    }, [classId]);
+        initFetch();
+    }, [fetchLessons]);
 
     const handleCreateLesson = async (formData: FormData) => {
         if (!classId) return;
         try {
-            const newLesson = await teachingService.createLesson(Number(classId), formData);
-            setLessons((prev) => [...prev, newLesson]);
+            await teachingService.createLesson(Number(classId), formData);
+            await fetchLessons(); // Tải lại danh sách từ server
             toast.success("Tạo bài học mới thành công!");
         } catch (error) {
             toast.error("Đã xảy ra lỗi khi tạo bài học.");

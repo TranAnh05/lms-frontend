@@ -42,8 +42,9 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({ isOpen, on
             formData.append("description", description);
             formData.append("isPublished", String(isPublished));
             
+            // Backend hứng List<MultipartFile> bằng key "files"
             selectedFiles.forEach((file) => {
-                formData.append("materials", file);
+                formData.append("files", file);
             });
 
             await onSubmit(formData);
@@ -89,7 +90,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({ isOpen, on
                         </div>
                         <div className="sm:col-span-1">
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                                Thứ tự hiển thị <span className="text-rose-500">*</span>
+                                Thứ tự <span className="text-rose-500">*</span>
                             </label>
                             <input
                                 type="number"

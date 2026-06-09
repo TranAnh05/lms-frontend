@@ -81,12 +81,15 @@ export const LessonItem: React.FC<LessonItemProps> = ({ lesson }) => {
                                             </p>
                                         </div>
                                     </div>
-                                    <button 
+                                    <a 
+                                        href={file.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-all focus:outline-none"
                                         title="Tải xuống"
                                     >
                                         <Download className="w-4 h-4" />
-                                    </button>
+                                    </a>
                                 </div>
                             ))}
                         </div>

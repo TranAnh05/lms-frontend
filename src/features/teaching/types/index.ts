@@ -13,6 +13,20 @@ export interface LecturerClassResponse {
     currentStudents: number;
 }
 
+export interface LecturerClassDetailResponse {
+    classId: number;
+    classCode: string;
+    courseName: string;
+    courseCode: string;
+    credits: number;
+    status: ClassStatus;
+    maxStudents: number;
+    currentStudents: number;
+    dayOfWeek: number;
+    shiftName: string;
+    roomName: string;
+}
+
 export interface StudentOfClassResponse {
     studentId: number;
     fullName: string;
@@ -32,13 +46,21 @@ export interface LessonMaterial {
 
 export interface LessonBasic {
     id: number;
+    classId: number;
     title: string;
     description?: string;
     orderIndex: number;
     isPublished: boolean;
     materials: LessonMaterial[];
     createdAt: string;
-    updatedAt: string;
+}
+
+export interface CreateLessonPayload {
+    title: string;
+    description?: string;
+    orderIndex?: number;
+    isPublished?: boolean;
+    files?: File[];
 }
 
 export interface ExamBasic {
