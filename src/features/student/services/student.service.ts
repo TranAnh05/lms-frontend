@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
 
 import { MOCK_EXAM_TAKING_DATA, MOCK_STUDENT_GRADES } from "../data/mockdata";
@@ -73,5 +74,13 @@ export const studentService = {
     ): Promise<StudentGradeResponse | null> => {
         await networkDelay(500);
         return MOCK_STUDENT_GRADES[classId] || null;
+    },
+
+    downloadMaterial: async (materialId: number): Promise<Blob> => {
+        const response = await apiClient.get(`/classes/materials/${materialId}/download`, {
+            responseType: "blob",
+        });
+        
+        return response as unknown as Blob; 
     },
 };
