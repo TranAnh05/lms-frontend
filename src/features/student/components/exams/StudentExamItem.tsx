@@ -25,7 +25,7 @@ export const StudentExamItem: React.FC<StudentExamItemProps> = ({ exam }) => {
 
     const handleActionClick = () => {
         if (canTakeExam) {
-            navigate(`/student/exams/${exam.id}/take`);
+            navigate(`/student/exams/${exam.id}/take`, { state: { exam } });
         }
     };
 

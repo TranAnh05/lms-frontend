@@ -28,13 +28,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
             <div className="space-y-3 pl-0 sm:pl-13">
                 {question.options.map((option, optIdx) => {
-                    const isSelected = selectedOptionId === option.id;
-                    const optionLabel = String.fromCharCode(65 + optIdx); // Chuyển 0,1,2,3 thành A, B, C, D
+                    const isSelected = selectedOptionId === option.optionId;
+                    const optionLabel = String.fromCharCode(65 + optIdx); 
 
                     return (
                         <button
-                            key={option.id}
-                            onClick={() => onSelectOption(question.id, option.id)}
+                            key={option.optionId}
+                            onClick={() => onSelectOption(question.questionId, option.optionId)}
                             className={clsx(
                                 "w-full text-left flex items-start gap-3.5 p-4 rounded-xl border transition-all duration-200 focus:outline-none",
                                 isSelected

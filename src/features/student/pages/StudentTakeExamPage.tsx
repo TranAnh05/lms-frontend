@@ -1,83 +1,107 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/refs */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Timer, AlertTriangle, ShieldAlert, FileCheck, Loader2 } from "lucide-react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+    Timer,
+    AlertTriangle,
+    ShieldAlert,
+    FileCheck,
+    Loader2,
+    ArrowLeft,
+} from "lucide-react";
 import { toast } from "react-toastify";
 import { studentService } from "../services/student.service";
-import { type ExamTakingResponse, type ExamSubmitResponse } from "../types";
+import {
+    type ExamTakingResponse,
+    type ExamSubmitResponse,
+    type StudentExamBasic,
+} from "../types";
 import { QuestionCard } from "../components/exams/QuestionCard";
 
 export const StudentTakeExamPage: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [exam, setExam] = useState<ExamTakingResponse | null>(null);
+    const examBasic = location.state?.exam as StudentExamBasic;
+
+    const [isStarting, setIsStarting] = useState(false);
+    const [examPaper, setExamPaper] = useState<ExamTakingResponse | null>(null);
 
     const [isStarted, setIsStarted] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const [submitResult, setSubmitResult] = useState<ExamSubmitResponse | null>(null);
+    const [submitResult, setSubmitResult] = useState<ExamSubmitResponse | null>(
+        null,
+    );
 
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [timeLeft, setTimeLeft] = useState(0);
 
     const [showOverlay, setShowOverlay] = useState(false);
-    
-    // Sử dụng Ref để theo dõi giá trị realtime trong Event Listener mà không bị stale (cũ)
+
     const isSubmittedRef = useRef(false);
     const isOverlayVisibleRef = useRef(false);
     const violationCountRef = useRef(0);
 
+    const attemptIdRef = useRef<number | null>(null);
+
     useEffect(() => {
-        const fetchExam = async () => {
-            if (!examId) return;
-            try {
-                const data = await studentService.getExamQuestions(Number(examId));
-                setExam(data);
-                setTimeLeft(data.timeLimit * 60);
-            } catch (error) {
-                toast.error("Không thể tải đề thi. Vui lòng thử lại sau.");
-                navigate(-1);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchExam();
-    }, [examId, navigate]);
-
-    const handleSubmit = useCallback(async (forced = false) => {
-        if (!exam || isSubmittedRef.current) return;
-        
-        isSubmittedRef.current = true;
-        setIsSubmitted(true);
-
-        const payload = {
-            answers: exam.questions.map((q) => ({
-                questionId: q.id,
-                selectedOptionId: answers[q.id] || null,
-            })),
-        };
-
-        try {
-            const result = await studentService.submitExam(exam.examId, payload);
-            setSubmitResult(result);
-            
-            if (document.fullscreenElement) {
-                await document.exitFullscreen().catch(() => {});
-            }
-            if (forced) {
-                toast.error("Bài làm đã được tự động thu!");
-            } else {
-                toast.success("Nộp bài thành công!");
-            }
-        } catch (error) {
-            toast.error("Lỗi khi nộp bài. Vui lòng báo cáo giám thị.");
-            isSubmittedRef.current = false;
-            setIsSubmitted(false);
+        if (!examBasic) {
+            toast.error("Vui lòng truy cập bài kiểm tra từ danh sách lớp.");
+            navigate(-1);
         }
-    }, [exam, answers]);
+    }, [examBasic, navigate]);
 
-    // Đồng hồ đếm ngược
+    const handleSubmit = useCallback(
+        async (forced = false) => {
+            if (!examPaper || isSubmittedRef.current) return;
+
+            if (!attemptIdRef.current) {
+                toast.error(
+                    "Lỗi đồng bộ: Không tìm thấy mã phiên làm bài.",
+                );
+                return;
+            }
+
+            isSubmittedRef.current = true;
+            setIsSubmitted(true);
+
+            const payload = {
+                answers: examPaper.questions.map((q) => ({
+                    questionId: q.questionId,
+                    selectedOptionId: answers[q.questionId] || null,
+                })),
+            };
+
+            try {
+                const result = await studentService.submitExam(
+                    attemptIdRef.current,
+                    payload,
+                    true,
+                );
+                setSubmitResult(result);
+
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen().catch(() => {});
+                }
+                if (forced) {
+                    toast.error(
+                        "Bài làm đã được tự động thu do hết giờ hoặc vi phạm!",
+                    );
+                } else {
+                    toast.success("Nộp bài thành công!");
+                }
+            } catch (error) {
+                toast.error("Lỗi khi nộp bài. Vui lòng báo cáo giám thị.");
+                isSubmittedRef.current = false;
+                setIsSubmitted(false);
+            }
+        },
+        [examPaper, answers],
+    );
+
     useEffect(() => {
         if (!isStarted || isSubmitted || timeLeft <= 0) return;
         const timer = setInterval(() => {
@@ -93,12 +117,10 @@ export const StudentTakeExamPage: React.FC = () => {
         return () => clearInterval(timer);
     }, [isStarted, isSubmitted, timeLeft, handleSubmit]);
 
-    // Xử lý logic chống gian lận
     useEffect(() => {
         if (!isStarted || isSubmitted) return;
 
         const handleViolation = () => {
-            // Chặn đếm nhồi nếu màn hình đỏ đang hiện hoặc đã nộp bài
             if (isSubmittedRef.current || isOverlayVisibleRef.current) return;
 
             isOverlayVisibleRef.current = true;
@@ -108,14 +130,20 @@ export const StudentTakeExamPage: React.FC = () => {
             if (violationCountRef.current >= 2) {
                 handleSubmit(true);
             } else {
-                toast.warning(`Cảnh báo vi phạm (${violationCountRef.current}/2). Đề thi bị tạm ẩn!`);
+                toast.warning(
+                    `Cảnh báo vi phạm (${violationCountRef.current}/2). Đề thi bị tạm ẩn!`,
+                );
             }
         };
 
-        const handleFullscreenChange = () => { if (!document.fullscreenElement) handleViolation(); };
-        const handleVisibilityChange = () => { if (document.hidden) handleViolation(); };
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement) handleViolation();
+        };
+        const handleVisibilityChange = () => {
+            if (document.hidden) handleViolation();
+        };
         const handleBlur = () => handleViolation();
-        
+
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             e.preventDefault();
             e.returnValue = "";
@@ -127,8 +155,14 @@ export const StudentTakeExamPage: React.FC = () => {
         window.addEventListener("beforeunload", handleBeforeUnload);
 
         return () => {
-            document.removeEventListener("fullscreenchange", handleFullscreenChange);
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            document.removeEventListener(
+                "fullscreenchange",
+                handleFullscreenChange,
+            );
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange,
+            );
             window.removeEventListener("blur", handleBlur);
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
@@ -139,26 +173,53 @@ export const StudentTakeExamPage: React.FC = () => {
             await document.documentElement.requestFullscreen();
             isOverlayVisibleRef.current = false;
             setShowOverlay(false);
-            if (!isStarted) setIsStarted(true);
+            setIsStarted(true);
         } catch (err) {
             toast.error("Trình duyệt từ chối quyền toàn màn hình.");
+            throw err;
+        }
+    };
+
+    const handleStart = async () => {
+        if (!examId || !examBasic) return;
+        try {
+            setIsStarting(true);
+
+            try {
+                const attemptData = await studentService.startExam(
+                    Number(examId),
+                );
+                attemptIdRef.current = attemptData.attemptId;
+            } catch (startError) {
+                console.log("Phiên làm bài có thể đã được khởi tạo trước đó.");
+            }
+
+            const paperData = await studentService.getExamQuestions(
+                Number(examId),
+            );
+            setExamPaper(paperData);
+            setTimeLeft(paperData.timeLimit * 60);
+
+            await requestFullScreen();
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.message ||
+                    "Không thể tải cấu hình đề thi.",
+            );
+        } finally {
+            setIsStarting(false);
         }
     };
 
     const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+        const m = Math.floor(seconds / 60)
+            .toString()
+            .padStart(2, "0");
         const s = (seconds % 60).toString().padStart(2, "0");
         return `${m}:${s}`;
     };
 
-    if (isLoading || !exam) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-                <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Đang tải cấu hình đề thi...</p>
-            </div>
-        );
-    }
+    if (!examBasic) return null;
 
     if (isSubmitted && submitResult) {
         return (
@@ -167,14 +228,23 @@ export const StudentTakeExamPage: React.FC = () => {
                     <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <FileCheck className="w-8 h-8" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Đã nộp bài thành công</h2>
-                    <p className="text-gray-500 mb-8">Bạn đã hoàn thành bài kiểm tra.</p>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        Đã nộp bài thành công
+                    </h2>
+                    <p className="text-gray-500 mb-8">
+                        Bạn đã hoàn thành bài kiểm tra.
+                    </p>
 
                     <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-100">
-                        <div className="text-sm text-gray-500 mb-1">Điểm số của bạn</div>
-                        <div className="text-4xl font-black text-blue-600 mb-4">{submitResult.score.toFixed(2)}</div>
+                        <div className="text-sm text-gray-500 mb-1">
+                            Điểm số của bạn
+                        </div>
+                        <div className="text-4xl font-black text-blue-600 mb-4">
+                            {submitResult.score.toFixed(2)}
+                        </div>
                         <div className="text-sm font-medium text-gray-700">
-                            Số câu đúng: {submitResult.correctAnswers} / {submitResult.totalQuestions}
+                            Số câu đúng: {submitResult.correctAnswers} /{" "}
+                            {submitResult.totalQuestions}
                         </div>
                     </div>
 
@@ -193,46 +263,69 @@ export const StudentTakeExamPage: React.FC = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 max-w-xl w-full">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4 leading-snug">{exam.title}</h1>
+                    <button
+                        onClick={() => navigate("/dashboard/student-classes")}
+                        className="mb-3 font-bold text-[16px] hover:text-blue-600 flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-lg"
+                    >
+                        <ArrowLeft /> <span>Trở về</span>
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-4 leading-snug">
+                        {examBasic.title}
+                    </h1>
                     <div className="flex gap-6 mb-8 text-sm font-medium text-gray-600 bg-gray-50 p-4 rounded-xl">
                         <div className="flex items-center gap-2">
                             <Timer className="w-5 h-5 text-blue-600" />
-                            Thời gian: {exam.timeLimit} phút
+                            Thời gian: {examBasic.timeLimit} phút
                         </div>
                         <div className="flex items-center gap-2">
                             <FileCheck className="w-5 h-5 text-indigo-600" />
-                            Tổng số: {exam.totalQuestions} câu hỏi
+                            Tổng số: {examBasic.totalQuestions} câu hỏi
                         </div>
                     </div>
 
                     <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-8 flex gap-3 text-rose-800 text-sm leading-relaxed">
                         <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                         <div>
-                            <strong>Lưu ý quan trọng:</strong> Hệ thống bắt buộc làm bài ở chế độ toàn màn hình. 
-                            Nếu bạn rời khỏi màn hình (Esc, Alt+Tab, chia màn hình) quá <strong>2 lần</strong>, hệ thống sẽ tự động nộp bài!
+                            <strong>Lưu ý quan trọng:</strong> Hệ thống bắt buộc
+                            làm bài ở chế độ toàn màn hình. Nếu bạn rời khỏi màn
+                            hình (Esc, Alt+Tab, chia màn hình) quá{" "}
+                            <strong>2 lần</strong>, hệ thống sẽ tự động nộp bài!
                         </div>
                     </div>
 
                     <button
-                        onClick={requestFullScreen}
-                        className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors text-lg"
+                        onClick={handleStart}
+                        disabled={isStarting}
+                        className="w-full flex items-center justify-center py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors text-lg disabled:opacity-70"
                     >
-                        Bắt đầu làm bài
+                        {isStarting ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                            "Bắt đầu làm bài"
+                        )}
                     </button>
                 </div>
             </div>
         );
     }
 
+    if (!examPaper) return null;
+
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col relative select-none">
             {showOverlay && (
                 <div className="fixed inset-0 z-50 bg-gray-900/95 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center">
                     <ShieldAlert className="w-20 h-20 text-rose-500 mb-6" />
-                    <h2 className="text-3xl font-bold text-white mb-4">Đề thi đã bị tạm ẩn</h2>
+                    <h2 className="text-3xl font-bold text-white mb-4">
+                        Đề thi đã bị tạm ẩn
+                    </h2>
                     <p className="text-gray-300 max-w-lg text-lg mb-8">
-                        Bạn đã vi phạm quy chế thi (thoát màn hình hoặc chuyển tab).<br/>
-                        Đây là lần vi phạm thứ <strong>{violationCountRef.current}</strong>. Nếu vi phạm 2 lần, bài sẽ tự động nộp.
+                        Bạn đã vi phạm quy chế thi (thoát màn hình hoặc chuyển
+                        tab).
+                        <br />
+                        Đây là lần vi phạm thứ{" "}
+                        <strong>{violationCountRef.current}</strong>. Nếu vi
+                        phạm 2 lần, bài sẽ tự động nộp.
                     </p>
                     <button
                         onClick={requestFullScreen}
@@ -244,7 +337,9 @@ export const StudentTakeExamPage: React.FC = () => {
             )}
 
             <header className="bg-white border-b border-gray-200 sticky top-0 z-30 px-6 py-4 shadow-sm flex items-center justify-between">
-                <h1 className="text-lg font-bold text-gray-800 truncate max-w-2xl">{exam.title}</h1>
+                <h1 className="text-lg font-bold text-gray-800 truncate max-w-2xl">
+                    {examPaper.title}
+                </h1>
                 <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2 rounded-lg font-mono text-xl font-bold shrink-0">
                     <Timer className="w-5 h-5" />
                     {formatTime(timeLeft)}
@@ -253,14 +348,17 @@ export const StudentTakeExamPage: React.FC = () => {
 
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-32">
                 <div className="max-w-4xl mx-auto space-y-6 pb-20">
-                    {exam.questions.map((q, idx) => (
+                    {examPaper.questions.map((q, idx) => (
                         <QuestionCard
-                            key={q.id}
+                            key={q.questionId}
                             index={idx + 1}
                             question={q}
-                            selectedOptionId={answers[q.id] || null}
+                            selectedOptionId={answers[q.questionId] || null}
                             onSelectOption={(qId, optId) =>
-                                setAnswers((prev) => ({ ...prev, [qId]: optId }))
+                                setAnswers((prev) => ({
+                                    ...prev,
+                                    [qId]: optId,
+                                }))
                             }
                         />
                     ))}
@@ -270,11 +368,19 @@ export const StudentTakeExamPage: React.FC = () => {
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div className="text-gray-600 font-medium">
-                        Đã chọn: <span className="font-bold text-blue-600">{Object.keys(answers).length}</span> / {exam.totalQuestions}
+                        Đã chọn:{" "}
+                        <span className="font-bold text-blue-600">
+                            {Object.keys(answers).length}
+                        </span>{" "}
+                        / {examPaper.totalQuestions}
                     </div>
                     <button
                         onClick={() => {
-                            if (window.confirm("Bạn có chắc chắn muốn nộp bài ngay bây giờ?")) {
+                            if (
+                                window.confirm(
+                                    "Bạn có chắc chắn muốn nộp bài ngay bây giờ?",
+                                )
+                            ) {
                                 handleSubmit(false);
                             }
                         }}

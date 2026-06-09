@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { Loader2, AlertCircle, CheckCircle, XCircle, HelpCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { studentService } from "../../services/student.service";
 import { type StudentGradeResponse } from "../../types";
 
@@ -74,17 +75,17 @@ export const StudentGradeView: React.FC<StudentGradeViewProps> = ({ classId }) =
                                 <div className="flex items-center justify-center">
                                     {grade.status === "PASS" && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            <CheckCircle className="w-3.5 h-3.5" /> Đạt
+                                            Đạt
                                         </span>
                                     )}
                                     {grade.status === "FAIL" && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                            <XCircle className="w-3.5 h-3.5" /> Học lại
+                                            Học lại
                                         </span>
                                     )}
                                     {grade.status === "PENDING" && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200">
-                                            <HelpCircle className="w-3.5 h-3.5" /> Chưa có
+                                            Chưa đủ điểm
                                         </span>
                                     )}
                                 </div>
