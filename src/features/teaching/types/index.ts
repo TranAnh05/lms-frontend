@@ -65,6 +65,7 @@ export interface CreateLessonPayload {
 
 export interface ExamBasic {
     id: number;
+    classId: number;
     title: string;
     description?: string;
     examType: ExamType;
@@ -72,6 +73,27 @@ export interface ExamBasic {
     totalQuestions: number;
     status: ExamStatus;
     createdAt: string;
+    deletedAt?: string;
+}
+
+export interface OptionDto {
+    content: string;
+    isCorrect: boolean;
+    orderIndex?: number;
+}
+
+export interface QuestionDto {
+    content: string;
+    orderIndex?: number;
+    options: OptionDto[];
+}
+
+export interface CreateExamPayload {
+    title: string;
+    description?: string;
+    examType: ExamType;
+    timeLimit: number;
+    questions: QuestionDto[];
 }
 
 export interface StudentGrade {

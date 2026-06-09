@@ -6,9 +6,16 @@ import { ExamItem } from "./ExamItem";
 interface ExamListProps {
     exams: ExamBasic[];
     isLoading: boolean;
+    onOpenExam?: (examId: number) => void;
+    onCloseExam?: (examId: number) => void;
 }
 
-export const ExamList: React.FC<ExamListProps> = ({ exams, isLoading }) => {
+export const ExamList: React.FC<ExamListProps> = ({ 
+    exams, 
+    isLoading, 
+    onOpenExam, 
+    onCloseExam 
+}) => {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -35,7 +42,12 @@ export const ExamList: React.FC<ExamListProps> = ({ exams, isLoading }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {exams.map((exam) => (
-                <ExamItem key={exam.id} exam={exam} />
+                <ExamItem 
+                    key={exam.id} 
+                    exam={exam} 
+                    onOpen={onOpenExam}
+                    onClose={onCloseExam}
+                />
             ))}
         </div>
     );
