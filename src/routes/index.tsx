@@ -24,6 +24,7 @@ import { GradeManagePage } from "@/features/teaching/pages/GradeManagePage";
 import { StudentClassListPage } from "@/features/student/pages/StudentClassListPage";
 import { StudentClassDetailPage } from "@/features/student/pages/StudentClassDetailPage";
 import { StudentTakeExamPage } from "@/features/student/pages/StudentTakeExamPage";
+import { StudentTranscriptPage } from "@/features/grades/pages/StudentTranscriptPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -120,6 +121,10 @@ export const router = createBrowserRouter([
             {
                 path: "student-registration",
                 element: <CourseRegistrationPage />,
+            },
+            {
+                path: "results",
+                element: <StudentTranscriptPage />
             },
 
             {

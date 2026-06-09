@@ -1,0 +1,111 @@
+import React from "react";
+import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { type SemesterTranscript } from "../types";
+import { GradeStatusBadge } from "./GradeStatusBadge";
+
+interface SemesterGradeTableProps {
+    semesterTranscript: SemesterTranscript;
+    isExpanded: boolean;
+    onToggle: () => void;
+}
+
+export const SemesterGradeTable: React.FC<SemesterGradeTableProps> = ({
+    semesterTranscript,
+    isExpanded,
+    onToggle,
+}) => {
+    const { summary, subjects } = semesterTranscript;
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-5">
+            {/* Header Học Kỳ */}
+            <div 
+                onClick={onToggle}
+                className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer hover:bg-gray-50/50 transition-colors select-none"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                        <Calendar className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">
+                            Học kỳ {summary.semesterNumber}
+                        </h3>
+                        <p className="text-xs font-medium text-gray-500 mt-0.5">
+                            Năm học: {summary.academicYear} | Học kỳ: {summary.semesterCode}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm">
+                    <div className="bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100 text-center min-w-[70px]">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Số TC đăng ký</p>
+                        <p className="font-bold text-gray-700">{summary.totalRegisteredCredits}</p>
+                    </div>
+                    <div className="bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100 text-center min-w-[70px]">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Số TC tích lũy</p>
+                        <p className="font-bold text-emerald-600">{summary.totalEarnedCredits}</p>
+                    </div>
+                    <div className="bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100 text-center min-w-[70px]">
+                        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">GPA Hệ 10</p>
+                        <p className="font-black text-blue-600">{summary.semesterGpa10.toFixed(2)}</p>
+                    </div>
+                    <div className="bg-indigo-50/50 px-3 py-1.5 rounded-xl border border-indigo-100 text-center min-w-[70px]">
+                        <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">GPA Hệ 4</p>
+                        <p className="font-black text-indigo-600">{summary.semesterGpa4.toFixed(2)}</p>
+                    </div>
+
+                    <div className="text-gray-400 pl-2 shrink-0 border-l border-gray-200 hidden lg:block">
+                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
+                </div>
+            </div>
+
+            {/* Bảng điểm chi tiết */}
+            {isExpanded && (
+                <div className="border-t border-gray-100 overflow-x-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr className="bg-gray-50/70 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-4 text-center w-12">STT</th>
+                                <th className="py-3.5 px-4">Tên môn học</th>
+                                <th className="py-3.5 px-3 text-center w-16">TC</th>
+                                <th className="py-3.5 px-3 text-center w-16">TX1</th>
+                                <th className="py-3.5 px-3 text-center w-16">TX2</th>
+                                <th className="py-3.5 px-3 text-center w-16">GK</th>
+                                <th className="py-3.5 px-3 text-center w-16">CK</th>
+                                <th className="py-3.5 px-3 text-center w-28">Tổng kết</th>
+                                <th className="py-3.5 px-3 text-center w-14">Hệ 4</th>
+                                <th className="py-3.5 px-3 text-center w-14">Chữ</th>
+                                <th className="py-3.5 px-4 text-center w-28">Kết quả</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-600">
+                            {subjects.map((subject, idx) => (
+                                <tr key={subject.courseCode} className="hover:bg-gray-50/30 transition-colors">
+                                    <td className="py-4 px-4 text-center text-gray-400 font-mono text-xs">{idx + 1}</td>
+                                    <td className="py-4 px-4 text-gray-900 font-semibold">{subject.courseName}</td>
+                                    <td className="py-4 px-3 text-center font-semibold">{subject.credits}</td>
+                                    <td className="py-4 px-3 text-center text-gray-500">{subject.regularScore1 ?? "-"}</td>
+                                    <td className="py-4 px-3 text-center text-gray-500">{subject.regularScore2 ?? "-"}</td>
+                                    <td className="py-4 px-3 text-center text-gray-500">{subject.midtermScore ?? "-"}</td>
+                                    <td className="py-4 px-3 text-center text-gray-500">{subject.finalScore ?? "-"}</td>
+                                    <td className="py-4 px-3 text-center text-blue-600 font-bold">
+                                        {subject.totalScore10 !== null ? subject.totalScore10.toFixed(1) : "-"}
+                                    </td>
+                                    <td className="py-4 px-3 text-center text-gray-900 font-bold">
+                                        {subject.totalScore4 !== null ? subject.totalScore4.toFixed(1) : "-"}
+                                    </td>
+                                    <td className="py-4 px-3 text-center font-black text-gray-900">{subject.letterGrade || "-"}</td>
+                                    <td className="py-4 px-4 text-center">
+                                        <GradeStatusBadge status={subject.status} />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+};
