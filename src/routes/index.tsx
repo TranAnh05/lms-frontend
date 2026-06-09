@@ -15,14 +15,15 @@ import { ClassRequestPage } from "@/features/class-requests/pages/ClassRequestPa
 import { RegistrationPeriodsPage } from "@/features/classes/pages/RegistrationPeriodsPage";
 import { CourseRegistrationPage } from "@/features/enrollments/pages/CourseRegistrationPage";
 import { TimetablePage } from "@/features/timetable/pages/TimetablePage";
-
-// Imports module Teaching (Giảng viên)
 import { ClassListPage } from "@/features/teaching/pages/ClassListPage";
 import { ClassWorkspaceLayout } from "@/features/teaching/pages/ClassWorkspaceLayout";
 import { StudentManagePage } from "@/features/teaching/pages/StudentManagePage";
 import { LessonManagePage } from "@/features/teaching/pages/LessonManagePage";
 import { ExamManagePage } from "@/features/teaching/pages/ExamManagePage";
 import { GradeManagePage } from "@/features/teaching/pages/GradeManagePage";
+import { StudentClassListPage } from "@/features/student/pages/StudentClassListPage";
+import { StudentClassDetailPage } from "@/features/student/pages/StudentClassDetailPage";
+import { StudentTakeExamPage } from "@/features/student/pages/StudentTakeExamPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
     {
         path: "/login",
         element: <LoginPage />,
+    },
+    {
+        path: "/student/exams/:examId/take",
+        element: <StudentTakeExamPage />,
     },
     {
         path: "/dashboard",
@@ -102,19 +107,33 @@ export const router = createBrowserRouter([
             },
             {
                 path: "approval-classes",
-                element: <ClassRequestPage />
+                element: <ClassRequestPage />,
             },
             {
                 path: "head-classes",
-                element: <HeadQuanLyLopHoc />
+                element: <HeadQuanLyLopHoc />,
             },
             {
                 path: "registration",
-                element: <RegistrationPeriodsPage />
+                element: <RegistrationPeriodsPage />,
             },
             {
                 path: "student-registration",
-                element: <CourseRegistrationPage />
+                element: <CourseRegistrationPage />,
+            },
+
+            {
+                path: "student-classes",
+                children: [
+                    {
+                        index: true,
+                        element: <StudentClassListPage />,
+                    },
+                    {
+                        path: ":classId",
+                        element: <StudentClassDetailPage />,
+                    }
+                ]
             },
             // Cấu hình Nested Routing cho Giảng viên (Teaching Module)
             {
@@ -122,7 +141,7 @@ export const router = createBrowserRouter([
                 children: [
                     {
                         index: true,
-                        element: <ClassListPage />
+                        element: <ClassListPage />,
                     },
                     {
                         path: ":classId",
@@ -130,28 +149,28 @@ export const router = createBrowserRouter([
                         children: [
                             {
                                 index: true,
-                                element: <Navigate to="students" replace />
+                                element: <Navigate to="students" replace />,
                             },
                             {
                                 path: "students",
-                                element: <StudentManagePage />
+                                element: <StudentManagePage />,
                             },
                             {
                                 path: "lessons",
-                                element: <LessonManagePage />
+                                element: <LessonManagePage />,
                             },
                             {
                                 path: "exams",
-                                element: <ExamManagePage />
+                                element: <ExamManagePage />,
                             },
                             {
                                 path: "grades",
-                                element: <GradeManagePage />
-                            }
-                        ]
-                    }
-                ]
-            }
+                                element: <GradeManagePage />,
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     },
     {
