@@ -64,11 +64,11 @@ export const teachingService = {
         await delay(800);
     },
 
-    openExam: async (examId: number): Promise<void> => {
-        await delay(500); 
+    openExam: async (classId: number, examId: number): Promise<void> => {
+        await apiClient.put(`/classes/${classId}/exams/${examId}/open`);
     },
 
-    closeExam: async (examId: number): Promise<void> => {
-        await delay(500);
-    }
+    closeExam: async (classId: number, examId: number): Promise<void> => {
+        await apiClient.put(`/classes/${classId}/exams/${examId}/close`);
+    },
 };

@@ -47,28 +47,30 @@ export const ExamManagePage: React.FC = () => {
     };
 
     const handleOpenExam = async (examId: number) => {
-        try {
-            await teachingService.openExam(examId);
-            setExams((prev) =>
-                prev.map((exam) => (exam.id === examId ? { ...exam, status: "OPEN" } : exam))
-            );
-            toast.success("Đã mở bài kiểm tra cho sinh viên làm bài!");
-        } catch (error) {
-            toast.error("Không thể mở bài kiểm tra.");
-        }
-    };
+    if (!classId) return;
+    try {
+        await teachingService.openExam(Number(classId), examId);
+        setExams((prev) =>
+            prev.map((exam) => (exam.id === examId ? { ...exam, status: "OPEN" } : exam))
+        );
+        toast.success("Đã mở bài kiểm tra cho sinh viên làm bài!");
+    } catch (error) {
+        toast.error("Không thể mở bài kiểm tra.");
+    }
+};
 
-    const handleCloseExam = async (examId: number) => {
-        try {
-            await teachingService.closeExam(examId);
-            setExams((prev) =>
-                prev.map((exam) => (exam.id === examId ? { ...exam, status: "CLOSED" } : exam))
-            );
-            toast.success("Đã đóng bài kiểm tra thành công.");
-        } catch (error) {
-            toast.error("Không thể đóng bài kiểm tra.");
-        }
-    };
+const handleCloseExam = async (examId: number) => {
+    if (!classId) return;
+    try {
+        await teachingService.closeExam(Number(classId), examId);
+        setExams((prev) =>
+            prev.map((exam) => (exam.id === examId ? { ...exam, status: "CLOSED" } : exam))
+        );
+        toast.success("Đã đóng bài kiểm tra thành công.");
+    } catch (error) {
+        toast.error("Không thể đóng bài kiểm tra.");
+    }
+};
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
