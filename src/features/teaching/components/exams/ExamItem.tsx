@@ -1,10 +1,12 @@
 import React from "react";
-import { Clock, FileQuestion, MoreVertical, FileCheck } from "lucide-react";
+import { Clock, FileQuestion, MoreVertical, FileCheck, PlayCircle, StopCircle } from "lucide-react";
 import clsx from "clsx";
 import { type ExamBasic, type ExamType, type ExamStatus } from "../../types";
 
 interface ExamItemProps {
     exam: ExamBasic;
+    onOpen?: (examId: number) => void;
+    onClose?: (examId: number) => void;
 }
 
 const TYPE_CONFIG: Record<ExamType, { label: string; color: string }> = {
@@ -19,13 +21,16 @@ const STATUS_CONFIG: Record<ExamStatus, { label: string; dotClass: string; textC
     CLOSED: { label: "Đã đóng", dotClass: "bg-rose-500", textClass: "text-rose-700" },
 };
 
-export const ExamItem: React.FC<ExamItemProps> = ({ exam }) => {
+export const ExamItem: React.FC<ExamItemProps> = ({ exam, onOpen, onClose }) => {
     const typeConfig = TYPE_CONFIG[exam.examType];
     const statusConfig = STATUS_CONFIG[exam.status];
 
+    const isOpen = exam.status === "OPEN";
+    const isClosed = exam.status === "CLOSED";
+
     return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all group overflow-hidden">
-            <div className="p-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all group overflow-hidden flex flex-col">
+            <div className="p-5 flex-1">
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
                         <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shrink-0 group-hover:bg-indigo-100 transition-colors">
@@ -72,6 +77,25 @@ export const ExamItem: React.FC<ExamItemProps> = ({ exam }) => {
                         <MoreVertical className="w-5 h-5" />
                     </button>
                 </div>
+            </div>
+
+            <div className="px-5 py-3.5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-end gap-3 mt-auto">
+                <button
+                    onClick={() => onOpen?.(exam.id)}
+                    disabled={isOpen || isClosed}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-emerald-100"
+                >
+                    <PlayCircle className="w-4 h-4" />
+                    Mở bài
+                </button>
+                <button
+                    onClick={() => onClose?.(exam.id)}
+                    disabled={!isOpen}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-rose-700 bg-rose-100 hover:bg-rose-200 rounded-lg transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-100"
+                >
+                    <StopCircle className="w-4 h-4" />
+                    Đóng bài
+                </button>
             </div>
         </div>
     );

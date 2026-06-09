@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import clsx from "clsx";
-import { type ExamType } from "../../types";
+import { type ExamType, type CreateExamPayload } from "../../types";
 
 interface CreateExamModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: CreateExamPayload) => Promise<void>;
 }
 
 interface QuestionInput {
@@ -28,7 +28,6 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
     const [questions, setQuestions] = useState<QuestionInput[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Tự động cập nhật danh sách và thứ tự câu hỏi ngầm
     useEffect(() => {
         const count = Math.max(0, totalQuestions);
         setQuestions((prev) => {
@@ -70,7 +69,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
         try {
             const formattedQuestions = questions.map(q => ({
                 content: q.questionText,
-                orderIndex: q.orderIndex, // orderIndex được gửi ngầm xuống backend
+                orderIndex: q.orderIndex,
                 options: [
                     { content: q.answerA, isCorrect: q.correctAnswer === "A", orderIndex: 1 },
                     { content: q.answerB, isCorrect: q.correctAnswer === "B", orderIndex: 2 },
@@ -84,7 +83,6 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
                 description: description.trim(),
                 examType,
                 timeLimit,
-                totalQuestions,
                 questions: formattedQuestions,
             });
             
@@ -95,8 +93,6 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClos
             setTotalQuestions(5);
             setQuestions([]);
             onClose();
-        } catch (error) {
-            // Error handled by parent
         } finally {
             setIsSubmitting(false);
         }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Loader2, Inbox } from "lucide-react";
 import { type LessonBasic } from "../../types";
 import { LessonItem } from "./LessonItem";
@@ -9,6 +9,12 @@ interface LessonListProps {
 }
 
 export const LessonList: React.FC<LessonListProps> = ({ lessons, isLoading }) => {
+    // Sắp xếp bài học theo thứ tự tăng dần của orderIndex
+    const sortedLessons = useMemo(() => {
+        if (!lessons) return [];
+        return [...lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+    }, [lessons]);
+
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -18,7 +24,7 @@ export const LessonList: React.FC<LessonListProps> = ({ lessons, isLoading }) =>
         );
     }
 
-    if (!lessons || lessons.length === 0) {
+    if (sortedLessons.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm border-dashed">
                 <div className="p-4 bg-gray-50 rounded-full mb-3 text-gray-400">
@@ -34,7 +40,7 @@ export const LessonList: React.FC<LessonListProps> = ({ lessons, isLoading }) =>
 
     return (
         <div className="space-y-4">
-            {lessons.map((lesson) => (
+            {sortedLessons.map((lesson) => (
                 <LessonItem key={lesson.id} lesson={lesson} />
             ))}
         </div>

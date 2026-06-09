@@ -4,28 +4,36 @@ export type ExamType = 'REGULAR' | 'MIDTERM' | 'FINAL';
 export type ExamStatus = 'CREATED' | 'OPEN' | 'CLOSED';
 export type GradeStatus = 'PENDING' | 'PASS' | 'FAIL';
 
-export interface ClassBasic {
-    id: number;
-    code: string;
-    courseCode: string;
+export interface LecturerClassResponse {
+    classId: number;
+    classCode: string;
     courseName: string;
-    credits: number;
-    semesterCode: string;
+    status: ClassStatus;
     maxStudents: number;
     currentStudents: number;
-    status: ClassStatus;
 }
 
-export interface StudentInClass {
-    enrollmentId: number;
+export interface LecturerClassDetailResponse {
+    classId: number;
+    classCode: string;
+    courseName: string;
+    courseCode: string;
+    credits: number;
+    status: ClassStatus;
+    maxStudents: number;
+    currentStudents: number;
+    dayOfWeek: number;
+    shiftName: string;
+    roomName: string;
+}
+
+export interface StudentOfClassResponse {
     studentId: number;
-    studentCode: string;
     fullName: string;
-    email: string;
     avatarUrl?: string;
-    cohort: number;
+    studentCode: string;
+    email: string;
     enrollmentStatus: EnrollmentStatus;
-    enrolledAt: string;
 }
 
 export interface LessonMaterial {
@@ -38,17 +46,26 @@ export interface LessonMaterial {
 
 export interface LessonBasic {
     id: number;
+    classId: number;
     title: string;
     description?: string;
     orderIndex: number;
     isPublished: boolean;
     materials: LessonMaterial[];
     createdAt: string;
-    updatedAt: string;
+}
+
+export interface CreateLessonPayload {
+    title: string;
+    description?: string;
+    orderIndex?: number;
+    isPublished?: boolean;
+    files?: File[];
 }
 
 export interface ExamBasic {
     id: number;
+    classId: number;
     title: string;
     description?: string;
     examType: ExamType;
@@ -56,6 +73,27 @@ export interface ExamBasic {
     totalQuestions: number;
     status: ExamStatus;
     createdAt: string;
+    deletedAt?: string;
+}
+
+export interface OptionDto {
+    content: string;
+    isCorrect: boolean;
+    orderIndex?: number;
+}
+
+export interface QuestionDto {
+    content: string;
+    orderIndex?: number;
+    options: OptionDto[];
+}
+
+export interface CreateExamPayload {
+    title: string;
+    description?: string;
+    examType: ExamType;
+    timeLimit: number;
+    questions: QuestionDto[];
 }
 
 export interface StudentGrade {

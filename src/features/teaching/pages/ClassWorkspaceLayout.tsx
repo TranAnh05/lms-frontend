@@ -1,18 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Outlet, useParams, useNavigate } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 import clsx from "clsx";
 import { teachingService } from "../services/teaching.service";
-import { type ClassBasic } from "../types";
+import { type LecturerClassDetailResponse, type ClassStatus } from "../types";
 import { ClassWorkspaceNav } from "../components/ClassWorkspaceNav";
+
+const STATUS_CONFIG: Record<ClassStatus, { label: string; color: string }> = {
+    PENDING: { label: "Chờ mở", color: "bg-amber-100 text-amber-700" },
+    REGISTRATION: { label: "Đang đăng ký", color: "bg-blue-100 text-blue-700" },
+    ONGOING: { label: "Đang diễn ra", color: "bg-emerald-100 text-emerald-700" },
+    COMPLETED: { label: "Đã kết thúc", color: "bg-gray-100 text-gray-600" },
+    CANCELED: { label: "Đã hủy", color: "bg-rose-100 text-rose-700" },
+};
 
 export const ClassWorkspaceLayout: React.FC = () => {
     const { classId } = useParams<{ classId: string }>();
     const navigate = useNavigate();
     
-    const [classData, setClassData] = useState<ClassBasic | null>(null);
+    const [classData, setClassData] = useState<LecturerClassDetailResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -47,7 +54,7 @@ export const ClassWorkspaceLayout: React.FC = () => {
 
     if (!classData) return null;
 
-    const isFull = classData.currentStudents >= classData.maxStudents;
+    const statusConfig = STATUS_CONFIG[classData.status];
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50/50">
@@ -64,11 +71,8 @@ export const ClassWorkspaceLayout: React.FC = () => {
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-3 mb-2.5">
-                                <span className={clsx(
-                                    "px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide rounded-md",
-                                    classData.status === "ONGOING" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                                )}>
-                                    {classData.status === "ONGOING" ? "Đang diễn ra" : classData.status}
+                                <span className={clsx("px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide rounded-md", statusConfig.color)}>
+                                    {statusConfig.label}
                                 </span>
                             </div>
                             
@@ -79,17 +83,7 @@ export const ClassWorkspaceLayout: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-4 text-sm text-gray-600">
                                 <div>
                                     <span className="text-gray-500">Mã lớp:</span>{" "}
-                                    <span className="font-semibold text-gray-900">{classData.code}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-500">Tín chỉ:</span>{" "}
-                                    <span className="font-semibold text-gray-900">{classData.credits}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-500">Sĩ số:</span>{" "}
-                                    <strong className={clsx(isFull ? "text-rose-600" : "text-gray-900")}>
-                                        {classData.currentStudents}
-                                    </strong> / {classData.maxStudents}
+                                    <span className="font-semibold text-gray-900">{classData.classCode}</span>
                                 </div>
                             </div>
                         </div>

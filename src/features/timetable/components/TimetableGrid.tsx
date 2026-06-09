@@ -3,8 +3,7 @@ import { Loader2 } from "lucide-react";
 import clsx from "clsx";
 import { ScheduleCard } from "./ScheduleCard";
 import { getDatesOfWeek } from "../utils/dateUtils";
-import { SHIFTS } from "../data/mockTimetableData";
-import { type ScheduleItem, type TimetableRole } from "../types";
+import { SHIFTS, type ScheduleItem, type TimetableRole } from "../types";
 
 interface TimetableGridProps {
     currentDate: Date;
@@ -57,16 +56,10 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                             
                             return (
                                 <div key={day.id} className="p-3 border-r border-gray-200 last:border-r-0 flex flex-col items-center justify-center gap-1">
-                                    <span className={clsx(
-                                        "text-sm font-bold",
-                                        isToday ? "text-blue-600" : "text-gray-900"
-                                    )}>
+                                    <span className={clsx("text-sm font-bold", isToday ? "text-blue-600" : "text-gray-900")}>
                                         {day.name}
                                     </span>
-                                    <span className={clsx(
-                                        "text-xs font-semibold px-2.5 py-0.5 rounded-full",
-                                        isToday ? "bg-blue-100 text-blue-700" : "text-gray-500"
-                                    )}>
+                                    <span className={clsx("text-xs font-semibold px-2.5 py-0.5 rounded-full", isToday ? "bg-blue-100 text-blue-700" : "text-gray-500")}>
                                         {date.getDate().toString().padStart(2, '0')}/{(date.getMonth() + 1).toString().padStart(2, '0')}
                                     </span>
                                 </div>
@@ -95,17 +88,38 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                         </span>
                                     </div>
 
-                                    {DAYS_OF_WEEK.map((day) => {
-                                        const classItem = data.find(d => d.shiftId === shift.id && d.dayOfWeek === day.id);
+                                    {DAYS_OF_WEEK.map((day, idx) => {
+                                        const cellDate = new Date(weekDates[idx]);
+                                        cellDate.setHours(0, 0, 0, 0);
+
+                                        const classItem = data.find(d => {
+                                            const isMatch = d.shiftName?.includes(shift.name) && d.dayOfWeek === day.id;
+                                            if (!isMatch) return false;
+
+                                            if (d.startDate && d.totalWeeks) {
+                                                const baseStart = new Date(d.startDate);
+                                                
+                                                // Dời lịch sang tuần kế tiếp (cộng thêm 7 ngày)
+                                                const actualStart = new Date(baseStart);
+                                                actualStart.setDate(baseStart.getDate() + 7);
+                                                actualStart.setHours(0, 0, 0, 0);
+
+                                                // Tính ngày kết thúc học phần
+                                                const actualEnd = new Date(actualStart);
+                                                actualEnd.setDate(actualStart.getDate() + (d.totalWeeks * 7));
+                                                actualEnd.setHours(0, 0, 0, 0);
+
+                                                return cellDate >= actualStart && cellDate < actualEnd;
+                                            }
+                                            return true;
+                                        });
                                         
                                         return (
                                             <div 
                                                 key={`${shift.id}-${day.id}`} 
                                                 className="p-1.5 border-r border-gray-200 last:border-r-0 min-h-[160px] bg-white hover:bg-gray-50/50 transition-colors"
                                             >
-                                                {classItem ? (
-                                                    <ScheduleCard item={classItem} role={role} />
-                                                ) : null}
+                                                {classItem && <ScheduleCard item={classItem} role={role} />}
                                             </div>
                                         );
                                     })}

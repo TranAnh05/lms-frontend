@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Plus, FileCheck } from "lucide-react";
 import { toast } from "react-toastify";
 import { teachingService } from "../services/teaching.service";
-import { type ExamBasic } from "../types";
+import { type ExamBasic, type CreateExamPayload } from "../types";
 import { ExamList } from "../components/exams/ExamList";
 import { CreateExamModal } from "../components/exams/CreateExamModal";
 
@@ -14,32 +13,60 @@ export const ExamManagePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchExams = async () => {
-            if (!classId) return;
-            setIsLoading(true);
-            try {
-                const data = await teachingService.getExams(Number(classId));
-                setExams(data);
-            } catch (error) {
-                toast.error("Không thể tải danh sách bài kiểm tra.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchExams();
-    }, [classId]);
-
-    const handleCreateExam = async (payload: Partial<ExamBasic>) => {
+    // Tách hàm fetch để tái sử dụng sau khi tạo mới
+    const fetchExams = useCallback(async () => {
         if (!classId) return;
         try {
-            const newExam = await teachingService.createExam(Number(classId), payload);
-            setExams((prev) => [...prev, newExam]);
+            const data = await teachingService.getExams(Number(classId));
+            setExams(data);
+        } catch (error) {
+            toast.error("Không thể tải danh sách bài kiểm tra.");
+        }
+    }, [classId]);
+
+    useEffect(() => {
+        const initFetch = async () => {
+            setIsLoading(true);
+            await fetchExams();
+            setIsLoading(false);
+        };
+
+        initFetch();
+    }, [fetchExams]);
+
+    const handleCreateExam = async (payload: CreateExamPayload) => {
+        if (!classId) return;
+        try {
+            await teachingService.createExam(Number(classId), payload);
+            await fetchExams(); // Tải lại danh sách từ server thay vì append chuỗi
             toast.success("Tạo bài kiểm tra thành công!");
         } catch (error) {
             toast.error("Đã xảy ra lỗi khi tạo bài kiểm tra.");
             throw error; 
+        }
+    };
+
+    const handleOpenExam = async (examId: number) => {
+        try {
+            await teachingService.openExam(examId);
+            setExams((prev) =>
+                prev.map((exam) => (exam.id === examId ? { ...exam, status: "OPEN" } : exam))
+            );
+            toast.success("Đã mở bài kiểm tra cho sinh viên làm bài!");
+        } catch (error) {
+            toast.error("Không thể mở bài kiểm tra.");
+        }
+    };
+
+    const handleCloseExam = async (examId: number) => {
+        try {
+            await teachingService.closeExam(examId);
+            setExams((prev) =>
+                prev.map((exam) => (exam.id === examId ? { ...exam, status: "CLOSED" } : exam))
+            );
+            toast.success("Đã đóng bài kiểm tra thành công.");
+        } catch (error) {
+            toast.error("Không thể đóng bài kiểm tra.");
         }
     };
 
@@ -70,6 +97,8 @@ export const ExamManagePage: React.FC = () => {
             <ExamList 
                 exams={exams} 
                 isLoading={isLoading} 
+                onOpenExam={handleOpenExam}
+                onCloseExam={handleCloseExam}
             />
 
             <CreateExamModal 
