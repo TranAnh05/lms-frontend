@@ -97,9 +97,10 @@ export interface CreateExamPayload {
 }
 
 export interface StudentGrade {
-    enrollmentId: number;
+    studentId: number;
     studentCode: string;
     fullName: string;
+    email: string;
     regularScore1?: number;
     regularScore2?: number;
     midtermScore?: number;
@@ -108,8 +109,11 @@ export interface StudentGrade {
     status: GradeStatus;
 }
 
-export interface GradeFormula {
-    regularWeight: number;
-    midtermWeight: number;
-    finalWeight: number;
+export interface ClassGradeListResponse {
+    classId: number;
+    classCode: string;
+    courseName: string;
+    courseCode: string;
+    totalStudents: number;
+    students: StudentGrade[];
 }

@@ -7,6 +7,8 @@ import {
     type PageResponse,
     type CreateUserPayload,
     type ApiResponse,
+    type UpdateUserPayload,
+    type DropdownOption,
 } from "../types";
 
 interface ServerResponse<T> {
@@ -49,5 +51,23 @@ export const userService = {
             "/users/create-with-roles",
             payload,
         )) as ApiResponse<string>;
+    },
+
+    updateUser: async (
+        id: number,
+        payload: UpdateUserPayload,
+    ): Promise<ApiResponse<User>> => {
+        return (await apiClient.put(
+            `/users/${id}`,
+            payload
+        )) as ApiResponse<User>;
+    },
+
+    getMajorsDropdown: async (
+        departmentId?: number | null
+    ): Promise<DropdownOption[]> => {
+        return (await apiClient.get("/majors/dropdown", {
+            params: { departmentId: departmentId || undefined },
+        })) as DropdownOption[];
     },
 };
