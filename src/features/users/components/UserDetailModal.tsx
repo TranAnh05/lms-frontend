@@ -10,6 +10,9 @@ import {
     CheckCircle,
     Lock,
     ShieldCheck,
+    Briefcase,
+    GraduationCap,
+    Edit2
 } from "lucide-react";
 import { type User } from "../types";
 import { userService } from "../services/user.service";
@@ -25,16 +28,26 @@ const ROLE_LABELS: Record<string, string> = {
     STUDENT: "Sinh viên",
 };
 
+const STUDENT_STATUS_LABELS: Record<string, string> = {
+    STUDYING: "Đang học",
+    RESERVED: "Bảo lưu",
+    SUSPENDED: "Đình chỉ",
+    GRADUATED: "Đã tốt nghiệp",
+    DROPPED_OUT: "Thôi học",
+};
+
 interface UserDetailModalProps {
     userId: number | null;
     isOpen: boolean;
     onClose: () => void;
+    onEdit: (userId: number) => void;
 }
 
 export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     userId,
     isOpen,
     onClose,
+    onEdit,
 }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -86,12 +99,25 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] md:max-h-[85vh] animate-in fade-in zoom-in-95 duration-200"
                 onClick={handleContentClick}
             >
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-10"
-                >
-                    <X className="w-5 h-5" />
-                </button>
+                <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                    {!isLoading && user && (
+                        <button
+                            onClick={() => {
+                                onEdit(user.id);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">Chỉnh sửa</span>
+                        </button>
+                    )}
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
 
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-24 flex-1">
@@ -107,8 +133,8 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 flex-1 overflow-y-auto">
-                        <div className="bg-gray-50/70 p-8 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col items-center text-center">
+                    <div className="grid grid-cols-1 md:grid-cols-3 flex-1 overflow-y-auto mt-2 sm:mt-0">
+                        <div className="bg-gray-50/70 p-8 pt-12 sm:pt-8 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col items-center text-center">
                             <div className="relative mb-4">
                                 {user.avatarUrl ? (
                                     <img
@@ -226,22 +252,16 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                                     <div className="grid grid-cols-3 py-3.5 px-4 items-center">
                                         <span className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                                            <Phone className="w-4 h-4" /> Số
-                                            điện thoại
+                                            <Phone className="w-4 h-4" /> Số điện thoại
                                         </span>
                                         <span className="col-span-2 text-sm font-semibold text-gray-900">
-                                            {user.phone || (
-                                                <span className="text-gray-400 italic font-normal">
-                                                    Chưa cập nhật
-                                                </span>
-                                            )}
+                                            {user.phone || <span className="text-gray-400 italic font-normal">Chưa cập nhật</span>}
                                         </span>
                                     </div>
 
                                     <div className="grid grid-cols-3 py-3.5 px-4 items-center">
                                         <span className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                                            <Calendar className="w-4 h-4" />{" "}
-                                            Ngày sinh
+                                            <Calendar className="w-4 h-4" /> Ngày sinh
                                         </span>
                                         <span className="col-span-2 text-sm font-semibold text-gray-900">
                                             {formatDate(user.birthday)}
@@ -250,37 +270,114 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
                                     <div className="grid grid-cols-3 py-3.5 px-4 items-center">
                                         <span className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                                            <Shield className="w-4 h-4" /> Giới
-                                            tính
+                                            <Shield className="w-4 h-4" /> Giới tính
                                         </span>
                                         <span className="col-span-2 text-sm font-semibold text-gray-900">
-                                            {user.gender === "MALE"
-                                                ? "Nam"
-                                                : user.gender === "FEMALE"
-                                                  ? "Nữ"
-                                                  : user.gender || (
-                                                        <span className="text-gray-400 italic font-normal">
-                                                            Chưa cập nhật
-                                                        </span>
-                                                    )}
+                                            {user.gender === "MALE" ? "Nam" : user.gender === "FEMALE" ? "Nữ" : user.gender || <span className="text-gray-400 italic font-normal">Chưa cập nhật</span>}
                                         </span>
                                     </div>
 
                                     <div className="grid grid-cols-3 py-3.5 px-4 items-start">
                                         <span className="text-sm font-medium text-gray-400 flex items-center gap-2 mt-0.5">
-                                            <MapPin className="w-4 h-4" /> Địa
-                                            chỉ hiện tại
+                                            <MapPin className="w-4 h-4" /> Địa chỉ hiện tại
                                         </span>
                                         <span className="col-span-2 text-sm font-semibold text-gray-900 leading-relaxed">
-                                            {user.address || (
-                                                <span className="text-gray-400 italic font-normal">
-                                                    Chưa cập nhật
-                                                </span>
-                                            )}
+                                            {user.address || <span className="text-gray-400 italic font-normal">Chưa cập nhật</span>}
                                         </span>
                                     </div>
                                 </div>
                             </div>
+
+                            {user.employeeCode && (
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                                        <Briefcase className="w-4 h-4 text-gray-400" />{" "}
+                                        Thông tin Giảng viên
+                                    </h3>
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100 bg-blue-50/20">
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Mã giảng viên</span>
+                                            <span className="col-span-2 text-sm font-bold text-blue-700 font-mono">
+                                                {user.employeeCode}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Khoa</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                {user.departmentName || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Học hàm</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                {user.academicTitle || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Chuyên môn</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                {user.specialization || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Loại hợp đồng</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                {user.isVisiting ? "Giảng viên thỉnh giảng" : "Biên chế"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Ngày tuyển dụng</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                {formatDate(user.hireDate)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {user.studentCode && (
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+                                        <GraduationCap className="w-4 h-4 text-gray-400" />{" "}
+                                        Thông tin sinh viên
+                                    </h3>
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100 bg-emerald-50/20">
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Mã sinh viên</span>
+                                            <span className="col-span-2 text-sm font-bold text-emerald-700 font-mono">
+                                                {user.studentCode}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Khóa học</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                Khóa {user.cohort || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Ngành học</span>
+                                            <span className="col-span-2 text-sm font-semibold text-gray-900">
+                                                {user.majorName ? `${user.majorName} (${user.majorCode})` : "—"}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-3 py-3.5 px-4 items-center">
+                                            <span className="text-sm font-medium text-gray-500">Trạng thái</span>
+                                            <span className="col-span-2">
+                                                <span className={clsx(
+                                                    "px-2 py-0.5 rounded text-xs font-bold tracking-wide",
+                                                    user.studentStatus === 'STUDYING' ? "bg-emerald-100 text-emerald-700" :
+                                                    user.studentStatus === 'RESERVED' ? "bg-amber-100 text-amber-700" :
+                                                    user.studentStatus === 'SUSPENDED' ? "bg-rose-100 text-rose-700" :
+                                                    "bg-gray-100 text-gray-700"
+                                                )}>
+                                                    {STUDENT_STATUS_LABELS[user.studentStatus || ''] || user.studentStatus || "—"}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     </div>
                 )}

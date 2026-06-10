@@ -9,6 +9,7 @@ import { UserFilter } from "../components/UserFilter";
 import { UserTable } from "../components/UserTable";
 import { UserDetailModal } from "../components/UserDetailModal";
 import { UserFormModal } from "../components/UserFormModal";
+import { UserEditModal } from "../components/UserEditModal";
 import { Plus } from "lucide-react";
 
 export const UserPage: React.FC = () => {
@@ -22,9 +23,12 @@ export const UserPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const pageSize = 10;
-    const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
+
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
     useEffect(() => {
@@ -115,8 +119,19 @@ export const UserPage: React.FC = () => {
     }, [fetchUsers]);
 
     const handleEditUser = useCallback((id: number) => {
-        toast.info(`Đang mở form cập nhật người dùng có ID: ${id}`);
+        setIsViewModalOpen(false);
+        setSelectedUserId(id);
+        setIsEditModalOpen(true);
     }, []);
+
+    const handleCloseEditModal = useCallback(() => {
+        setIsEditModalOpen(false);
+        setSelectedUserId(null);
+    }, []);
+
+    const handleEditSuccess = useCallback(() => {
+        fetchUsers();
+    }, [fetchUsers]);
 
     const handleToggleLockUser = async (id: number, currentStatus: boolean) => {
         const actionText = currentStatus ? "khóa" : "mở khóa";
@@ -127,6 +142,7 @@ export const UserPage: React.FC = () => {
             )
         ) {
             try {
+                // TODO: Gắn API khóa/mở khóa thực tế tại đây
                 toast.success(
                     `Đã thực hiện ${actionText} tài khoản ID ${id} thành công!`,
                 );
@@ -199,12 +215,20 @@ export const UserPage: React.FC = () => {
                 isOpen={isViewModalOpen}
                 onClose={handleCloseViewModal}
                 userId={selectedUserId}
+                onEdit={handleEditUser}
             />
 
             <UserFormModal
                 isOpen={isCreateModalOpen}
                 onClose={handleCloseCreateModal}
                 onSuccess={handleCreateSuccess}
+            />
+
+            <UserEditModal
+                isOpen={isEditModalOpen}
+                onClose={handleCloseEditModal}
+                userId={selectedUserId}
+                onSuccess={handleEditSuccess}
             />
         </div>
     );
