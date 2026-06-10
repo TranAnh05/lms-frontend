@@ -135,7 +135,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                                         <Clock className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                                         <div>
                                             <p className="text-xs font-bold text-gray-400 uppercase">Ca học</p>
-                                            <p className="text-sm font-semibold text-gray-700">{classData.shiftName}</p>
+                                            <p className="text-sm font-semibold text-gray-700">{classData.shiftName}: {classData.startTimeShilf} - {classData.endTimeShilf}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-2.5">
