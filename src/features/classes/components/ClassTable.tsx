@@ -147,8 +147,6 @@ export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead,
                                         <td className="px-5 py-4 text-center">
                                             <div className="flex flex-col items-center gap-1.5 w-full max-w-[80px] mx-auto">
                                                 <div className="flex items-center justify-center text-xs font-semibold whitespace-nowrap">
-                                                    <span className={clsx(isFull ? "text-red-600" : "text-blue-600")}>{current}</span>
-                                                    <span className="text-gray-400 mx-1">/</span>
                                                     <span className="text-gray-600">{max}</span>
                                                 </div>
                                                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">

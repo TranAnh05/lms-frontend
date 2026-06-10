@@ -41,6 +41,8 @@ export interface ClassInfo {
     lecturerName: string;
     dayOfWeek: number;
     shiftName: string;
+    startTimeShilf: string; 
+    endTimeShilf: string;  
     roomName: string;
     currentStudents: number;
     maxStudents: number;

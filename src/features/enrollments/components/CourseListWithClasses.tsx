@@ -114,7 +114,7 @@ export const CourseListWithClasses: React.FC<CourseListWithClassesProps> = ({
                                             const isDisabled = (!isRegistered && isFull) || (!isRegistered && !!registeredClassInCourse);
                                             
                                             const dayStr = cls.dayOfWeek === 8 ? "CN" : `T${cls.dayOfWeek}`;
-                                            const timeString = cls.dayOfWeek ? `${dayStr} (${cls.shiftName})` : "";
+                                            const timeString = cls.dayOfWeek ? `${dayStr} (${cls.shiftName} ${cls.startTimeShilf} - ${cls.endTimeShilf})` : "";
 
                                             return (
                                                 <tr key={cls.classId} className={clsx(
