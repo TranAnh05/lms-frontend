@@ -7,7 +7,11 @@ interface FinalizeGradeModalProps {
     onConfirm: () => Promise<void>;
 }
 
-export const FinalizeGradeModal: React.FC<FinalizeGradeModalProps> = ({ isOpen, onClose, onConfirm }) => {
+export const FinalizeGradeModal: React.FC<FinalizeGradeModalProps> = ({ 
+    isOpen, 
+    onClose, 
+    onConfirm 
+}) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!isOpen) return null;
@@ -17,6 +21,8 @@ export const FinalizeGradeModal: React.FC<FinalizeGradeModalProps> = ({ isOpen, 
         try {
             await onConfirm();
             onClose();
+        } catch (error) {
+            // Lỗi sẽ được log hoặc thông báo (toast) từ component cha
         } finally {
             setIsSubmitting(false);
         }

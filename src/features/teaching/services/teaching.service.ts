@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
 import { 
     type LecturerClassResponse, 
@@ -6,7 +7,8 @@ import {
     type ExamBasic, 
     type CreateExamPayload,
     type StudentGrade, 
-    type StudentOfClassResponse
+    type StudentOfClassResponse,
+    type ClassGradeListResponse
 } from "../types";
 
 import { MOCK_GRADES } from "../data/mockTeachingData";
@@ -55,9 +57,9 @@ export const teachingService = {
 
     // --- Giữ lại Mock Data cho các tính năng chưa có API ---
 
-    getClassGrades: async (classId: number): Promise<StudentGrade[]> => {
-        await delay(400);
-        return MOCK_GRADES[classId] || [];
+   getClassGrades: async (classId: number): Promise<ClassGradeListResponse> => {
+        const response = await apiClient.get(`/classes/${classId}/grades`);
+        return (response as any).data;
     },
 
     finalizeGrades: async (classId: number): Promise<void> => {

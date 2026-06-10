@@ -4,13 +4,13 @@ import { useParams, useOutletContext } from "react-router-dom";
 import { GraduationCap, Lock, CheckCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { teachingService } from "../services/teaching.service";
-import { type StudentGrade, type ClassBasic, type GradeFormula } from "../types";
-import { GradebookTable } from "../components/grades/GradebookTable";
+import { type StudentGrade, type LecturerClassResponse } from "../types";
+import { GradebookTable, type GradeFormula } from "../components/grades/GradebookTable";
 import { FinalizeGradeModal } from "../components/grades/FinalizeGradeModal";
 
 export const GradeManagePage: React.FC = () => {
     const { classId } = useParams<{ classId: string }>();
-    const { classData } = useOutletContext<{ classData: ClassBasic }>();
+    const { classData } = useOutletContext<{ classData: LecturerClassResponse }>();
     
     const [grades, setGrades] = useState<StudentGrade[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +29,8 @@ export const GradeManagePage: React.FC = () => {
             setIsLoading(true);
             try {
                 const data = await teachingService.getClassGrades(Number(classId));
-                setGrades(data);
+                // API trả về Object ClassGradeListResponse, ta cần lấy mảng students
+                setGrades(data.students || []); 
             } catch (error) {
                 toast.error("Không thể tải bảng điểm lớp học.");
             } finally {
@@ -41,21 +42,15 @@ export const GradeManagePage: React.FC = () => {
     }, [classId]);
 
     const handleGradeChange = (
-        enrollmentId: number, 
+        studentId: number, 
         field: "regularScore1" | "regularScore2" | "midtermScore" | "finalScore", 
         value: number | null
     ) => {
         setGrades(prev => prev.map(grade => 
-            grade.enrollmentId === enrollmentId 
+            grade.studentId === studentId 
                 ? { ...grade, [field]: value } 
                 : grade
         ));
-    };
-
-    const handleSaveGrades = async () => {
-        // TODO: Kết nối API lưu điểm thực tế
-        await new Promise(resolve => setTimeout(resolve, 800));
-        toast.success("Đã lưu tiến độ điểm thành công!");
     };
 
     const handleFinalize = async () => {
@@ -91,13 +86,15 @@ export const GradeManagePage: React.FC = () => {
                         Đã chốt học phần
                     </div>
                 ) : (
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/20 w-full sm:w-auto shadow-sm"
-                    >
-                        <Lock className="w-4 h-4" />
-                        Chốt điểm học phần
-                    </button>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/20 w-full sm:w-auto shadow-sm"
+                        >
+                            <Lock className="w-4 h-4" />
+                            Chốt điểm
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -107,7 +104,6 @@ export const GradeManagePage: React.FC = () => {
                 isLoading={isLoading} 
                 isFinalized={isFinalized}
                 onGradeChange={handleGradeChange}
-                onSaveGrades={handleSaveGrades}
             />
 
             <FinalizeGradeModal 
