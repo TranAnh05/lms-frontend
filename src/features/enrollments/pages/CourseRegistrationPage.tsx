@@ -2,28 +2,30 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 
-import { 
-    type CourseWithClassesResponse, 
-    type EnrollmentResponse, 
-    type ClassInfo
+import {
+    type CourseWithClassesResponse,
+    type EnrollmentResponse,
+    type ClassInfo,
 } from "../types";
 import { enrollmentService } from "../services/enrollment.service";
 
 import { CourseListWithClasses } from "../components/CourseListWithClasses";
 import { RegisteredClassesTable } from "../components/RegisteredClassesTable";
-import { EnrollmentSummary } from "../components/EnrollmentSummary";
 import { ClassDetailModal } from "../components/ClassDetailModal";
 
 export const CourseRegistrationPage: React.FC = () => {
     const [courses, setCourses] = useState<CourseWithClassesResponse[]>([]);
-    const [registeredClasses, setRegisteredClasses] = useState<EnrollmentResponse[]>([]);
-    
+    const [registeredClasses, setRegisteredClasses] = useState<
+        EnrollmentResponse[]
+    >([]);
+
     const [isLoadingCourses, setIsLoadingCourses] = useState(true);
     const [isLoadingCart, setIsLoadingCart] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [selectedClass, setSelectedClass] = useState<ClassInfo | null>(null);
-    const [selectedCourseContext, setSelectedCourseContext] = useState<CourseWithClassesResponse | null>(null);
+    const [selectedCourseContext, setSelectedCourseContext] =
+        useState<CourseWithClassesResponse | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     // Lấy dữ liệu API khởi tạo
@@ -33,7 +35,7 @@ export const CourseRegistrationPage: React.FC = () => {
         try {
             const [coursesData, registeredData] = await Promise.all([
                 enrollmentService.getAvailableCourses(),
-                enrollmentService.getRegisteredClasses()
+                enrollmentService.getRegisteredClasses(),
             ]);
             setCourses(coursesData);
             setRegisteredClasses(registeredData);
@@ -49,18 +51,8 @@ export const CourseRegistrationPage: React.FC = () => {
         fetchInitialData();
     }, [fetchInitialData]);
 
-    const { totalCredits, totalClasses } = useMemo(() => {
-        return registeredClasses.reduce(
-            (acc, curr) => ({
-                totalCredits: acc.totalCredits + curr.credits,
-                totalClasses: acc.totalClasses + 1
-            }),
-            { totalCredits: 0, totalClasses: 0 }
-        );
-    }, [registeredClasses]);
-
     const registeredClassIds = useMemo(() => {
-        return registeredClasses.map(rc => rc.classId);
+        return registeredClasses.map((rc) => rc.classId);
     }, [registeredClasses]);
 
     // Xử lý nút Đăng ký học phần
@@ -69,25 +61,31 @@ export const CourseRegistrationPage: React.FC = () => {
         setIsProcessing(true);
         try {
             await enrollmentService.registerClass(classId);
-            
+
             // Cập nhật lại giỏ hàng và danh sách (số lượng currentStudent) để đồng bộ mới nhất
             const [coursesData, registeredData] = await Promise.all([
                 enrollmentService.getAvailableCourses(),
-                enrollmentService.getRegisteredClasses()
+                enrollmentService.getRegisteredClasses(),
             ]);
             setCourses(coursesData);
             setRegisteredClasses(registeredData);
-            
+
             toast.success("Đăng ký lớp học phần thành công!");
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Đăng ký thất bại. Lớp có thể đã đầy hoặc bị trùng lịch.");
+            toast.error(
+                error?.response?.data?.message ||
+                    "Đăng ký thất bại. Lớp có thể đã đầy hoặc bị trùng lịch.",
+            );
         } finally {
             setIsProcessing(false);
         }
     };
 
     // Xử lý xem chi tiết
-    const handleViewDetail = (classData: ClassInfo, course: CourseWithClassesResponse) => {
+    const handleViewDetail = (
+        classData: ClassInfo,
+        course: CourseWithClassesResponse,
+    ) => {
         setSelectedClass(classData);
         setSelectedCourseContext(course);
         setIsDetailModalOpen(true);
@@ -99,10 +97,12 @@ export const CourseRegistrationPage: React.FC = () => {
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-4">
                         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <h2 className="text-lg font-bold text-gray-900">DANH SÁCH MÔN HỌC MỞ ĐĂNG KÝ</h2>
+                            <h2 className="text-lg font-bold text-gray-900">
+                                DANH SÁCH MÔN HỌC MỞ ĐĂNG KÝ
+                            </h2>
                         </div>
-                        
-                        <CourseListWithClasses 
+
+                        <CourseListWithClasses
                             data={courses}
                             isLoading={isLoadingCourses}
                             registeredClassIds={registeredClassIds}
@@ -111,21 +111,16 @@ export const CourseRegistrationPage: React.FC = () => {
                         />
                     </div>
 
-                    <EnrollmentSummary 
-                        totalCredits={totalCredits}
-                        totalClasses={totalClasses}
-                        minCredits={14}
-                        maxCredits={24}
-                    />
-                    
-                    <RegisteredClassesTable 
-                        data={registeredClasses}
-                        isLoading={isLoadingCart}
-                    />
+                    {courses.length > 0 && (
+                        <RegisteredClassesTable
+                            data={registeredClasses}
+                            isLoading={isLoadingCart}
+                        />
+                    )}
                 </div>
             </div>
 
-            <ClassDetailModal 
+            <ClassDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
                 classData={selectedClass}
