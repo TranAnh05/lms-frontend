@@ -39,3 +39,11 @@ export interface MajorFilterParams {
     sortBy?: string;
     sortDirection?: string;
 }
+
+export interface CreateMajorInput {
+    code: string;
+    name: string;
+    requiredMinimumCredits: number;
+    departmentId: number;
+    description: string | null;
+}
