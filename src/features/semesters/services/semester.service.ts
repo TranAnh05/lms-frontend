@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import apiClient from "@/services/apiClient";
 import {
     type SemesterResponse,
     type PageResponse,
     type SemesterListParams,
     type SemesterCreatePayload,
+    type SemesterClassResponse,
 } from "../types";
+import { MOCK_SEMESTER_CLASSES } from "./mockData";
 
 export const semesterService = {
     getSemesters: async (
@@ -33,5 +36,19 @@ export const semesterService = {
             "/semesters",
             payload,
         )) as SemesterResponse;
+    },
+
+    getClassesBySemester: async (
+        semesterId: number,
+    ): Promise<SemesterClassResponse[]> => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return MOCK_SEMESTER_CLASSES;
+    },
+
+    closeSemester: async (
+        semesterId: number,
+    ): Promise<{ message: string }> => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return { message: "Đóng học kỳ thành công!" };
     },
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
@@ -9,6 +10,7 @@ import { type SemesterResponse, type PageResponse } from "../types";
 import { SemesterFilter } from "../components/SemesterFilter";
 import { SemesterListTable } from "../components/SemesterListTable";
 import { SemesterFormModal } from "../components/SemesterFormModal";
+import { SemesterClosingModal } from "../components/SemesterClosingModal";
 const ACADEMIC_YEARS = ["2023-2024", "2024-2025", "2025-2026", "2026-2027"];
 
 export const SemesterManagement: React.FC = () => {
@@ -28,6 +30,10 @@ export const SemesterManagement: React.FC = () => {
     const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
         null,
     );
+    const [isClosingModalOpen, setIsClosingModalOpen] =
+        useState<boolean>(false);
+    const [selectedSemesterForClose, setSelectedSemesterForClose] =
+        useState<SemesterResponse | null>(null);
 
     const fetchSemesters = useCallback(async () => {
         setIsLoading(true);
@@ -95,17 +101,18 @@ export const SemesterManagement: React.FC = () => {
         );
     };
 
-    const handleToggleStatus = (
-        id: number,
-        currentStatus: "ACTIVE" | "CLOSED",
-    ) => {
-        const actionText = currentStatus === "ACTIVE" ? "đóng" : "mở lại";
-        if (
-            window.confirm(
-                `Bạn có chắc chắn muốn ${actionText} học kỳ này không?`,
-            )
-        ) {
-            toast.success(`Yêu cầu ${actionText} học kỳ đã được ghi nhận.`);
+    const handleToggleStatus = (semester: SemesterResponse) => {
+        if (semester.status === "ACTIVE") {
+            setSelectedSemesterForClose(semester);
+            setIsClosingModalOpen(true);
+        } else {
+            if (
+                window.confirm(
+                    `Bạn có chắc chắn muốn mở lại học kỳ ${semester.semesterCode} không?`,
+                )
+            ) {
+                toast.success(`Yêu cầu mở lại học kỳ đã được ghi nhận.`);
+            }
         }
     };
 
@@ -153,6 +160,18 @@ export const SemesterManagement: React.FC = () => {
                 onClose={() => setIsCreateModalOpen(false)}
                 onSuccess={() => {
                     setCurrentPage(0);
+                    fetchSemesters();
+                }}
+            />
+
+            <SemesterClosingModal
+                isOpen={isClosingModalOpen}
+                onClose={() => {
+                    setIsClosingModalOpen(false);
+                    setSelectedSemesterForClose(null);
+                }}
+                semester={selectedSemesterForClose}
+                onSuccess={() => {
                     fetchSemesters();
                 }}
             />
