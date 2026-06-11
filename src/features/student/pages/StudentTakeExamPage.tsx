@@ -32,19 +32,17 @@ export const StudentTakeExamPage: React.FC = () => {
 
     const [isStarted, setIsStarted] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const [submitResult, setSubmitResult] = useState<ExamSubmitResponse | null>(
-        null,
-    );
+    const [submitResult, setSubmitResult] = useState<ExamSubmitResponse | null>(null);
 
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [timeLeft, setTimeLeft] = useState(0);
 
     const [showOverlay, setShowOverlay] = useState(false);
+    const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false); // State quản lý Modal nộp bài
 
     const isSubmittedRef = useRef(false);
     const isOverlayVisibleRef = useRef(false);
     const violationCountRef = useRef(0);
-
     const attemptIdRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -54,42 +52,64 @@ export const StudentTakeExamPage: React.FC = () => {
         }
     }, [examBasic, navigate]);
 
+    const handleSelectOption = useCallback(async (questionId: number, optionId: number) => {
+        setAnswers((prev) => ({
+            ...prev,
+            [questionId]: optionId,
+        }));
+
+        if (attemptIdRef.current) {
+            try {
+                await studentService.saveStudentAnswer(attemptIdRef.current, {
+                    questionId,
+                    selectedOptionId: optionId,
+                });
+            } catch (error) {
+                console.error("Lỗi khi đồng bộ đáp án với máy chủ:", error);
+            }
+        }
+    }, []);
+
     const handleSubmit = useCallback(
         async (forced = false) => {
             if (!examPaper || isSubmittedRef.current) return;
 
             if (!attemptIdRef.current) {
-                toast.error(
-                    "Lỗi đồng bộ: Không tìm thấy mã phiên làm bài.",
-                );
+                toast.error("Lỗi đồng bộ: Không tìm thấy mã phiên làm bài.");
                 return;
             }
 
             isSubmittedRef.current = true;
             setIsSubmitted(true);
 
-            const payload = {
-                answers: examPaper.questions.map((q) => ({
-                    questionId: q.questionId,
-                    selectedOptionId: answers[q.questionId] || null,
-                })),
-            };
-
             try {
-                const result = await studentService.submitExam(
-                    attemptIdRef.current,
-                    payload,
-                    true,
-                );
+                let result;
+
+                if (forced) {
+                    result = await studentService.submitExam(attemptIdRef.current, true);
+                } else {
+                    try {
+                        result = await studentService.submitExam(attemptIdRef.current, false);
+                    } catch (error: any) {
+                        // Custom confirm khi thiếu câu (có thể nâng cấp tiếp thành Modal sau nếu muốn)
+                        if (window.confirm("Hệ thống phát hiện bạn còn câu hỏi chưa chọn đáp án. Bạn có thực sự muốn nộp bài không?")) {
+                            result = await studentService.submitExam(attemptIdRef.current, true);
+                        } else {
+                            isSubmittedRef.current = false;
+                            setIsSubmitted(false);
+                            return;
+                        }
+                    }
+                }
+
                 setSubmitResult(result);
 
                 if (document.fullscreenElement) {
                     await document.exitFullscreen().catch(() => {});
                 }
+                
                 if (forced) {
-                    toast.error(
-                        "Bài làm đã được tự động thu do hết giờ hoặc vi phạm!",
-                    );
+                    toast.error("Bài làm đã được tự động thu do hết giờ hoặc vi phạm!");
                 } else {
                     toast.success("Nộp bài thành công!");
                 }
@@ -99,7 +119,7 @@ export const StudentTakeExamPage: React.FC = () => {
                 setIsSubmitted(false);
             }
         },
-        [examPaper, answers],
+        [examPaper]
     );
 
     useEffect(() => {
@@ -155,14 +175,8 @@ export const StudentTakeExamPage: React.FC = () => {
         window.addEventListener("beforeunload", handleBeforeUnload);
 
         return () => {
-            document.removeEventListener(
-                "fullscreenchange",
-                handleFullscreenChange,
-            );
-            document.removeEventListener(
-                "visibilitychange",
-                handleVisibilityChange,
-            );
+            document.removeEventListener("fullscreenchange", handleFullscreenChange);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
             window.removeEventListener("blur", handleBlur);
             window.removeEventListener("beforeunload", handleBeforeUnload);
         };
@@ -186,25 +200,20 @@ export const StudentTakeExamPage: React.FC = () => {
             setIsStarting(true);
 
             try {
-                const attemptData = await studentService.startExam(
-                    Number(examId),
-                );
+                const attemptData = await studentService.startExam(Number(examId));
                 attemptIdRef.current = attemptData.attemptId;
             } catch (startError) {
                 console.log("Phiên làm bài có thể đã được khởi tạo trước đó.");
             }
 
-            const paperData = await studentService.getExamQuestions(
-                Number(examId),
-            );
+            const paperData = await studentService.getExamQuestions(Number(examId));
             setExamPaper(paperData);
             setTimeLeft(paperData.timeLimit * 60);
 
             await requestFullScreen();
         } catch (error: any) {
             toast.error(
-                error.response?.data?.message ||
-                    "Không thể tải cấu hình đề thi.",
+                error.response?.data?.message || "Không thể tải cấu hình đề thi."
             );
         } finally {
             setIsStarting(false);
@@ -212,9 +221,7 @@ export const StudentTakeExamPage: React.FC = () => {
     };
 
     const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60)
-            .toString()
-            .padStart(2, "0");
+        const m = Math.floor(seconds / 60).toString().padStart(2, "0");
         const s = (seconds % 60).toString().padStart(2, "0");
         return `${m}:${s}`;
     };
@@ -243,8 +250,7 @@ export const StudentTakeExamPage: React.FC = () => {
                             {submitResult.score.toFixed(2)}
                         </div>
                         <div className="text-sm font-medium text-gray-700">
-                            Số câu đúng: {submitResult.correctAnswers} /{" "}
-                            {submitResult.totalQuestions}
+                            Số câu đúng: {submitResult.correctAnswers} / {submitResult.totalQuestions}
                         </div>
                     </div>
 
@@ -354,12 +360,7 @@ export const StudentTakeExamPage: React.FC = () => {
                             index={idx + 1}
                             question={q}
                             selectedOptionId={answers[q.questionId] || null}
-                            onSelectOption={(qId, optId) =>
-                                setAnswers((prev) => ({
-                                    ...prev,
-                                    [qId]: optId,
-                                }))
-                            }
+                            onSelectOption={handleSelectOption}
                         />
                     ))}
                 </div>
@@ -375,21 +376,47 @@ export const StudentTakeExamPage: React.FC = () => {
                         / {examPaper.totalQuestions}
                     </div>
                     <button
-                        onClick={() => {
-                            if (
-                                window.confirm(
-                                    "Bạn có chắc chắn muốn nộp bài ngay bây giờ?",
-                                )
-                            ) {
-                                handleSubmit(false);
-                            }
-                        }}
+                        onClick={() => setIsSubmitModalOpen(true)}
                         className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors shadow-sm"
                     >
                         Nộp bài
                     </button>
                 </div>
             </footer>
+
+            {/* Modal Xác nhận nộp bài */}
+            {isSubmitModalOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FileCheck className="w-8 h-8" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Xác nhận nộp bài</h3>
+                            <p className="text-gray-500 mb-6">
+                                Bạn đã trả lời <strong className="text-blue-600">{Object.keys(answers).length}</strong> / {examPaper.totalQuestions} câu hỏi. Bạn có chắc chắn muốn nộp bài ngay bây giờ?
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsSubmitModalOpen(false)}
+                                    className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors"
+                                >
+                                    Quay lại
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsSubmitModalOpen(false);
+                                        handleSubmit(false);
+                                    }}
+                                    className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors shadow-sm"
+                                >
+                                    Xác nhận nộp
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

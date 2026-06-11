@@ -10,6 +10,7 @@ import {
     type ExamSubmitResponse,
     type StudentGradeResponse,
     type ExamAttemptResponse,
+    type SaveAnswerRequest,
 } from "../types";
 
 export const studentService = {
@@ -43,14 +44,23 @@ export const studentService = {
         return (response as any).data;
     },
 
+    saveStudentAnswer: async (
+        attemptId: number,
+        payload: SaveAnswerRequest
+    ): Promise<string> => {
+        const response = await apiClient.put(
+            `/attempts/${attemptId}/answers`,
+            payload
+        );
+        return (response as any).data;
+    },
+
     submitExam: async (
-        attemptId: number, 
-        payload: ExamSubmitPayload,
-        acceptIncomplete: boolean = false 
+        attemptId: number,
+        acceptIncomplete: boolean = false
     ): Promise<ExamSubmitResponse> => {
         const response = await apiClient.post(
-            `/attempts/${attemptId}/submit?acceptIncomplete=${acceptIncomplete}`,
-            payload
+            `/attempts/${attemptId}/submit?acceptIncomplete=${acceptIncomplete}`
         );
         return (response as any).data;
     },

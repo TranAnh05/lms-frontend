@@ -22,7 +22,7 @@ export const StudentClassDetailPage: React.FC = () => {
         const fetchClassDetail = async () => {
             if (!classId) return;
             try {
-                const classes = await studentService.getMyClasses();
+                const classes = await studentService.getMyClassesRegitered();
                 const classList = Array.isArray(classes) ? classes : (classes as any).data;
                 const currentClass = classList?.find((c: StudentClassResponse) => c.classId === Number(classId));
                 
