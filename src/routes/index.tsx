@@ -25,6 +25,7 @@ import { StudentClassListPage } from "@/features/student/pages/StudentClassListP
 import { StudentClassDetailPage } from "@/features/student/pages/StudentClassDetailPage";
 import { StudentTakeExamPage } from "@/features/student/pages/StudentTakeExamPage";
 import { StudentTranscriptPage } from "@/features/grades/pages/StudentTranscriptPage";
+import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -36,12 +37,6 @@ const RoleBasedRedirect = () => {
 const HeadQuanLyLopHoc = () => (
     <div className="text-xl font-bold text-gray-800">
         Giao diện Quản lý lớp học cho trưởng khoa
-    </div>
-);
-
-const ProfilePage = () => (
-    <div className="text-xl font-bold text-gray-800">
-        Giao diện Hồ sơ cá nhân
     </div>
 );
 

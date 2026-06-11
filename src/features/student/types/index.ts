@@ -74,13 +74,9 @@ export interface ExamTakingResponse {
     questions: ExamTakingQuestion[];
 }
 
-export interface StudentAnswerPayload {
+export interface SaveAnswerRequest {
     questionId: number;
-    selectedOptionId: number | null;
-}
-
-export interface ExamSubmitPayload {
-    answers: StudentAnswerPayload[];
+    selectedOptionId: number;
 }
 
 export interface ExamSubmitResponse {

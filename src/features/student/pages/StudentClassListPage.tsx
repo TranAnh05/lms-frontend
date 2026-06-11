@@ -24,7 +24,7 @@ export const StudentClassListPage: React.FC = () => {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const res = await studentService.getMyClasses();
+                const res = await studentService.getMyClassesRegitered();
                 const classList = Array.isArray(res) ? res : (res as any).data;
                 setClasses(classList || []);
             } catch (error) {

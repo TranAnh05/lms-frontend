@@ -9,6 +9,7 @@ import { MajorFilter } from "../components/MajorFilter";
 import { MajorTable } from "../components/MajorTable";
 import { MajorDetailModal } from "../components/MajorDetailModal";
 import { useAuthStore } from "@/store/authStore";
+import { MajorFormModal } from "../components/MajorFormModal";
 
 export const MajorPage: React.FC = () => {
     const [majors, setMajors] = useState<Major[]>([]);
@@ -20,6 +21,7 @@ export const MajorPage: React.FC = () => {
     const [totalPages, setTotalPages] = useState<number>(0);
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [selectedMajorId, setSelectedMajorId] = useState<number | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const { user } = useAuthStore();
 
     const isTrainingDept = user?.roles?.includes("TRAINING_DEPT");
@@ -42,30 +44,30 @@ export const MajorPage: React.FC = () => {
         setCurrentPage(0);
     }, [debouncedSearchTerm, selectedDeptId]);
 
-    useEffect(() => {
-        const fetchMajors = async () => {
-            setIsLoading(true);
-            try {
-                const response = await majorService.getMajors({
-                    keyword: debouncedSearchTerm,
-                    departmentId: selectedDeptId,
-                    page: currentPage,
-                    size: 10,
-                    sortBy: "createdAt",
-                    sortDirection: "desc",
-                });
+    const fetchMajors = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await majorService.getMajors({
+                keyword: debouncedSearchTerm,
+                departmentId: selectedDeptId,
+                page: currentPage,
+                size: 10,
+                sortBy: "createdAt",
+                sortDirection: "desc",
+            });
 
-                setMajors(response.content);
-                setTotalPages(response.totalPages);
-            } catch (error) {
-                toast.error("Không thể tải danh sách ngành học.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchMajors();
+            setMajors(response.content);
+            setTotalPages(response.totalPages);
+        } catch (error) {
+            toast.error("Không thể tải danh sách ngành học.");
+        } finally {
+            setIsLoading(false);
+        }
     }, [debouncedSearchTerm, selectedDeptId, currentPage]);
+
+    useEffect(() => {
+        fetchMajors();
+    }, [fetchMajors]);
 
     const handlePageChange = useCallback((newPage: number) => {
         setCurrentPage(newPage);
@@ -73,8 +75,20 @@ export const MajorPage: React.FC = () => {
 
     const handleAddClick = useCallback(() => {
         if (!hasAddEditPermission) return;
-        toast.info("Chức năng thêm mới đang được phát triển.");
+        setIsCreateModalOpen(true);
     }, [hasAddEditPermission]);
+
+    const handleCloseCreateModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleCreateSuccess = useCallback(() => {
+        if (currentPage === 0) {
+            fetchMajors();
+        } else {
+            setCurrentPage(0);
+        }
+    }, [currentPage, fetchMajors]);
 
     const handleView = useCallback((id: number) => {
         setSelectedMajorId(id);
@@ -157,6 +171,13 @@ export const MajorPage: React.FC = () => {
                 isOpen={isViewModalOpen}
                 onClose={handleCloseViewModal}
                 majorId={selectedMajorId}
+            />
+
+            <MajorFormModal
+                isOpen={isCreateModalOpen}
+                onClose={handleCloseCreateModal}
+                onSuccess={handleCreateSuccess}
+                departments={departments}
             />
         </div>
     );
