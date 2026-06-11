@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import apiClient from "@/services/apiClient";
 import {
@@ -41,8 +42,8 @@ export const semesterService = {
     getClassesBySemester: async (
         semesterId: number,
     ): Promise<SemesterClassResponse[]> => {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return MOCK_SEMESTER_CLASSES;
+        const response: any = await apiClient.get(`/classes/semesters/${semesterId}/classes`)
+        return response.data || response
     },
 
     closeSemester: async (
