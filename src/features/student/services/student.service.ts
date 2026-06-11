@@ -17,6 +17,10 @@ export const studentService = {
         return apiClient.get("/enrollments/my");
     },
 
+    getMyClassesRegitered: async (): Promise<StudentClassResponse[]> => {
+        return apiClient.get("/enrollments/my/registered")
+    },
+
     getLessons: async (classId: number): Promise<StudentLessonBasic[]> => {
         const response = await apiClient.get(`/classes/${classId}/lessons`);
         return (response as any).data || [];
