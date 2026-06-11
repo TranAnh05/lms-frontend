@@ -3,7 +3,6 @@ import {
     Eye,
     Edit3,
     Lock,
-    Unlock,
     ShieldAlert,
     MoreHorizontal,
 } from "lucide-react";
@@ -16,7 +15,7 @@ const ActionMenu: React.FC<{
     total: number;
     onViewDetail: (id: number) => void;
     onUpdate: (id: number) => void;
-    onToggleStatus: (id: number, currentStatus: "ACTIVE" | "CLOSED") => void;
+    onToggleStatus: (semester: SemesterResponse) => void;
 }> = ({ semester, index, total, onViewDetail, onUpdate, onToggleStatus }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -85,7 +84,7 @@ const ActionMenu: React.FC<{
                     <button
                         onClick={() => {
                             setIsOpen(false);
-                            onToggleStatus(semester.id, semester.status);
+                            onToggleStatus(semester);
                         }}
                         className={clsx(
                             "w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left",
@@ -94,13 +93,9 @@ const ActionMenu: React.FC<{
                                 : "text-green-600 hover:bg-green-50",
                         )}
                     >
-                        {semester.status === "ACTIVE" ? (
+                        {semester.status === "ACTIVE" && (
                             <>
                                 <Lock className="w-4 h-4" /> Đóng học kỳ
-                            </>
-                        ) : (
-                            <>
-                                <Unlock className="w-4 h-4" /> Mở lại học kỳ
                             </>
                         )}
                     </button>
@@ -115,7 +110,7 @@ interface SemesterListTableProps {
     isLoading: boolean;
     onViewDetail: (id: number) => void;
     onUpdate: (id: number) => void;
-    onToggleStatus: (id: number, currentStatus: "ACTIVE" | "CLOSED") => void;
+    onToggleStatus: (semester: SemesterResponse) => void;
     onPageChange: (page: number) => void;
 }
 

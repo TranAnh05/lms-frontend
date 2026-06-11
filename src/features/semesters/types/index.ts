@@ -39,3 +39,13 @@ export interface SemesterCreatePayload {
     startDate: string;
     endDate: string;
 }
+
+export type ClassStatus = 'PENDING' | 'REGISTRATION' | 'ONGOING' | 'COMPLETED' | 'CANCELED';
+
+export interface SemesterClassResponse {
+    id: number;
+    code: string;
+    courseName: string;
+    lecturerName: string | null;
+    status: ClassStatus;
+}
