@@ -6,14 +6,9 @@ import {
     type LessonBasic, 
     type ExamBasic, 
     type CreateExamPayload,
-    type StudentGrade, 
     type StudentOfClassResponse,
     type ClassGradeListResponse
 } from "../types";
-
-import { MOCK_GRADES } from "../data/mockTeachingData";
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const teachingService = {
     getAssignedClasses: async (status?: string): Promise<LecturerClassResponse[]> => {
@@ -55,15 +50,15 @@ export const teachingService = {
         return response.data;
     },
 
-    // --- Giữ lại Mock Data cho các tính năng chưa có API ---
-
    getClassGrades: async (classId: number): Promise<ClassGradeListResponse> => {
         const response = await apiClient.get(`/classes/${classId}/grades`);
         return (response as any).data;
     },
 
     finalizeGrades: async (classId: number): Promise<void> => {
-        await delay(800);
+        await apiClient.post("/grades/lock", null, {
+            params: { classId }
+        });
     },
 
     openExam: async (classId: number, examId: number): Promise<void> => {
