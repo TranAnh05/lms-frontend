@@ -1,4 +1,3 @@
-import { type SemesterBasic } from "./index";
 
 export interface ClassPendingResponse {
     id: number;
@@ -15,7 +14,9 @@ export interface ClassPendingResponse {
 
 export interface RegistrationPeriodResponse {
     id: number;
-    semester: SemesterBasic;
+    // semester: SemesterBasic;
+    semesterId: number;
+    semesterCode: string;
     name: string;
     type: string;
     startTime: string; 
@@ -47,4 +48,26 @@ export interface DepartmentResponse {
     id: number;
     code: string;
     name: string;
+}
+
+export interface ClassInPeriodResponse {
+    id: number;
+    code: string;
+    courseName: string;
+    enrolledCount: number;
+    maxStudents: number;
+    lecturerName: string | null;
+}
+
+export interface RegistrationPeriodDetailResponse {
+    id: number;
+    name: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    semesterId: number;
+    semesterName: string;
+    totalClasses: number;
+    totalEnrollments: number;
+    classes: ClassInPeriodResponse[];
 }

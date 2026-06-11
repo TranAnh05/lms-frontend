@@ -154,9 +154,7 @@ export const RegistrationTable: React.FC<RegistrationTableProps> = ({
                                         </td>
                                         <td className="px-5 py-4 whitespace-nowrap">
                                             <span className="font-medium text-gray-700 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-200">
-                                                {period.semester
-                                                    ?.semesterCode ||
-                                                    "Đang cập nhật"}
+                                                {period.semesterCode}
                                             </span>
                                         </td>
                                         <td className="px-5 py-4 whitespace-nowrap">
