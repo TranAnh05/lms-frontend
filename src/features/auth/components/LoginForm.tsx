@@ -26,7 +26,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading }) => 
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onTouched', 
   });
 
   return (
