@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
-import { type PageResponse, type ClassDetailResponse } from "../types";
+import { type PageResponse } from "../types";
 import {
     type RegistrationPeriodResponse,
     type CreateRegistrationPayload,
     type ClassPendingResponse,
     type SemesterResponse,
     type DepartmentResponse,
+    type RegistrationPeriodDetailResponse,
 } from "../types/registration.types";
 
 export const registrationService = {
@@ -50,10 +51,10 @@ export const registrationService = {
         await apiClient.post("/registration-periods/open", payload);
     },
 
-    getRegistrationPeriodDetail: async (
+   getRegistrationPeriodDetail: async (
         id: number
-    ): Promise<RegistrationPeriodResponse & { classes: ClassDetailResponse[] }> => {
-        const response: any = await apiClient.get(`/registration-periods/${id}`);
+    ): Promise<RegistrationPeriodDetailResponse> => {
+        const response: any = await apiClient.get(`/registration-management/periods/${id}`);
         return response.data || response;
     },
 
