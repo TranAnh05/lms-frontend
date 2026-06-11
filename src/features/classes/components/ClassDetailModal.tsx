@@ -8,16 +8,14 @@ import {
     MapPin,
     Clock,
     AlertCircle,
-    Building2,
-    CalendarDays
 } from "lucide-react";
 import clsx from "clsx";
-import { type ClassDetailResponse } from "../types";
+import { type ClassDetailForStudentResponse } from "../types";
 
 interface ClassDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
-    classDetail: ClassDetailResponse | null;
+    classDetail: ClassDetailForStudentResponse | null;
     isLoading?: boolean;
 }
 
@@ -47,6 +45,8 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
             <div className="absolute inset-0" onClick={onClose}></div>
 
             <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden">
+                
+                {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50 shrink-0">
                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-blue-600" />
@@ -60,6 +60,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                     </button>
                 </div>
 
+                {/* Body */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gray-50/30">
                     {isLoading ? (
                         <div className="space-y-6 animate-pulse">
@@ -77,16 +78,18 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                         </div>
                     ) : (
                         <div className="space-y-6">
+                            
+                            {/* Card 1: Thông tin môn học cơ bản */}
                             <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                     <div>
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="font-mono text-sm font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                                {classDetail.code}
+                                            <span className="font-mono text-sm font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 shadow-sm">
+                                                {classDetail.classCode}
                                             </span>
                                             <span
                                                 className={clsx(
-                                                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border",
+                                                    "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border",
                                                     STATUS_UI_CONFIG[classDetail.status]?.style || "bg-gray-100 text-gray-700 border-gray-200"
                                                 )}
                                             >
@@ -98,10 +101,12 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                                         </h2>
                                         <p className="text-sm text-gray-500 mt-1.5 flex items-center gap-3">
                                             <span>Mã môn: <strong className="text-gray-700">{classDetail.courseCode}</strong></span>
+                                            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                            <span>Số tín chỉ: <strong className="text-gray-700">{classDetail.credits} TC</strong></span>
                                         </p>
                                     </div>
                                     
-                                    <div className="flex flex-col items-start sm:items-end bg-gray-50 p-3 rounded-lg border border-gray-100 min-w-[120px]">
+                                    <div className="flex flex-col items-start sm:items-end bg-gray-50 p-3 rounded-xl border border-gray-100 min-w-[130px] shrink-0">
                                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <Users className="w-3.5 h-3.5" /> Sĩ số hiện tại
                                         </span>
@@ -112,90 +117,78 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                                             )}>
                                                 {classDetail.currentStudents}
                                             </span>
-                                            <span className="text-gray-400 mx-1">/</span>
-                                            <span className="text-gray-600 font-medium">{classDetail.maxStudents}</span>
+                                            <span className="text-gray-400 mx-1.5">/</span>
+                                            <span className="text-gray-600 font-medium text-lg">{classDetail.maxStudents}</span>
                                         </div>
                                     </div>
                                 </div>
-
-                                {classDetail.status === "CANCELED" && classDetail.lockReason && (
-                                    <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-800 flex items-start gap-2">
-                                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                                        <p><strong>Lý do hủy:</strong> {classDetail.lockReason}</p>
-                                    </div>
-                                )}
                             </div>
 
+                            {/* Card 2: Thông tin giảng viên và học kỳ */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
-                                    <div className="flex items-start gap-3">
-                                        <User className="w-4 h-4 text-emerald-500 mt-0.5" />
-                                        <div>
-                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Giảng viên phụ trách</p>
-                                            <p className="text-sm font-semibold text-gray-900 mt-0.5">
-                                                {classDetail.lecturerName ? classDetail.lecturerName : <span className="text-amber-600 italic">Chưa phân công</span>}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <Building2 className="w-4 h-4 text-indigo-500 mt-0.5" />
-                                        <div>
-                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Khoa / Bộ môn</p>
-                                            <p className="text-sm font-medium text-gray-800 mt-0.5">{classDetail.departmentName}</p>
-                                        </div>
+                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-start gap-3">
+                                    <User className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Giảng viên phụ trách</p>
+                                        <p className="text-sm font-semibold text-gray-900 mt-1">
+                                            {classDetail.lecturerName ? classDetail.lecturerName : <span className="text-amber-600 italic">Chưa phân công</span>}
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
-                                    <div className="flex items-start gap-3">
-                                        <Calendar className="w-4 h-4 text-blue-500 mt-0.5" />
-                                        <div>
-                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Học kỳ triển khai</p>
-                                            <p className="text-sm font-semibold text-gray-900 mt-0.5">{classDetail.semesterCode}</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">Năm học: {classDetail.academicYear}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <CalendarDays className="w-4 h-4 text-purple-500 mt-0.5" />
-                                        <div>
-                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Đợt đăng ký</p>
-                                            <p className="text-sm font-medium text-gray-800 mt-0.5">
-                                                {classDetail.registrationPeriod ? classDetail.registrationPeriod.name : <span className="text-gray-400 italic">Chưa liên kết</span>}
-                                            </p>
-                                        </div>
+                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex items-start gap-3">
+                                    <Calendar className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Học kỳ triển khai</p>
+                                        <p className="text-sm font-semibold text-gray-900 mt-1">{classDetail.semesterCode}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                                <div className="bg-gray-50 border-b border-gray-200 px-5 py-3 flex items-center gap-2">
+                            {/* Card 3: Thời khóa biểu */}
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                                <div className="bg-gray-50 border-b border-gray-100 px-5 py-3.5 flex items-center gap-2">
                                     <Clock className="w-4 h-4 text-gray-500" />
-                                    <h4 className="text-sm font-bold text-gray-800">Thời khóa biểu</h4>
+                                    <h4 className="text-sm font-bold text-gray-800">Thời khóa biểu chi tiết</h4>
                                 </div>
                                 <div className="p-5">
                                     {(!classDetail.schedules || classDetail.schedules.length === 0) ? (
-                                        <p className="text-sm text-gray-500 text-center py-4 italic">Lớp học phần này chưa được xếp lịch học.</p>
+                                        <p className="text-sm text-gray-500 text-center py-6 italic bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                                            Lớp học phần này chưa được xếp lịch học.
+                                        </p>
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {classDetail.schedules.map((schedule, idx) => (
-                                                <div key={schedule.id || idx} className="flex items-start gap-3 p-3 border border-blue-100 bg-blue-50/30 rounded-lg hover:border-blue-300 transition-colors">
-                                                    <div className="flex flex-col items-center justify-center bg-white border border-blue-200 rounded-md w-12 h-12 shrink-0 shadow-sm">
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase">{getDayOfWeekName(schedule.dayOfWeek).split(' ')[0]}</span>
-                                                        <span className="text-sm font-black text-blue-700">{getDayOfWeekName(schedule.dayOfWeek).split(' ')[1]}</span>
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-bold text-gray-900">
-                                                            {schedule.shift.name} <span className="font-medium text-gray-500 text-xs ml-1">({schedule.shift.startTime} - {schedule.shift.endTime})</span>
-                                                        </p>
-                                                        <div className="flex items-center gap-1.5 mt-1">
-                                                            <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                                            <p className="text-xs font-medium text-gray-700 truncate" title={schedule.room.name}>
-                                                                {schedule.room.name} <span className="text-gray-400 font-normal">({schedule.room.type === 'LAB' ? 'Thực hành' : 'Lý thuyết'})</span>
+                                            {classDetail.schedules.map((schedule, idx) => {
+                                                const dayParts = getDayOfWeekName(schedule.dayOfWeek).split(' ');
+                                                const dayPrefix = dayParts[0]; // "Thứ" hoặc "Chủ"
+                                                const daySuffix = dayParts[1]; // "2", "3" hoặc "Nhật"
+
+                                                return (
+                                                    <div key={idx} className="flex items-start gap-3 p-3.5 border border-blue-100 bg-blue-50/40 rounded-xl hover:border-blue-300 transition-colors">
+                                                        <div className="flex flex-col items-center justify-center bg-white border border-blue-200 rounded-lg w-12 h-12 shrink-0 shadow-sm">
+                                                            <span className="text-[9px] font-bold text-gray-400 uppercase leading-none">{dayPrefix}</span>
+                                                            <span className="text-base font-black text-blue-700 leading-tight mt-0.5">{daySuffix}</span>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                                                                {schedule.shiftName} 
+                                                                <span className="font-medium text-gray-500 text-xs bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">
+                                                                    {schedule.startTime.substring(0, 5)} - {schedule.endTime.substring(0, 5)}
+                                                                </span>
                                                             </p>
+                                                            <div className="flex items-center gap-1.5 mt-2 text-xs">
+                                                                <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                                                <p className="font-medium text-gray-700 truncate" title={schedule.roomName}>
+                                                                    {schedule.roomName} 
+                                                                    <span className="text-gray-400 font-normal ml-1">
+                                                                        ({schedule.roomType === 'LAB' ? 'Thực hành' : 'Lý thuyết'})
+                                                                    </span>
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -204,12 +197,13 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                     )}
                 </div>
 
-                <div className="p-5 border-t border-gray-100 bg-gray-50/80 rounded-b-2xl flex justify-end shrink-0">
+                {/* Footer */}
+                <div className="p-5 border-t border-gray-100 bg-gray-50/80 flex justify-end shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:ring-4 focus:ring-gray-100 focus:outline-none"
+                        className="px-6 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors focus:ring-4 focus:ring-gray-100 focus:outline-none"
                     >
-                        Đóng
+                        Đóng cửa sổ
                     </button>
                 </div>
             </div>
