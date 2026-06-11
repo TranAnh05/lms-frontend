@@ -107,3 +107,26 @@ export interface SemesterBasic {
     semesterCode: string;
     academicYear: string;
 }
+
+export interface ScheduleInfoForStudent {
+    dayOfWeek: number;
+    shiftName: string;
+    startTime: string;
+    endTime: string;
+    roomName: string;
+    roomType: string;
+}
+
+export interface ClassDetailForStudentResponse {
+    classId: number;
+    classCode: string;
+    status: string;
+    maxStudents: number;
+    currentStudents: number;
+    semesterCode: string;
+    courseCode: string;
+    courseName: string;
+    credits: number;
+    lecturerName: string | null;
+    schedules: ScheduleInfoForStudent[];
+}

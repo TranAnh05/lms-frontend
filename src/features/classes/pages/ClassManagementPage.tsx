@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/authStore";
 import { classService } from "../services/class.service";
 import {
     type ClassDetailResponse,
+    type ClassDetailForStudentResponse, 
     type PageResponse,
     type DepartmentBasic,
     type SemesterBasic,
@@ -15,12 +16,6 @@ import { ClassFilter } from "../components/ClassFilter";
 import { ClassTable } from "../components/ClassTable";
 import { AssignLecturerModal } from "../components/AssignLecturerModal";
 import { ClassDetailModal } from "../components/ClassDetailModal";
-
-const MOCK_SEMESTERS = [
-    { id: 1, name: "Học kỳ 1 (2025-2026)" },
-    { id: 2, name: "Học kỳ 2 (2025-2026)" },
-    { id: 3, name: "Học kỳ Hè (2025-2026)" },
-];
 
 export const ClassManagementPage: React.FC = () => {
     const user = useAuthStore((state) => state.user);
@@ -45,7 +40,9 @@ export const ClassManagementPage: React.FC = () => {
     const [selectedClassForAssign, setSelectedClassForAssign] = useState<ClassDetailResponse | null>(null);
 
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const [selectedClassDetail, setSelectedClassDetail] = useState<ClassDetailResponse | null>(null);
+    
+    // Cập nhật Type của state để chứa dữ liệu từ API mới
+    const [selectedClassDetail, setSelectedClassDetail] = useState<ClassDetailForStudentResponse | null>(null);
     const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
     useEffect(() => {
@@ -62,15 +59,15 @@ export const ClassManagementPage: React.FC = () => {
 
     useEffect(() => {
         const fetchSemesters = async () => {
-        try {
-            const res = await classService.getSemesters();
-            setSemesters(res);
-        } catch {
-            toast.error("Không thể tải danh sách học kỳ.");
-        }
-    };
-    fetchSemesters();
-    }, [])
+            try {
+                const res = await classService.getSemesters();
+                setSemesters(res);
+            } catch {
+                toast.error("Không thể tải danh sách học kỳ.");
+            }
+        };
+        fetchSemesters();
+    }, []);
 
     const fetchClasses = useCallback(async () => {
         setIsLoading(true);
@@ -103,7 +100,8 @@ export const ClassManagementPage: React.FC = () => {
         setIsDetailModalOpen(true);
         setIsFetchingDetail(true);
         try {
-            const detail = await classService.getClassById(id);
+            // Thay đổi hàm gọi API sang hàm mới
+            const detail = await classService.getClassDetailForStudent(id);
             setSelectedClassDetail(detail);
         } catch {
             toast.error("Không thể tải thông tin chi tiết.");

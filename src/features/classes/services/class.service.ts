@@ -9,6 +9,7 @@ import {
     type LecturerBasic,
     type AssignLecturerPayload,
     type DropdownResponseDto,
+    type ClassDetailForStudentResponse,
 } from "../types";
 
 export const classService = {
@@ -48,5 +49,10 @@ export const classService = {
 
     assignLecturer: async (classId: number, payload: AssignLecturerPayload): Promise<void> => {
         await apiClient.put(`/class-requests/classes/${classId}/assign-lecturer`, payload);
+    },
+
+    getClassDetailForStudent: async (classId: number): Promise<ClassDetailForStudentResponse> => {
+        const response: any = await apiClient.get(`/classes/${classId}/student-detail`);
+        return response.data || response;
     },
 };
