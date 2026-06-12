@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
-import { type UserProfileResponse } from "../types";
+import { type ChangePasswordPayload, type UserProfileResponse } from "../types";
 
 export const profileService = {
     getCurrentProfile: async (): Promise<UserProfileResponse> => {
@@ -18,5 +19,10 @@ export const profileService = {
         });
         
         return (response.data !== undefined ? response.data : response) as string;
+    },
+
+    changePassword: async (payload: ChangePasswordPayload): Promise<string> => {
+        const response: any = await apiClient.put("/profile/change-password", payload);
+        return response.message || "Đổi mật khẩu thành công!";
     },
 };

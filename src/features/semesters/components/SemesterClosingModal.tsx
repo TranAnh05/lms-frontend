@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from "react";
 import { X, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
@@ -58,8 +59,9 @@ export const SemesterClosingModal: React.FC<SemesterClosingModalProps> = ({
             toast.success(`Đóng học kỳ ${semester.semesterCode} thành công!`);
             onSuccess();
             onClose();
-        } catch (error) {
-            toast.error("Đã xảy ra lỗi trong quá trình đóng học kỳ.");
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || "Đã xảy ra lỗi trong quá trình đóng học kỳ.";
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }

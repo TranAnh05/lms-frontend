@@ -18,3 +18,8 @@ export interface UserProfileResponse {
     specialization?: string;
     departmentName?: string;
 }
+
+export interface ChangePasswordPayload {
+    oldPassword: string;
+    newPassword: string;
+}
