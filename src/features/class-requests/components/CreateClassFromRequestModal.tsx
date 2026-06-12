@@ -5,6 +5,7 @@ import { Layers, Calendar, BookOpen, Clock, MapPin, Users, User, CheckCircle2 } 
 import { toast } from "react-toastify";
 import { classRequestService } from "../services/classRequest.service";
 import { type ClassOpeningResponseDto, type DropdownResponseDto } from "../types";
+import { any } from "zod";
 
 export interface ClassConfigItem {
     roomId: number | "";
@@ -113,8 +114,10 @@ export const CreateClassFromRequestModal: React.FC<CreateClassFromRequestModalPr
                 }))
             });
             onSuccess(); 
-        } catch {
-            console.error("Lỗi khi tạo lớp");
+        } catch (error: any) {
+            console.error("Lỗi khi tạo lớp", error);
+            const errorMessage = error.response?.data?.message || "Đã xảy ra lỗi khi khởi tạo lớp học phần. Vui lòng kiểm tra lại.";
+            toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
