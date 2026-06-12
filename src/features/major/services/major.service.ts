@@ -5,6 +5,7 @@ import {
     type Major,
     type MajorFilterParams,
     type PageResponse,
+    type UpdateMajorInput,
 } from "../types";
 
 export const majorService = {
@@ -37,22 +38,23 @@ export const majorService = {
     },
 
     createMajor: async (data: CreateMajorInput): Promise<Major> => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const response = await apiClient.post("/majors", data);
+        return (
+            response.data !== undefined ? response.data : response
+        ) as Major;
+    },
 
-        const mockNewMajor: Major = {
-            id: Math.floor(Math.random() * 1000) + 100, 
-            code: data.code.toUpperCase(),
-            name: data.name,
-            requiredMinimumCredits: Number(data.requiredMinimumCredits),
-            description: data.description,
-            isActive: true,
-            lockReason: null,
-            departmentId: data.departmentId,
-            departmentCode: `DEPT_${data.departmentId}`, 
-            departmentName: `Khoa chức năng mẫu ${data.departmentId}`, 
-        };
+    updateMajor: async (id: number, data: UpdateMajorInput): Promise<Major> => {
+        const response = await apiClient.put(`/majors/${id}`, data);
+        return (
+            response.data !== undefined ? response.data : response
+        ) as Major;
+    },
 
-        return mockNewMajor;
-
-    }    
+    deleteMajor: async (id: number): Promise<string> => {
+        const response = await apiClient.delete(`/majors/${id}`);
+        return (
+            response.data !== undefined ? response.data : response
+        ) as string;
+    },
 };
