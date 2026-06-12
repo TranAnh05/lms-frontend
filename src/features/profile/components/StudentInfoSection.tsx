@@ -31,7 +31,7 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({ profile 
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-1.5">Khóa học (Cohort)</label>
+                    <label className="block text-sm font-semibold text-gray-600 mb-1.5">Khóa học</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                             <Calendar className="w-4 h-4" />
