@@ -72,3 +72,13 @@ export interface CourseRejectPayload {
     courseId: number;
     rejectReason: string;
 }
+
+
+export interface UpdateCoursePayload {
+    departmentId: number;
+    name: string;
+    credits: number;
+    theoreticalHours: number;
+    practicalHours: number;
+    description?: string;
+}

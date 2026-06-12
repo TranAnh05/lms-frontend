@@ -8,6 +8,7 @@ import {
     type CreateCourseProposalPayload,
     type Department,
     type PageResponse,
+    type UpdateCoursePayload,
 } from "../types";
 
 export const courseService = {
@@ -75,5 +76,16 @@ export const courseService = {
 
     rejectCourse: async (payload: CourseRejectPayload): Promise<Course> => {
         return (await apiClient.post("/courses/reject", payload)) as Course;
+    },
+
+    updateCourse: async (
+        id: number,
+        payload: UpdateCoursePayload,
+    ): Promise<Course> => {
+        return (await apiClient.put(`/courses/${id}`, payload)) as Course;
+    },
+
+    deleteCourse: async (id: number): Promise<void> => {
+        await apiClient.delete(`/courses/${id}`);
     },
 };

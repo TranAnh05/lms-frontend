@@ -55,18 +55,26 @@ interface CourseProposalFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    editId?: number | null; // Cờ nhận biết chế độ Cập nhật
 }
 
-export const CourseProposalFormModal: React.FC<
-    CourseProposalFormModalProps
-> = ({ isOpen, onClose, onSuccess }) => {
+export const CourseProposalFormModal: React.FC<CourseProposalFormModalProps> = ({
+    isOpen,
+    onClose,
+    onSuccess,
+    editId,
+}) => {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoadingDepts, setIsLoadingDepts] = useState(false);
+    const [isFetchingDetail, setIsFetchingDetail] = useState(false);
+
+    const isEditMode = !!editId;
 
     const {
         register,
         handleSubmit,
         reset,
+        setValue,
         formState: { errors, isSubmitting },
     } = useForm<FormData>({
         resolver: zodResolver(createProposalSchema),
@@ -81,35 +89,62 @@ export const CourseProposalFormModal: React.FC<
         },
     });
 
+    // Khởi tạo dữ liệu: fetch danh sách Khoa và chi tiết môn học (nếu đang sửa)
     useEffect(() => {
-        const fetchDepartments = async () => {
+        const initializeData = async () => {
             setIsLoadingDepts(true);
             try {
-                const data = await courseService.getDepartments();
-                setDepartments(data);
+                const depts = await courseService.getDepartments();
+                setDepartments(depts);
+
+                if (editId) {
+                    setIsFetchingDetail(true);
+                    const course = await courseService.getCourseById(editId);
+                    
+                    setValue("departmentId", course.departmentId);
+                    setValue("code", course.code);
+                    setValue("name", course.name);
+                    setValue("credits", course.credits);
+                    setValue("theoreticalHours", course.theoreticalHours);
+                    setValue("practicalHours", course.practicalHours);
+                    setValue("description", course.description || "");
+                }
             } catch (error) {
-                toast.error("Không thể tải danh sách Khoa.");
+                toast.error("Không thể tải thông tin dữ liệu cấu hình.");
+                onClose();
             } finally {
                 setIsLoadingDepts(false);
+                setIsFetchingDetail(false);
             }
         };
 
         if (isOpen) {
             reset();
-            fetchDepartments();
+            initializeData();
         }
-    }, [isOpen, reset]);
+    }, [isOpen, editId, reset, setValue, onClose]);
 
+    // Xử lý Gửi đề xuất (POST) hoặc Lưu thay đổi (PUT)
     const onSubmit = async (data: FormData) => {
         try {
-            await courseService.createCourseProposal(data);
-            toast.success("Đã gửi đề xuất môn học thành công!");
+            if (isEditMode && editId) {
+                await courseService.updateCourse(editId, {
+                    departmentId: data.departmentId,
+                    name: data.name.trim(),
+                    credits: data.credits,
+                    theoreticalHours: data.theoreticalHours,
+                    practicalHours: data.practicalHours,
+                    description: data.description?.trim(),
+                });
+                toast.success("Cập nhật thông tin môn học thành công!");
+            } else {
+                await courseService.createCourseProposal(data);
+                toast.success("Đã gửi đề xuất môn học thành công!");
+            }
             onSuccess();
             onClose();
         } catch (error: any) {
-            const errorMsg =
-                error.response?.data?.message ||
-                "Đã xảy ra lỗi khi gửi đề xuất.";
+            const errorMsg = error.response?.data?.message || "Đã xảy ra lỗi trong quá trình xử lý.";
             toast.error(errorMsg);
         }
     };
@@ -122,19 +157,26 @@ export const CourseProposalFormModal: React.FC<
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
             <div
                 className="absolute inset-0"
-                onClick={!isSubmitting ? onClose : undefined}
+                onClick={(!isSubmitting && !isFetchingDetail) ? onClose : undefined}
             ></div>
 
             <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+                
+                {isFetchingDetail && (
+                    <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-sm flex items-center justify-center rounded-2xl">
+                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    </div>
+                )}
+
                 {/* HEADER */}
-                <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl">
+                <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl shrink-0">
                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-blue-600" />
-                        Tạo Đề xuất Môn học
+                        {isEditMode ? "Cập nhật Môn học" : "Tạo Đề xuất Môn học"}
                     </h3>
                     <button
                         onClick={onClose}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isFetchingDetail}
                         className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none disabled:opacity-50"
                     >
                         <X className="w-5 h-5" />
@@ -151,8 +193,7 @@ export const CourseProposalFormModal: React.FC<
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-b border-gray-100 pb-6">
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Khoa phụ trách{" "}
-                                    <span className="text-red-500">*</span>
+                                    Khoa phụ trách <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -167,7 +208,7 @@ export const CourseProposalFormModal: React.FC<
                                             "bg-white block w-full pl-10 pr-10 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors appearance-none cursor-pointer",
                                             errors.departmentId
                                                 ? "border-red-300 focus:ring-red-500/20 text-red-900"
-                                                : "border-gray-300 focus:ring-blue-500/20",
+                                                : "border-gray-300 focus:ring-blue-500/20"
                                         )}
                                     >
                                         <option value={0} disabled>
@@ -176,10 +217,7 @@ export const CourseProposalFormModal: React.FC<
                                                 : "-- Chọn khoa phụ trách --"}
                                         </option>
                                         {departments.map((dept) => (
-                                            <option
-                                                key={dept.id}
-                                                value={dept.id}
-                                            >
+                                            <option key={dept.id} value={dept.id}>
                                                 {dept.name}
                                             </option>
                                         ))}
@@ -194,8 +232,7 @@ export const CourseProposalFormModal: React.FC<
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Mã môn học{" "}
-                                    <span className="text-red-500">*</span>
+                                    Mã môn học <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -203,18 +240,19 @@ export const CourseProposalFormModal: React.FC<
                                     </div>
                                     <input
                                         type="text"
+                                        disabled={isEditMode}
                                         placeholder="VD: SWE101"
                                         {...codeRest}
                                         onChange={(e) => {
-                                            e.target.value =
-                                                e.target.value.toUpperCase();
+                                            e.target.value = e.target.value.toUpperCase();
                                             onCodeChange(e);
                                         }}
                                         className={clsx(
                                             "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
+                                            isEditMode && "bg-gray-100 text-gray-500 cursor-not-allowed",
                                             errors.code
                                                 ? "border-red-300 focus:ring-red-500/20"
-                                                : "border-gray-300 focus:ring-blue-500/20",
+                                                : "border-gray-300 focus:ring-blue-500/20"
                                         )}
                                     />
                                 </div>
@@ -227,8 +265,7 @@ export const CourseProposalFormModal: React.FC<
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Tên môn học{" "}
-                                    <span className="text-red-500">*</span>
+                                    Tên môn học <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -242,7 +279,7 @@ export const CourseProposalFormModal: React.FC<
                                             "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
                                             errors.name
                                                 ? "border-red-300 focus:ring-red-500/20"
-                                                : "border-gray-300 focus:ring-blue-500/20",
+                                                : "border-gray-300 focus:ring-blue-500/20"
                                         )}
                                     />
                                 </div>
@@ -257,8 +294,7 @@ export const CourseProposalFormModal: React.FC<
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                    Số tín chỉ{" "}
-                                    <span className="text-red-500">*</span>
+                                    Số tín chỉ <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -270,7 +306,7 @@ export const CourseProposalFormModal: React.FC<
                                         "block w-full px-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
                                         errors.credits
                                             ? "border-red-300 focus:ring-red-500/20"
-                                            : "border-gray-300 focus:ring-blue-500/20",
+                                            : "border-gray-300 focus:ring-blue-500/20"
                                     )}
                                 />
                                 {errors.credits && (
@@ -294,7 +330,7 @@ export const CourseProposalFormModal: React.FC<
                                         "block w-full px-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-blue-50/50",
                                         errors.theoreticalHours
                                             ? "border-red-300 focus:ring-red-500/20"
-                                            : "border-blue-200 focus:ring-blue-500/20",
+                                            : "border-blue-200 focus:ring-blue-500/20"
                                     )}
                                 />
                                 {errors.theoreticalHours && (
@@ -318,7 +354,7 @@ export const CourseProposalFormModal: React.FC<
                                         "block w-full px-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-amber-50/50",
                                         errors.practicalHours
                                             ? "border-red-300 focus:ring-red-500/20"
-                                            : "border-amber-200 focus:ring-amber-500/20",
+                                            : "border-amber-200 focus:ring-amber-500/20"
                                     )}
                                 />
                                 {errors.practicalHours && (
@@ -349,11 +385,11 @@ export const CourseProposalFormModal: React.FC<
                 </div>
 
                 {/* FOOTER */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex items-center justify-end gap-3">
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isFetchingDetail}
                         className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-4 focus:ring-gray-100 disabled:opacity-50"
                     >
                         Hủy bỏ
@@ -361,16 +397,16 @@ export const CourseProposalFormModal: React.FC<
                     <button
                         type="submit"
                         form="proposalForm"
-                        disabled={isSubmitting}
-                        className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:bg-blue-400"
+                        disabled={isSubmitting || isFetchingDetail}
+                        className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:bg-blue-400 min-w-[140px] justify-center"
                     >
                         {isSubmitting ? (
                             <>
-                                <Loader2 className="w-4 h-4 animate-spin" />{" "}
-                                Đang gửi...
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {isEditMode ? "Đang lưu..." : "Đang gửi..."}
                             </>
                         ) : (
-                            "Gửi đề xuất"
+                            isEditMode ? "Lưu thay đổi" : "Gửi đề xuất"
                         )}
                     </button>
                 </div>
