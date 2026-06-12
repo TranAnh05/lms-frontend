@@ -8,22 +8,34 @@ import { type Major, type Department } from "../types";
 import { MajorFilter } from "../components/MajorFilter";
 import { MajorTable } from "../components/MajorTable";
 import { MajorDetailModal } from "../components/MajorDetailModal";
-import { useAuthStore } from "@/store/authStore";
 import { MajorFormModal } from "../components/MajorFormModal";
+import { MajorDeleteModal } from "../components/MajorDeleteModal"; 
+import { useAuthStore } from "@/store/authStore";
 
 export const MajorPage: React.FC = () => {
     const [majors, setMajors] = useState<Major[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    
+    // States cho bộ lọc & phân trang
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
+    
+    // States cho Modal Xem chi tiết
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [selectedMajorId, setSelectedMajorId] = useState<number | null>(null);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-    const { user } = useAuthStore();
+    
+    // States cho Modal Thêm/Sửa (Form Modal 2-trong-1)
+    const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
+    const [editMajorId, setEditMajorId] = useState<number | null>(null);
+    
+    // States cho Modal Xác nhận xóa
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+    const [majorToDelete, setMajorToDelete] = useState<{ id: number; name: string; code: string } | null>(null);
 
+    const { user } = useAuthStore();
     const isTrainingDept = user?.roles?.includes("TRAINING_DEPT");
     const hasAddEditPermission = !isTrainingDept;
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
@@ -73,23 +85,37 @@ export const MajorPage: React.FC = () => {
         setCurrentPage(newPage);
     }, []);
 
+    // ---------------- XỬ LÝ THÊM/SỬA ---------------- //
     const handleAddClick = useCallback(() => {
         if (!hasAddEditPermission) return;
-        setIsCreateModalOpen(true);
+        setEditMajorId(null); // Clear editId để hiển thị form Thêm mới
+        setIsFormModalOpen(true);
     }, [hasAddEditPermission]);
 
-    const handleCloseCreateModal = useCallback(() => {
-        setIsCreateModalOpen(false);
+    const handleEdit = useCallback(
+        (id: number) => {
+            if (!hasAddEditPermission) return;
+            setEditMajorId(id); // Gán editId để Form tự fetch data và chuyển sang form Cập nhật
+            setIsFormModalOpen(true);
+        },
+        [hasAddEditPermission],
+    );
+
+    const handleCloseFormModal = useCallback(() => {
+        setIsFormModalOpen(false);
+        setEditMajorId(null);
     }, []);
 
-    const handleCreateSuccess = useCallback(() => {
+    const handleFormSuccess = useCallback(() => {
         if (currentPage === 0) {
             fetchMajors();
         } else {
-            setCurrentPage(0);
+            setCurrentPage(0); // Về trang đầu tiên để thấy dữ liệu mới/cập nhật
         }
     }, [currentPage, fetchMajors]);
 
+
+    // ---------------- XỬ LÝ XEM CHI TIẾT ---------------- //
     const handleView = useCallback((id: number) => {
         setSelectedMajorId(id);
         setIsViewModalOpen(true);
@@ -100,25 +126,28 @@ export const MajorPage: React.FC = () => {
         setSelectedMajorId(null);
     }, []);
 
-    const handleEdit = useCallback(
-        (id: number) => {
-            if (!hasAddEditPermission) return;
-            toast.info(`Đang chỉnh sửa ngành học có ID: ${id}`);
-        },
-        [hasAddEditPermission],
-    );
 
+    // ---------------- XỬ LÝ XÓA ---------------- //
     const handleDelete = useCallback(
         (id: number) => {
             if (!hasAddEditPermission) return;
-            if (
-                window.confirm("Bạn có chắc chắn muốn xóa ngành học này không?")
-            ) {
-                toast.success(`Đã gửi yêu cầu xóa ngành học ID: ${id}`);
+            const targetMajor = majors.find((m) => m.id === id);
+            if (targetMajor) {
+                setMajorToDelete({ id: targetMajor.id, name: targetMajor.name, code: targetMajor.code });
+                setIsDeleteModalOpen(true);
             }
         },
-        [hasAddEditPermission],
+        [hasAddEditPermission, majors],
     );
+
+    const handleCloseDeleteModal = useCallback(() => {
+        setIsDeleteModalOpen(false);
+        setMajorToDelete(null);
+    }, []);
+
+    const handleDeleteSuccess = useCallback(() => {
+        fetchMajors();
+    }, [fetchMajors]);
 
     return (
         <div className="flex flex-col h-full space-y-6">
@@ -167,6 +196,7 @@ export const MajorPage: React.FC = () => {
                 />
             </div>
 
+            {/* Các Modals */}
             <MajorDetailModal
                 isOpen={isViewModalOpen}
                 onClose={handleCloseViewModal}
@@ -174,10 +204,18 @@ export const MajorPage: React.FC = () => {
             />
 
             <MajorFormModal
-                isOpen={isCreateModalOpen}
-                onClose={handleCloseCreateModal}
-                onSuccess={handleCreateSuccess}
+                isOpen={isFormModalOpen}
+                onClose={handleCloseFormModal}
+                onSuccess={handleFormSuccess}
                 departments={departments}
+                editId={editMajorId}
+            />
+
+            <MajorDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={handleCloseDeleteModal}
+                onSuccess={handleDeleteSuccess}
+                majorInfo={majorToDelete}
             />
         </div>
     );

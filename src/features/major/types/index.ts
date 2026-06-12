@@ -47,3 +47,9 @@ export interface CreateMajorInput {
     departmentId: number;
     description: string | null;
 }
+
+export interface UpdateMajorInput {
+    name: string;
+    requiredMinimumCredits: number;
+    description: string | null;
+}
