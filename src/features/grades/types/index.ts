@@ -1,7 +1,8 @@
-export type AcademicStatus = 'NORMAL' | 'WARNING' | 'SUSPENDED';
-export type SubjectGradeStatus = 'PASS' | 'FAIL' | 'PENDING';
+export type SubjectGradeStatus = 'PASS' | 'FAIL' | 'PENDING' | string;
 
-export interface SubjectGrade {
+export interface SubjectGradeDto {
+    classId: number;
+    classCode: string;
     courseCode: string;
     courseName: string;
     credits: number;
@@ -9,38 +10,28 @@ export interface SubjectGrade {
     regularScore2: number | null;
     midtermScore: number | null;
     finalScore: number | null;
-    totalScore10: number | null; 
-    totalScore4: number | null;  
-    letterGrade: string;        
+    totalScore: number | null;     
+    grade4: number | null;         
+    letterGrade: string | null;     
     status: SubjectGradeStatus;
 }
 
-export interface SemesterSummary {
+export interface SemesterTranscriptDto {
     semesterId: number;
     semesterCode: string;
     academicYear: string;
     semesterNumber: number;
-    totalRegisteredCredits: number;
-    totalEarnedCredits: number;
-    semesterGpa10: number;
-    semesterGpa4: number;
-    cumulativeGpa4: number;
-    academicStatus: AcademicStatus;
+    gpaThisSemester: number;
+    gpaThisSemester4: number;
+    creditsThisSemester: number;
+    creditsEarnedThisSemester: number;
+    subjects: SubjectGradeDto[];
 }
 
-export interface SemesterTranscript {
-    summary: SemesterSummary;
-    subjects: SubjectGrade[];
-}
-
-export interface AcademicOverview {
-    totalEarnedCredits: number;
-    cumulativeGpa10: number;
-    cumulativeGpa4: number;
-    currentAcademicStatus: AcademicStatus;
-}
-
-export interface StudentAcademicTranscript {
-    overview: AcademicOverview;
-    semesters: SemesterTranscript[];
+export interface TranscriptResponseDto {
+    gpaOverall: number;
+    gpaOverall4: number;
+    totalCreditsEarned: number;
+    totalSubjects: number;
+    semesters: SemesterTranscriptDto[];
 }

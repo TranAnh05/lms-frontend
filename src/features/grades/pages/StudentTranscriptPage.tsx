@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Loader2, FileSpreadsheet, ListTree, Shrink } from "lucide-react";
 import { toast } from "react-toastify";
 import { gradeService } from "../services/grade.service";
-import { type StudentAcademicTranscript } from "../types";
+import { type TranscriptResponseDto } from "../types";
 import { GradeOverviewCard } from "../components/GradeOverviewCard";
 import { SemesterGradeTable } from "../components/SemesterGradeTable";
 
 export const StudentTranscriptPage: React.FC = () => {
-    const [transcript, setTranscript] = useState<StudentAcademicTranscript | null>(null);
+    const [transcript, setTranscript] = useState<TranscriptResponseDto | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
 
@@ -19,7 +20,7 @@ export const StudentTranscriptPage: React.FC = () => {
                 setTranscript(data);
                 
                 if (data.semesters && data.semesters.length > 0) {
-                    setExpandedSemesters(new Set([data.semesters[0].summary.semesterId]));
+                    setExpandedSemesters(new Set([data.semesters[0].semesterId]));
                 }
             } catch (error) {
                 toast.error("Không thể tải bảng điểm. Vui lòng thử lại sau.");
@@ -45,7 +46,7 @@ export const StudentTranscriptPage: React.FC = () => {
 
     const handleExpandAll = () => {
         if (transcript?.semesters) {
-            setExpandedSemesters(new Set(transcript.semesters.map(s => s.summary.semesterId)));
+            setExpandedSemesters(new Set(transcript.semesters.map((s) => s.semesterId)));
         }
     };
 
@@ -81,11 +82,11 @@ export const StudentTranscriptPage: React.FC = () => {
                     Bảng điểm quá trình học tập
                 </h1>
                 <p className="text-sm text-gray-500 mt-2">
-                    Theo dõi chi tiết điểm số, số tín chỉ tích lũy và trạng thái học vụ qua từng học kỳ.
+                    Theo dõi chi tiết điểm số và số tín chỉ tích lũy qua từng học kỳ.
                 </p>
             </header>
 
-            <GradeOverviewCard overview={transcript.overview} />
+            <GradeOverviewCard data={transcript} />
 
             <div className="mt-8">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -112,10 +113,10 @@ export const StudentTranscriptPage: React.FC = () => {
                 <div className="space-y-5">
                     {transcript.semesters.map((semester) => (
                         <SemesterGradeTable 
-                            key={semester.summary.semesterId}
+                            key={semester.semesterId}
                             semesterTranscript={semester}
-                            isExpanded={expandedSemesters.has(semester.summary.semesterId)}
-                            onToggle={() => toggleSemester(semester.summary.semesterId)}
+                            isExpanded={expandedSemesters.has(semester.semesterId)}
+                            onToggle={() => toggleSemester(semester.semesterId)}
                         />
                     ))}
                 </div>

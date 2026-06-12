@@ -1,21 +1,14 @@
 import React from "react";
-import { BookOpen, Award, GraduationCap, Activity } from "lucide-react";
-import clsx from "clsx";
-import { type AcademicOverview, type AcademicStatus } from "../types";
+import { BookOpen, Award, GraduationCap, Layers } from "lucide-react";
+import { type TranscriptResponseDto } from "../types";
 
 interface GradeOverviewCardProps {
-    overview: AcademicOverview;
+    data: TranscriptResponseDto;
 }
 
-const ACADEMIC_STATUS_MAP: Record<AcademicStatus, { label: string; text: string; bg: string; iconBox: string }> = {
-    NORMAL: { label: "Bình thường", text: "text-emerald-700", bg: "bg-emerald-50/50 border-emerald-100", iconBox: "bg-emerald-100 text-emerald-600" },
-    WARNING: { label: "Cảnh báo học vụ", text: "text-amber-700", bg: "bg-amber-50/50 border-amber-100", iconBox: "bg-amber-100 text-amber-600" },
-    SUSPENDED: { label: "Đình chỉ học", text: "text-rose-700", bg: "bg-rose-50/50 border-rose-100", iconBox: "bg-rose-100 text-rose-600" },
-};
-
-export const GradeOverviewCard: React.FC<GradeOverviewCardProps> = ({ overview }) => {
-    const statusConfig = ACADEMIC_STATUS_MAP[overview.currentAcademicStatus] || ACADEMIC_STATUS_MAP.NORMAL;
-
+export const GradeOverviewCard: React.FC<GradeOverviewCardProps> = ({
+    data,
+}) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
@@ -23,8 +16,12 @@ export const GradeOverviewCard: React.FC<GradeOverviewCardProps> = ({ overview }
                     <BookOpen className="w-6 h-6" />
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-gray-500 mb-0.5">Tín chỉ tích lũy</p>
-                    <p className="text-2xl font-bold text-gray-900">{overview.totalEarnedCredits}</p>
+                    <p className="text-sm font-medium text-gray-500 mb-0.5">
+                        Tín chỉ tích lũy
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                        {data.totalCreditsEarned}
+                    </p>
                 </div>
             </div>
 
@@ -33,8 +30,14 @@ export const GradeOverviewCard: React.FC<GradeOverviewCardProps> = ({ overview }
                     <Award className="w-6 h-6" />
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-gray-500 mb-0.5">Điểm hệ 10 (CPA)</p>
-                    <p className="text-2xl font-bold text-gray-900">{overview.cumulativeGpa10.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-500 mb-0.5">
+                        Điểm hệ 10 (CPA)
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                        {data.gpaOverall != null
+                            ? data.gpaOverall.toFixed(2)
+                            : "0.00"}
+                    </p>
                 </div>
             </div>
 
@@ -43,18 +46,28 @@ export const GradeOverviewCard: React.FC<GradeOverviewCardProps> = ({ overview }
                     <GraduationCap className="w-6 h-6" />
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-gray-500 mb-0.5">Điểm hệ 4 (GPA)</p>
-                    <p className="text-2xl font-bold text-gray-900">{overview.cumulativeGpa4.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-500 mb-0.5">
+                        Điểm hệ 4 (GPA)
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                        {data.gpaOverall4 != null
+                            ? data.gpaOverall4.toFixed(2)
+                            : "0.00"}
+                    </p>
                 </div>
             </div>
 
-            <div className={clsx("p-5 rounded-2xl border shadow-sm flex items-center gap-4 transition-shadow hover:shadow-md", statusConfig.bg)}>
-                <div className={clsx("w-12 h-12 rounded-full flex items-center justify-center shrink-0", statusConfig.iconBox)}>
-                    <Activity className="w-6 h-6" />
+            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Layers className="w-6 h-6" />
                 </div>
                 <div>
-                    <p className={clsx("text-sm font-medium mb-0.5", statusConfig.text)}>Tình trạng học vụ</p>
-                    <p className={clsx("text-xl font-bold", statusConfig.text)}>{statusConfig.label}</p>
+                    <p className="text-sm font-medium text-gray-500 mb-0.5">
+                        Tổng số học phần
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                        {data.totalSubjects}
+                    </p>
                 </div>
             </div>
         </div>

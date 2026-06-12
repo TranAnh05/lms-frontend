@@ -8,7 +8,6 @@ import {
     type SemesterCreatePayload,
     type SemesterClassResponse,
 } from "../types";
-import { MOCK_SEMESTER_CLASSES } from "./mockData";
 
 export const semesterService = {
     getSemesters: async (
@@ -46,10 +45,8 @@ export const semesterService = {
         return response.data || response
     },
 
-    closeSemester: async (
-        semesterId: number,
-    ): Promise<{ message: string }> => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return { message: "Đóng học kỳ thành công!" };
-    },
+    closeSemester: async (semesterId: number): Promise<string> => {
+        const response: any = await apiClient.post(`/semesters/${semesterId}/close`)
+        return response.data || response
+    }
 };
