@@ -22,7 +22,7 @@ export const profileService = {
     },
 
     changePassword: async (payload: ChangePasswordPayload): Promise<string> => {
-        const response: any = await apiClient.put("/profile/change-password", payload);
-        return response.message || "Đổi mật khẩu thành công!";
+        const response: any = await apiClient.post("/auth/auth/change-password", payload);
+        return response.message || "Thay đổi mật khẩu tài khoản thành công!";
     },
 };
