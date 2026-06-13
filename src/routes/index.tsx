@@ -26,6 +26,8 @@ import { StudentClassDetailPage } from "@/features/student/pages/StudentClassDet
 import { StudentTakeExamPage } from "@/features/student/pages/StudentTakeExamPage";
 import { StudentTranscriptPage } from "@/features/grades/pages/StudentTranscriptPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 
 const RoleBasedRedirect = () => {
     const { user } = useAuthStore();
@@ -52,6 +54,14 @@ export const router = createBrowserRouter([
     {
         path: "/student/exams/:examId/take",
         element: <StudentTakeExamPage />,
+    },
+    {
+        path: "/forgot-password",
+        element: <ForgotPasswordPage />,
+    },
+    {
+        path: "/reset-password",
+        element: <ResetPasswordPage />,
     },
     {
         path: "/dashboard",
@@ -119,7 +129,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: "results",
-                element: <StudentTranscriptPage />
+                element: <StudentTranscriptPage />,
             },
 
             {
@@ -132,8 +142,8 @@ export const router = createBrowserRouter([
                     {
                         path: ":classId",
                         element: <StudentClassDetailPage />,
-                    }
-                ]
+                    },
+                ],
             },
             // Cấu hình Nested Routing cho Giảng viên (Teaching Module)
             {

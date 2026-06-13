@@ -2,6 +2,7 @@
 import { type LoginResponse } from "@/types/auth";
 import apiClient from "@/services/apiClient";
 import axios from "axios";
+import type { ForgotPasswordPayload, ResetPasswordPayload } from "../types";
 
 export interface LoginCredentials {
     username: string;
@@ -26,5 +27,13 @@ export const authService = {
             }
         );
         return response.data;
+    },
+
+    forgotPassword: async (payload: ForgotPasswordPayload): Promise<any> => {
+        return await apiClient.post("/auth/forgot-password", payload);
+    },
+
+    resetPassword: async (payload: ResetPasswordPayload): Promise<any> => {
+        return await apiClient.post("/auth/reset-password", payload);
     },
 };
