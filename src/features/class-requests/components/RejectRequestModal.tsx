@@ -1,12 +1,13 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from "react";
 import { X, AlertTriangle, Ban } from "lucide-react";
-import { type ClassRequestResponse } from "../types";
+import { type ClassOpeningResponseDto } from "../types";
 
 interface RejectRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (requestId: number, reason: string) => Promise<void>;
-    request: ClassRequestResponse | null;
+    request: ClassOpeningResponseDto | null;
 }
 
 export const RejectRequestModal: React.FC<RejectRequestModalProps> = ({
@@ -33,7 +34,7 @@ export const RejectRequestModal: React.FC<RejectRequestModalProps> = ({
 
         setIsSubmitting(true);
         try {
-            await onConfirm(request.id, reason.trim());
+            await onConfirm(request.requestId, reason.trim());
             onClose();
         } catch (error) {
             console.error("Lỗi khi từ chối đề xuất:", error);
@@ -70,11 +71,11 @@ export const RejectRequestModal: React.FC<RejectRequestModalProps> = ({
                             Bạn đang thực hiện từ chối đề xuất mở lớp học phần
                             môn{" "}
                             <strong className="text-gray-900">
-                                {request.course.name}
+                                {request.courseName}
                             </strong>{" "}
-                            ({request.course.code}) thuộc học kỳ{" "}
+                            thuộc học kỳ{" "}
                             <strong className="text-gray-900">
-                                {request.semester.semesterCode}
+                                {request.semesterCode}
                             </strong>
                             .
                         </div>
