@@ -18,6 +18,7 @@ import { AvatarUploader } from "../components/AvatarUploader";
 import { StudentInfoSection } from "../components/StudentInfoSection";
 import { TeacherInfoSection } from "../components/TeacherInfoSection";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
+import { useAuthStore } from "@/store/authStore";
 
 const ROLE_LABELS: Record<string, string> = {
     ADMIN: "Quản trị viên",
@@ -34,6 +35,7 @@ export const ProfilePage: React.FC = () => {
     const [profile, setProfile] = useState<UserProfileResponse | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const updateUserAvatar = useAuthStore((state) => state.updateUserAvatar)
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -53,6 +55,7 @@ export const ProfilePage: React.FC = () => {
 
     const handleAvatarUpdate = useCallback((newUrl: string) => {
         setProfile((prev) => (prev ? { ...prev, avatarUrl: newUrl } : prev));
+        updateUserAvatar(newUrl);
     }, []);
 
     const formatDate = (dateStr?: string) => {

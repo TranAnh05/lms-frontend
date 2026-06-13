@@ -9,6 +9,7 @@ interface AuthState {
   isAuthenticated: boolean;
   loginSuccess: (data: AuthResponseData) => void; 
   updateTokens: (accessToken: string, refreshToken: string) => void;
+  updateUserAvatar: (avatarUrl: string) => void;
   logout: () => void;
 }
 
@@ -33,6 +34,10 @@ export const useAuthStore = create<AuthState>()(
       updateTokens: (accessToken, refreshToken) => {
         setTokens(accessToken, refreshToken);
       },
+
+      updateUserAvatar: (avatarUrl) => set((state) => ({
+        user: state.user ? { ...state.user, avatarUrl } : null
+      })),
 
       logout: () => {
         clearTokens();
