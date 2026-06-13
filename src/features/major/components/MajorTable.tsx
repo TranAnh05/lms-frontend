@@ -49,10 +49,10 @@ const ActionMenu: React.FC<{
             document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen]);
 
-    const isBottomRow = index >= total - 2 && total > 2;
+    const isBottomRow = index === total - 1 && total > 2;
 
     return (
-        <div className="relative flex justify-center" ref={menuRef}>
+        <div className={clsx("relative flex justify-center", isOpen ? "z-[60]" : "z-10")} ref={menuRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
@@ -68,7 +68,7 @@ const ActionMenu: React.FC<{
             {isOpen && (
                 <div
                     className={clsx(
-                        "absolute right-0 w-44 bg-white border border-gray-100 rounded-lg shadow-xl py-1 z-50",
+                        "absolute right-0 w-44 bg-white border border-gray-100 rounded-lg shadow-xl py-1",
                         isBottomRow ? "bottom-full mb-1" : "top-full mt-1",
                     )}
                 >
@@ -139,23 +139,23 @@ export const MajorTable: React.FC<MajorTableProps> = ({
 }) => {
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-            <div className="overflow-x-auto min-h-[250px]">
-                <table className="w-full text-left text-sm text-gray-600">
+            <div className="w-full overflow-visible min-h-[250px] pb-4">
+                <table className="w-full table-fixed text-left text-sm text-gray-600">
                     <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
                         <tr>
-                            <th scope="col" className="px-6 py-4">
+                            <th scope="col" className="w-[15%] px-6 py-4">
                                 Mã ngành
                             </th>
-                            <th scope="col" className="px-6 py-4">
+                            <th scope="col" className="w-[30%] px-6 py-4">
                                 Tên ngành
                             </th>
-                            <th scope="col" className="px-6 py-4 text-center">
+                            <th scope="col" className="w-[15%] px-6 py-4 text-center">
                                 Tín chỉ
                             </th>
-                            <th scope="col" className="px-6 py-4">
+                            <th scope="col" className="w-[20%] px-6 py-4">
                                 Trạng thái
                             </th>
-                            <th scope="col" className="px-6 py-4 text-center">
+                            <th scope="col" className="w-[20%] px-6 py-4 text-center">
                                 Hành động
                             </th>
                         </tr>
@@ -168,8 +168,7 @@ export const MajorTable: React.FC<MajorTableProps> = ({
                                     colSpan={5}
                                     className="px-6 py-12 text-center text-gray-500"
                                 >
-                                    Không tìm thấy ngành học nào khớp với bộ
-                                    lọc.
+                                    Không tìm thấy ngành học nào khớp với bộ lọc.
                                 </td>
                             </tr>
                         ) : (

@@ -179,7 +179,7 @@ export const ClassDetailModal: React.FC<ClassDetailModalProps> = ({
                                                             <div className="flex items-center gap-1.5 mt-2 text-xs">
                                                                 <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                                                                 <p className="font-medium text-gray-700 truncate" title={schedule.roomName}>
-                                                                    {schedule.roomName} 
+                                                                   Phòng {schedule.roomName} 
                                                                     <span className="text-gray-400 font-normal ml-1">
                                                                         ({schedule.roomType === 'LAB' ? 'Thực hành' : 'Lý thuyết'})
                                                                     </span>
