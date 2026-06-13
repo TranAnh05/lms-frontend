@@ -30,11 +30,11 @@ const ActionMenu: React.FC<{
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen]);
 
-    // Nếu là 1 trong 2 dòng cuối (và bảng có > 1 dòng) -> Xổ menu lên trên
-    const isBottomRow = index > 0 && index >= total - 2;
+    // Tránh menu bị che: Chỉ xổ lên trên nếu danh sách có nhiều dòng VÀ đang ở 2 dòng cuối cùng
+    const isBottomRow = total > 2 && index >= total - 2;
 
     return (
-        <div className="relative flex justify-center" ref={menuRef}>
+        <div className="relative flex justify-center w-full" ref={menuRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
@@ -47,7 +47,7 @@ const ActionMenu: React.FC<{
 
             {isOpen && (
                 <div className={clsx(
-                    "absolute right-6 w-44 bg-white border border-gray-100 rounded-lg shadow-xl py-1 z-[9999]",
+                    "absolute right-0 w-44 bg-white border border-gray-100 rounded-lg shadow-xl py-1 z-[9999]",
                     isBottomRow ? "bottom-full mb-1" : "top-full mt-1"
                 )}>
                     <button
@@ -83,15 +83,15 @@ interface ClassTableProps {
 export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead, onViewDetail, onAssignLecturer, onPageChange }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col relative w-full">
-            <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-sm text-left text-gray-500 min-w-[900px]">
+            <div className="overflow-x-auto overflow-y-visible custom-scrollbar pb-4 min-h-[300px]">
+                <table className="w-full table-fixed text-sm text-left text-gray-500 min-w-[1050px] isolate">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50/80 border-b border-gray-100 font-bold">
                         <tr>
-                            <th className="px-5 py-4 w-[12%]">Mã lớp</th>
-                            <th className="px-5 py-4 w-[25%] max-w-[200px]">Môn học</th>
-                            <th className="px-5 py-4 w-[12%]">Học kỳ</th>
-                            <th className="px-5 py-4 w-[18%]">Giảng viên</th>
-                            <th className="px-5 py-4 text-center w-[13%]">Sĩ số</th>
+                            <th className="px-5 py-4 w-[18%]">Mã lớp</th>
+                            <th className="px-5 py-4 w-[24%]">Môn học</th>
+                            <th className="px-5 py-4 w-[10%]">Học kỳ</th>
+                            <th className="px-5 py-4 w-[16%]">Giảng viên</th>
+                            <th className="px-5 py-4 text-center w-[12%]">Sĩ số</th>
                             <th className="px-5 py-4 text-center w-[12%]">Trạng thái</th>
                             <th className="px-3 py-4 text-center w-[8%] sticky right-0 bg-gray-50/80 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.03)] z-20">Tác vụ</th>
                         </tr>
@@ -127,13 +127,16 @@ export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead,
                                 const status = STATUS_UI[item.status as keyof typeof STATUS_UI] || { label: item.status, style: "bg-gray-100 text-gray-700" };
 
                                 return (
-                                    <tr key={item.id} className="hover:bg-blue-50/40 bg-white transition-colors group relative focus-within:z-30 hover:z-30">
+                                    <tr key={item.id} className="hover:bg-blue-50/40 bg-white transition-colors group relative focus-within:z-[60] hover:z-30">
                                         <td className="px-5 py-4">
-                                            <span className="font-semibold text-gray-900 bg-gray-50 px-2 py-1 rounded border border-gray-200 font-mono text-xs whitespace-nowrap">
+                                            <span 
+                                                className="inline-block max-w-full font-semibold text-gray-900 bg-gray-50 px-2 py-1 rounded border border-gray-200 font-mono text-xs truncate align-middle"
+                                                title={item.code}
+                                            >
                                                 {item.code}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 max-w-[200px]">
+                                        <td className="px-5 py-4">
                                             <p className="font-medium text-gray-900 truncate" title={item.courseName}>{item.courseName}</p>
                                         </td>
                                         <td className="px-5 py-4 text-gray-600 font-medium whitespace-nowrap">{item.semesterCode}</td>
