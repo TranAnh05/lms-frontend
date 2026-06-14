@@ -11,6 +11,7 @@ import { UserDetailModal } from "../components/UserDetailModal";
 import { UserFormModal } from "../components/UserFormModal";
 import { UserEditModal } from "../components/UserEditModal";
 import { Plus } from "lucide-react";
+import { LockUserModal } from "../components/LockUserModal";
 
 export const UserPage: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -28,6 +29,7 @@ export const UserPage: React.FC = () => {
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+    const [isLockModalOpen, setIsLockModalOpen] = useState<boolean>(false);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
@@ -134,26 +136,21 @@ export const UserPage: React.FC = () => {
     }, [fetchUsers]);
 
     const handleToggleLockUser = async (id: number, currentStatus: boolean) => {
-        const actionText = currentStatus ? "khóa" : "mở khóa";
-
-        if (
-            window.confirm(
-                `Bạn có chắc chắn muốn ${actionText} tài khoản này không?`,
-            )
-        ) {
+    if (currentStatus) {
+        setSelectedUserId(id);
+        setIsLockModalOpen(true);
+    } else {
+        if (window.confirm("Bạn có chắc chắn muốn mở khóa tài khoản này không?")) {
             try {
-                // TODO: Gắn API khóa/mở khóa thực tế tại đây
-                toast.success(
-                    `Đã thực hiện ${actionText} tài khoản ID ${id} thành công!`,
-                );
+                await userService.lockUser(id, { lockReason: "" });
+                toast.success("Mở khóa tài khoản thành công!");
                 fetchUsers();
             } catch (error) {
-                toast.error(
-                    `Không thể thực hiện thao tác ${actionText} tài khoản.`,
-                );
+                toast.error("Không thể mở khóa tài khoản.");
             }
         }
-    };
+    }
+};
 
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
@@ -229,6 +226,16 @@ export const UserPage: React.FC = () => {
                 onClose={handleCloseEditModal}
                 userId={selectedUserId}
                 onSuccess={handleEditSuccess}
+            />
+
+            <LockUserModal
+                isOpen={isLockModalOpen}
+                onClose={() => {
+                    setIsLockModalOpen(false);
+                    setSelectedUserId(null);
+                }}
+                onSuccess={fetchUsers}
+                userId={selectedUserId}
             />
         </div>
     );

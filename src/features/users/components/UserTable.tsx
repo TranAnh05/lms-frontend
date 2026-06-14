@@ -12,13 +12,34 @@ import { type User } from "../types";
 import clsx from "clsx";
 
 const ROLE_UI_CONFIG: Record<string, { label: string; colorClass: string }> = {
-    ADMIN: { label: "Quản trị viên", colorClass: "bg-red-50 text-red-700 border-red-200" },
-    PRINCIPAL: { label: "Hiệu trưởng", colorClass: "bg-purple-50 text-purple-700 border-purple-200" },
-    HR: { label: "Phòng Nhân sự", colorClass: "bg-orange-50 text-orange-700 border-orange-200" },
-    TRAINING_DEPT: { label: "Phòng Đào tạo", colorClass: "bg-blue-50 text-blue-700 border-blue-200" },
-    HEAD_OF_DEPT: { label: "Trưởng khoa", colorClass: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-    INSTRUCTOR: { label: "Giảng viên", colorClass: "bg-cyan-50 text-cyan-700 border-cyan-200" },
-    STUDENT: { label: "Sinh viên", colorClass: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    ADMIN: {
+        label: "Quản trị viên",
+        colorClass: "bg-red-50 text-red-700 border-red-200",
+    },
+    PRINCIPAL: {
+        label: "Hiệu trưởng",
+        colorClass: "bg-purple-50 text-purple-700 border-purple-200",
+    },
+    HR: {
+        label: "Phòng Nhân sự",
+        colorClass: "bg-orange-50 text-orange-700 border-orange-200",
+    },
+    TRAINING_DEPT: {
+        label: "Phòng Đào tạo",
+        colorClass: "bg-blue-50 text-blue-700 border-blue-200",
+    },
+    HEAD_OF_DEPT: {
+        label: "Trưởng khoa",
+        colorClass: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    },
+    INSTRUCTOR: {
+        label: "Giảng viên",
+        colorClass: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    },
+    STUDENT: {
+        label: "Sinh viên",
+        colorClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    },
 };
 
 const ActionMenu: React.FC<{
@@ -34,12 +55,16 @@ const ActionMenu: React.FC<{
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
         if (isOpen) document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen]);
 
     const isBottomRow = index >= total - 2 && total > 2;
@@ -50,7 +75,9 @@ const ActionMenu: React.FC<{
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
                     "p-1.5 transition-colors rounded-md focus:outline-none",
-                    isOpen ? "bg-gray-200 text-gray-900" : "text-gray-400 hover:text-gray-800 hover:bg-gray-100",
+                    isOpen
+                        ? "bg-gray-200 text-gray-900"
+                        : "text-gray-400 hover:text-gray-800 hover:bg-gray-100",
                 )}
             >
                 <MoreHorizontal className="w-5 h-5" />
@@ -92,16 +119,14 @@ const ActionMenu: React.FC<{
                         }}
                         className={clsx(
                             "w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left",
-                            user.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50",
+                            user.isActive
+                                ? "text-rose-600 hover:bg-rose-50"
+                                : "text-emerald-600 hover:bg-emerald-50", 
                         )}
                     >
-                        {user.isActive ? (
+                        {user.isActive && (
                             <>
                                 <Lock className="w-4 h-4" /> Khóa tài khoản
-                            </>
-                        ) : (
-                            <>
-                                <Unlock className="w-4 h-4" /> Mở khóa tài khoản
                             </>
                         )}
                     </button>
@@ -141,24 +166,41 @@ export const UserTable: React.FC<UserTableProps> = ({
                 <table className="w-full text-left text-sm text-gray-600">
                     <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
                         <tr>
-                            <th scope="col" className="px-6 py-4">Người dùng</th>
-                            <th scope="col" className="px-6 py-4">Liên hệ</th>
-                            <th scope="col" className="px-6 py-4">Vai trò</th>
-                            <th scope="col" className="px-6 py-4">Trạng thái</th>
-                            <th scope="col" className="px-6 py-4 text-center">Hành động</th>
+                            <th scope="col" className="px-6 py-4">
+                                Người dùng
+                            </th>
+                            <th scope="col" className="px-6 py-4">
+                                Liên hệ
+                            </th>
+                            <th scope="col" className="px-6 py-4">
+                                Vai trò
+                            </th>
+                            <th scope="col" className="px-6 py-4">
+                                Trạng thái
+                            </th>
+                            <th scope="col" className="px-6 py-4 text-center">
+                                Hành động
+                            </th>
                         </tr>
                     </thead>
 
                     <tbody className="divide-y divide-gray-100">
                         {users.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                                    Không tìm thấy người dùng nào khớp với bộ lọc.
+                                <td
+                                    colSpan={5}
+                                    className="px-6 py-12 text-center text-gray-500"
+                                >
+                                    Không tìm thấy người dùng nào khớp với bộ
+                                    lọc.
                                 </td>
                             </tr>
                         ) : (
                             users.map((user, index) => (
-                                <tr key={user.id} className="hover:bg-blue-50/50 transition-colors">
+                                <tr
+                                    key={user.id}
+                                    className="hover:bg-blue-50/50 transition-colors"
+                                >
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             {user.avatarUrl ? (
@@ -169,12 +211,16 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                 />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold border border-blue-200 shrink-0">
-                                                    {getInitials(user.fullName, user.username)}
+                                                    {getInitials(
+                                                        user.fullName,
+                                                        user.username,
+                                                    )}
                                                 </div>
                                             )}
                                             <div>
                                                 <p className="font-semibold text-gray-900 leading-snug">
-                                                    {user.fullName || "Chưa cập nhật tên"}
+                                                    {user.fullName ||
+                                                        "Chưa cập nhật tên"}
                                                 </p>
                                                 <p className="text-[11px] text-gray-500 mt-0.5 tracking-wide">
                                                     @{user.username}
@@ -184,20 +230,33 @@ export const UserTable: React.FC<UserTableProps> = ({
                                     </td>
 
                                     <td className="px-6 py-4">
-                                        <p className="text-gray-900 font-medium text-xs">{user.email}</p>
+                                        <p className="text-gray-900 font-medium text-xs">
+                                            {user.email}
+                                        </p>
                                         <p className="text-[11px] text-gray-500 mt-0.5">
-                                            {user.phone ? user.phone : <span className="italic">Chưa có SĐT</span>}
+                                            {user.phone ? (
+                                                user.phone
+                                            ) : (
+                                                <span className="italic">
+                                                    Chưa có SĐT
+                                                </span>
+                                            )}
                                         </p>
                                     </td>
 
                                     <td className="px-6 py-4">
                                         <div className="flex flex-wrap gap-1.5">
-                                            {user.roles && user.roles.length > 0 ? (
+                                            {user.roles &&
+                                            user.roles.length > 0 ? (
                                                 user.roles.map((roleCode) => {
-                                                    const config = ROLE_UI_CONFIG[roleCode] || {
-                                                        label: roleCode,
-                                                        colorClass: "bg-gray-100 text-gray-700 border-gray-200",
-                                                    };
+                                                    const config =
+                                                        ROLE_UI_CONFIG[
+                                                            roleCode
+                                                        ] || {
+                                                            label: roleCode,
+                                                            colorClass:
+                                                                "bg-gray-100 text-gray-700 border-gray-200",
+                                                        };
                                                     return (
                                                         <span
                                                             key={roleCode}
@@ -211,7 +270,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                     );
                                                 })
                                             ) : (
-                                                <span className="text-[11px] text-gray-400 italic">Chưa cấp quyền</span>
+                                                <span className="text-[11px] text-gray-400 italic">
+                                                    Chưa cấp quyền
+                                                </span>
                                             )}
                                         </div>
                                     </td>
@@ -225,7 +286,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                     : "bg-red-50 text-red-700 border-red-200",
                                             )}
                                         >
-                                            {user.isActive ? "Đang hoạt động" : "Đã khóa"}
+                                            {user.isActive
+                                                ? "Đang hoạt động"
+                                                : "Đã khóa"}
                                         </span>
                                     </td>
 
@@ -249,7 +312,11 @@ export const UserTable: React.FC<UserTableProps> = ({
             {totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50/50">
                     <span className="text-sm text-gray-700">
-                        Trang <span className="font-semibold text-gray-900">{currentPage + 1}</span> / {totalPages}
+                        Trang{" "}
+                        <span className="font-semibold text-gray-900">
+                            {currentPage + 1}
+                        </span>{" "}
+                        / {totalPages}
                     </span>
                     <div className="flex gap-2">
                         <button
