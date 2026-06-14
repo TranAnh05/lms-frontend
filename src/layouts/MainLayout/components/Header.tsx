@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { NotificationBell } from '@/features/notification/components/NotificationBell';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Quản trị viên',
@@ -17,6 +18,7 @@ export const Header: React.FC = () => {
   const primaryRoleCode = user?.roles?.[0]?.toUpperCase() || '';
   const displayRole = ROLE_LABELS[primaryRoleCode] || 'Thành viên';
   const initialChar = user?.fullName?.charAt(0).toUpperCase() || 'U';
+  const isStudent = user?.roles?.includes("STUDENT") ?? false;
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 z-10 shrink-0">
@@ -27,6 +29,7 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center">
+        {isStudent && <NotificationBell />}
         <div className="flex items-center gap-3 p-1">
           {user?.avatarUrl ? (
             <img 

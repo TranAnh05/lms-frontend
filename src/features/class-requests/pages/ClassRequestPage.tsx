@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
@@ -80,7 +81,7 @@ export const ClassRequestPage: React.FC = () => {
             toast.error("Lỗi khi từ chối đề xuất.");
         }
     };
-
+    
     const handleConfirmApprove = async (requestId: number) => {
         try {
             await classRequestService.approveRequest(requestId);
@@ -120,6 +121,7 @@ export const ClassRequestPage: React.FC = () => {
             <RequestTable
                 data={data}
                 isLoading={isLoading}
+                currentPage={currentPage}
                 onPageChange={setCurrentPage}
                 onViewDetail={(req) => { setSelectedRequest(req); setIsDetailModalOpen(true); }}
             />

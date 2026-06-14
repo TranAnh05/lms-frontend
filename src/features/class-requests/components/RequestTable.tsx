@@ -6,6 +6,7 @@ import { type ClassOpeningResponseDto, type PageResponse } from "../types";
 interface RequestTableProps {
     data: PageResponse<ClassOpeningResponseDto> | null;
     isLoading: boolean;
+    currentPage: number;
     onPageChange: (page: number) => void;
     onViewDetail: (request: ClassOpeningResponseDto) => void;
 }
@@ -13,6 +14,7 @@ interface RequestTableProps {
 export const RequestTable: React.FC<RequestTableProps> = ({
     data,
     isLoading,
+    currentPage, 
     onPageChange,
     onViewDetail,
 }) => {
@@ -22,25 +24,19 @@ export const RequestTable: React.FC<RequestTableProps> = ({
         switch (status) {
             case "PENDING":
                 return (
-                    <span
-                        className={`${baseClass} bg-amber-50 text-amber-700 border-amber-200`}
-                    >
+                    <span className={`${baseClass} bg-amber-50 text-amber-700 border-amber-200`}>
                         Chờ duyệt
                     </span>
                 );
             case "APPROVED":
                 return (
-                    <span
-                        className={`${baseClass} bg-emerald-50 text-emerald-700 border-emerald-200`}
-                    >
+                    <span className={`${baseClass} bg-emerald-50 text-emerald-700 border-emerald-200`}>
                         Đã duyệt
                     </span>
                 );
             case "REJECTED":
                 return (
-                    <span
-                        className={`${baseClass} bg-rose-50 text-rose-700 border-rose-200`}
-                    >
+                    <span className={`${baseClass} bg-rose-50 text-rose-700 border-rose-200`}>
                         Từ chối
                     </span>
                 );
@@ -49,7 +45,7 @@ export const RequestTable: React.FC<RequestTableProps> = ({
         }
     };
 
-    if (isLoading) {
+    if (isLoading && (!data || data.content.length === 0)) {
         return (
             <div className="w-full bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden animate-pulse">
                 <div className="h-12 bg-gray-50 border-b border-gray-100 w-full" />
@@ -84,7 +80,7 @@ export const RequestTable: React.FC<RequestTableProps> = ({
 
     const content = data.content || [];
     const totalPages = data.totalPages || 0;
-    const currentPage = data.number || 0;
+    const current = data.number !== undefined ? data.number : currentPage;
 
     return (
         <div className="w-full bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col relative z-0">
@@ -92,52 +88,36 @@ export const RequestTable: React.FC<RequestTableProps> = ({
                 <table className="w-full text-left border-collapse min-w-[900px]">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider">
-                            <th className="py-3.5 px-5 w-[35%] whitespace-nowrap">
-                                Môn học
-                            </th>
-                            <th className="py-3.5 px-5 w-[15%] whitespace-nowrap">
-                                Học kỳ
-                            </th>
-                            <th className="py-3.5 px-5 w-[20%] whitespace-nowrap">
-                                Người đề xuất
-                            </th>
-                            <th className="py-3.5 px-5 w-[10%] text-center whitespace-nowrap">
-                                SV Dự kiến
-                            </th>
-                            <th className="py-3.5 px-5 w-[10%] text-center whitespace-nowrap">
-                                Trạng thái
-                            </th>
+                            <th className="py-3.5 px-5 w-[35%] whitespace-nowrap">Môn học</th>
+                            <th className="py-3.5 px-5 w-[15%] whitespace-nowrap">Học kỳ</th>
+                            <th className="py-3.5 px-5 w-[20%] whitespace-nowrap">Người đề xuất</th>
+                            <th className="py-3.5 px-5 w-[10%] text-center whitespace-nowrap">SV Dự kiến</th>
+                            <th className="py-3.5 px-5 w-[10%] text-center whitespace-nowrap">Trạng thái</th>
                             <th className="py-3.5 px-5 w-[10%] text-center whitespace-nowrap sticky right-0 bg-gray-50 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.03)] z-10">
                                 Thao tác
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
+                    <tbody className="divide-y divide-gray-50 text-sm text-gray-700 relative">
+                        {isLoading && (
+                            <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10" />
+                        )}
                         {content.map((req) => (
                             <tr
-                                key={req.requestId} // SỬA: Dùng requestId làm key
+                                key={req.requestId}
                                 className="hover:bg-blue-50/30 transition-colors group cursor-pointer bg-white"
                                 onClick={() => onViewDetail(req)}
                             >
                                 <td className="py-3.5 px-5 max-w-[280px]">
-                                    <p
-                                        className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate"
-                                        title={req.courseName}
-                                    >
-                                        {/* SỬA: Gọi biến thẳng thay vì nested */}
+                                    <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate" title={req.courseName}>
                                         {req.courseName || "N/A"}
                                     </p>
                                 </td>
                                 <td className="py-3.5 px-5 text-gray-600 font-medium whitespace-nowrap">
-                                    {/* SỬA: Gọi biến thẳng */}
                                     {req.semesterCode || "N/A"}
                                 </td>
                                 <td className="py-3.5 px-5 text-gray-600 max-w-[180px]">
-                                    <p
-                                        className="truncate font-medium"
-                                        title={req.requesterName}
-                                    >
-                                        {/* SỬA: Gọi biến thẳng */}
+                                    <p className="truncate font-medium" title={req.requesterName}>
                                         {req.requesterName || "N/A"}
                                     </p>
                                 </td>
@@ -163,44 +143,40 @@ export const RequestTable: React.FC<RequestTableProps> = ({
                     </tbody>
                 </table>
             </div>
+
             {totalPages > 1 && (
-                <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 z-0">
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <span className="text-xs font-medium text-gray-500">
-                        Trang{" "}
-                        <span className="text-gray-700 font-semibold">
-                            {currentPage + 1}
-                        </span>{" "}
-                        trên tổng số{" "}
-                        <span className="text-gray-700 font-semibold">
-                            {totalPages}
-                        </span>{" "}
-                        trang
+                        Hiển thị <span className="font-semibold text-gray-700">{current * data.size + 1}</span> - <span className="font-semibold text-gray-700">{Math.min((current + 1) * data.size, data.totalElements)}</span> trong tổng số <span className="font-semibold text-gray-700">{data.totalElements}</span> đề xuất
                     </span>
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => onPageChange(currentPage - 1)}
-                            disabled={currentPage === 0}
+                            onClick={() => onPageChange(current - 1)}
+                            disabled={current === 0 || isLoading}
                             className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none"
                         >
                             Trước
                         </button>
+
                         {[...Array(totalPages)].map((_, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => onPageChange(idx)}
+                                disabled={isLoading}
                                 className={clsx(
                                     "w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg transition-all focus:outline-none",
-                                    currentPage === idx
+                                    current === idx
                                         ? "bg-blue-600 text-white border border-blue-600 shadow-sm"
-                                        : "text-gray-600 bg-white border border-gray-300 hover:bg-gray-50",
+                                        : "text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50",
                                 )}
                             >
                                 {idx + 1}
                             </button>
                         ))}
+
                         <button
-                            onClick={() => onPageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages - 1}
+                            onClick={() => onPageChange(current + 1)}
+                            disabled={current >= totalPages - 1 || isLoading}
                             className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none"
                         >
                             Sau
