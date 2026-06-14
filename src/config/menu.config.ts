@@ -124,7 +124,7 @@
             title: "Hồ sơ cá nhân",
             path: "/dashboard/profile",
             icon: UserCircle,
-        },
+        }
     } satisfies Record<string, MenuItem>;
 
     // ÁNH XẠ MENU THEO VAI TRÒ
