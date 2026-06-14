@@ -9,6 +9,7 @@ import {
     type ApiResponse,
     type UpdateUserPayload,
     type DropdownOption,
+    type LockUserRequest,
 } from "../types";
 
 interface ServerResponse<T> {
@@ -69,5 +70,15 @@ export const userService = {
         return (await apiClient.get("/majors/dropdown", {
             params: { departmentId: departmentId || undefined },
         })) as DropdownOption[];
+    },
+
+    lockUser: async (
+        id: number,
+        payload: LockUserRequest
+    ): Promise<ApiResponse<void>> => {
+        return (await apiClient.patch(
+            `/users/${id}/lock`,
+            payload
+        )) as ApiResponse<void>;
     },
 };

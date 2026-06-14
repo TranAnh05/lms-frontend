@@ -108,3 +108,7 @@ export interface UpdateUserPayload {
     cohort?: number | null;
     majorId?: number | null;
 }
+
+export interface LockUserRequest {
+    lockReason: string;
+}
