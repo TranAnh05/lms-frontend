@@ -10,6 +10,7 @@ import {
     type UpdateUserPayload,
     type DropdownOption,
     type LockUserRequest,
+    type RoleDropdown,
 } from "../types";
 
 interface ServerResponse<T> {
@@ -29,9 +30,9 @@ export const userService = {
         return (await apiClient.get(`/users/${id}`)) as User;
     },
 
-    getRoles: async (): Promise<Role[]> => {
+    getRoles: async (): Promise<RoleDropdown[]> => {
         const response = (await apiClient.get(
-            "/authorizations/roles",
+            "/users/roles/dropdown",
         )) as ServerResponse<Role[]>;
         return response.data;
     },

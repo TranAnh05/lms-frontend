@@ -425,6 +425,7 @@ export const UserEditModal: React.FC<UserEditModalProps> = ({
                                             </label>
                                             <input
                                                 type="number"
+                                                min={0}
                                                 value={formData.cohort || ""}
                                                 onChange={(e) =>
                                                     handleChange(

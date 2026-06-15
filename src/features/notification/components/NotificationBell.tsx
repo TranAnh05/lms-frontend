@@ -77,7 +77,7 @@ export const NotificationBell: React.FC = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-[400px] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200">
                     <div className="px-4 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-gray-800">Thông báo</h3>
                         <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
@@ -85,7 +85,7 @@ export const NotificationBell: React.FC = () => {
                         </span>
                     </div>
 
-                    <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                    <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
                         {notifications.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-8 text-gray-400">
                                 <Inbox className="w-8 h-8 mb-2 opacity-50" />
@@ -101,7 +101,7 @@ export const NotificationBell: React.FC = () => {
                                         <h4 className="text-sm font-semibold text-gray-900 mb-1 leading-snug">
                                             {notif.title}
                                         </h4>
-                                        <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed mb-2">
+                                        <p className="text-xs text-gray-600 line-clamp-5 leading-relaxed mb-2">
                                             {notif.message}
                                         </p>
                                         <span className="text-[10px] font-medium text-gray-400">

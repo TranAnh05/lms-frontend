@@ -1,12 +1,12 @@
 import React from "react";
 import { Search } from "lucide-react";
-import { type Role, type Department } from "../types";
+import {  type Department, type RoleDropdown } from "../types";
 
 interface UserFilterProps {
     searchTerm: string;
     onSearchChange: (value: string) => void;
 
-    roles: Role[];
+    roles: RoleDropdown[];
     selectedRoleCode: string;
     onRoleChange: (code: string) => void;
 
