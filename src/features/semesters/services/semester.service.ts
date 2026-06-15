@@ -7,6 +7,8 @@ import {
     type SemesterListParams,
     type SemesterCreatePayload,
     type SemesterClassResponse,
+    type SemesterUpdateRequest,
+    type SemesterDetailResponse,
 } from "../types";
 
 export const semesterService = {
@@ -23,10 +25,6 @@ export const semesterService = {
         return (await apiClient.get("/semesters", {
             params: cleanParams,
         })) as PageResponse<SemesterResponse>;
-    },
-
-    getSemesterById: async (id: number): Promise<SemesterResponse> => {
-        return (await apiClient.get(`/semesters/${id}`)) as SemesterResponse;
     },
 
     createSemester: async (
@@ -48,5 +46,19 @@ export const semesterService = {
     closeSemester: async (semesterId: number): Promise<string> => {
         const response: any = await apiClient.post(`/semesters/${semesterId}/close`)
         return response.data || response
-    }
+    },
+
+    getSemesterById: async (id: number): Promise<SemesterResponse> => {
+        return (await apiClient.get(`/semesters/${id}`)) as SemesterResponse;
+    },
+
+    updateSemester: async (
+        id: number,
+        payload: SemesterUpdateRequest
+    ): Promise<SemesterDetailResponse> => {
+        return (await apiClient.put(
+            `/semesters/${id}`, 
+            payload
+        )) as SemesterDetailResponse;
+    },
 };

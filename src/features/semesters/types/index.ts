@@ -49,3 +49,20 @@ export interface SemesterClassResponse {
     lecturerName: string | null;
     status: ClassStatus;
 }
+
+export interface SemesterDetailResponse {
+    id: number;
+    semesterCode: string;
+    academicYear: string;
+    semesterNumber: number;
+    startDate: string; 
+    endDate: string;
+    status: "ACTIVE" | "CLOSED";
+}
+
+export interface SemesterUpdateRequest {
+    academicYear: string;
+    semesterNumber: number;
+    startDate: string;
+    endDate: string;
+}

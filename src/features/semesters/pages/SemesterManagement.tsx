@@ -11,6 +11,9 @@ import { SemesterFilter } from "../components/SemesterFilter";
 import { SemesterListTable } from "../components/SemesterListTable";
 import { SemesterFormModal } from "../components/SemesterFormModal";
 import { SemesterClosingModal } from "../components/SemesterClosingModal";
+import { SemesterUpdateModal } from "../components/SemesterUpdateModal";
+import { SemesterDetailModal } from "../components/SemesterDetailModal";
+
 const ACADEMIC_YEARS = ["2023-2024", "2024-2025", "2025-2026", "2026-2027"];
 
 export const SemesterManagement: React.FC = () => {
@@ -26,6 +29,7 @@ export const SemesterManagement: React.FC = () => {
     const pageSize = 10;
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
     const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
         null,
@@ -96,9 +100,8 @@ export const SemesterManagement: React.FC = () => {
     };
 
     const handleUpdate = (id: number) => {
-        toast.info(
-            `Tính năng cập nhật Học kỳ (ID: ${id}) đang được phát triển.`,
-        );
+        setSelectedSemesterId(id);       
+        setIsUpdateModalOpen(true);      
     };
 
     const handleToggleStatus = (semester: SemesterResponse) => {
@@ -166,6 +169,27 @@ export const SemesterManagement: React.FC = () => {
                 onSuccess={() => {
                     fetchSemesters();
                 }}
+            />
+
+            <SemesterUpdateModal
+                isOpen={isUpdateModalOpen}
+                onClose={() => {
+                    setIsUpdateModalOpen(false);
+                    setSelectedSemesterId(null);
+                }}
+                onSuccess={() => {
+                    fetchSemesters(); 
+                }}
+                semesterId={selectedSemesterId}
+            />
+
+            <SemesterDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => {
+                    setIsDetailModalOpen(false);
+                    setSelectedSemesterId(null);
+                }}
+                semesterId={selectedSemesterId}
             />
         </div>
     );
