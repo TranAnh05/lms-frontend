@@ -12,6 +12,7 @@ import { UserFormModal } from "../components/UserFormModal";
 import { UserEditModal } from "../components/UserEditModal";
 import { Plus } from "lucide-react";
 import { LockUserModal } from "../components/LockUserModal";
+import { UnlockUserModal } from "../components/UnlockUserModal";
 
 export const UserPage: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -30,6 +31,7 @@ export const UserPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
     const [isLockModalOpen, setIsLockModalOpen] = useState<boolean>(false);
+    const [isUnlockModalOpen, setIsUnlockModalOpen] = useState<boolean>(false);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
@@ -135,22 +137,14 @@ export const UserPage: React.FC = () => {
         fetchUsers();
     }, [fetchUsers]);
 
-    const handleToggleLockUser = async (id: number, currentStatus: boolean) => {
-    if (currentStatus) {
+    const handleToggleLockUser = (id: number, currentStatus: boolean) => {
         setSelectedUserId(id);
-        setIsLockModalOpen(true);
-    } else {
-        if (window.confirm("Bạn có chắc chắn muốn mở khóa tài khoản này không?")) {
-            try {
-                await userService.lockUser(id, { lockReason: "" });
-                toast.success("Mở khóa tài khoản thành công!");
-                fetchUsers();
-            } catch (error) {
-                toast.error("Không thể mở khóa tài khoản.");
-            }
+        if (currentStatus) {
+            setIsLockModalOpen(true);
+        } else {
+            setIsUnlockModalOpen(true);
         }
-    }
-};
+    };
 
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
@@ -232,6 +226,16 @@ export const UserPage: React.FC = () => {
                 isOpen={isLockModalOpen}
                 onClose={() => {
                     setIsLockModalOpen(false);
+                    setSelectedUserId(null);
+                }}
+                onSuccess={fetchUsers}
+                userId={selectedUserId}
+            />
+
+            <UnlockUserModal
+                isOpen={isUnlockModalOpen}
+                onClose={() => {
+                    setIsUnlockModalOpen(false);
                     setSelectedUserId(null);
                 }}
                 onSuccess={fetchUsers}

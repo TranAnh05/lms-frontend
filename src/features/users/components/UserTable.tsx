@@ -124,9 +124,13 @@ const ActionMenu: React.FC<{
                                 : "text-emerald-600 hover:bg-emerald-50", 
                         )}
                     >
-                        {user.isActive && (
+                        {user.isActive ? (
                             <>
                                 <Lock className="w-4 h-4" /> Khóa tài khoản
+                            </>
+                        ) : (
+                            <>
+                                <Unlock className="w-4 h-4" /> Mở khóa tài khoản
                             </>
                         )}
                     </button>

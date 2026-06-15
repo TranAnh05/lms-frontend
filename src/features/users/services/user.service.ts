@@ -81,4 +81,10 @@ export const userService = {
             payload
         )) as ApiResponse<void>;
     },
+
+    unlockUser: async (id: number): Promise<ApiResponse<void>> => {
+        return (await apiClient.patch(
+            `/users/${id}/unlock`
+        )) as ApiResponse<void>;
+    },
 };
