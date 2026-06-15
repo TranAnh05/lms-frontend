@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "@/hooks/useDebounce";
 import { userService } from "../services/user.service";
-import { type User, type Role, type Department } from "../types";
+import { type User, type Role, type Department, type RoleDropdown } from "../types";
 import { UserFilter } from "../components/UserFilter";
 import { UserTable } from "../components/UserTable";
 import { UserDetailModal } from "../components/UserDetailModal";
@@ -16,7 +16,7 @@ import { UnlockUserModal } from "../components/UnlockUserModal";
 
 export const UserPage: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
-    const [roles, setRoles] = useState<Role[]>([]);
+    const [roles, setRoles] = useState<RoleDropdown[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState<string>("");

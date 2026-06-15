@@ -14,6 +14,12 @@ export interface Role {
     permissionCodes: string[];
 }
 
+export interface RoleDropdown {
+    id: number;
+    code: string;
+    name: string;
+}
+
 export interface Department {
     id: number;
     code: string;

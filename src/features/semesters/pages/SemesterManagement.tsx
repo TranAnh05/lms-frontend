@@ -105,15 +105,7 @@ export const SemesterManagement: React.FC = () => {
         if (semester.status === "ACTIVE") {
             setSelectedSemesterForClose(semester);
             setIsClosingModalOpen(true);
-        } else {
-            if (
-                window.confirm(
-                    `Bạn có chắc chắn muốn mở lại học kỳ ${semester.semesterCode} không?`,
-                )
-            ) {
-                toast.success(`Yêu cầu mở lại học kỳ đã được ghi nhận.`);
-            }
-        }
+        } 
     };
 
     return (

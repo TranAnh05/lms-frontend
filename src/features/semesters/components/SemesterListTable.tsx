@@ -93,13 +93,9 @@ const ActionMenu: React.FC<{
                                 : "text-green-600 hover:bg-green-50",
                         )}
                     >
-                        {semester.status === "ACTIVE" ? (
+                        {semester.status === "ACTIVE" && (
                             <>
                                 <Lock className="w-4 h-4" /> Đóng học kỳ
-                            </>
-                        ) : (
-                            <>
-                                <Lock className="w-4 h-4" /> Mở học kỳ
                             </>
                         )}
                     </button>
