@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { X, ShieldAlert } from "lucide-react";
 import { toast } from "react-toastify";
@@ -28,30 +27,44 @@ export const MajorDetailModal: React.FC<MajorDetailModalProps> = ({
             return;
         }
 
+        // Toi uu: Huy API call khi Component unmount de tranh memory leak
+        const abortController = new AbortController();
+
         const fetchDetail = async () => {
             setIsLoading(true);
             try {
                 const response = await majorService.getMajorById(majorId);
-                setData(response);
-            } catch (error) {
-                toast.error("Không thể lấy thông tin chi tiết ngành học.");
-                onClose();
+                if (!abortController.signal.aborted) {
+                    setData(response);
+                }
+            } catch {
+                if (!abortController.signal.aborted) {
+                    toast.error("Không thể lấy thông tin chi tiết ngành học.");
+                    onClose();
+                }
             } finally {
-                setIsLoading(false);
+                if (!abortController.signal.aborted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         fetchDetail();
+
+        return () => {
+            abortController.abort();
+            setData(null);
+        };
     }, [isOpen, majorId, onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div
-                className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
+            {/* Toi uu: Tach rieng the backdrop de xu ly click ra ngoai, khong dung stopPropagation */}
+            <div className="absolute inset-0" onClick={onClose}></div>
+
+            <div className="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <h2 className="text-lg font-bold text-gray-900">
@@ -66,7 +79,7 @@ export const MajorDetailModal: React.FC<MajorDetailModalProps> = ({
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>

@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from "react";
 import { X, Loader2, Save } from "lucide-react";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 import { majorService } from "../services/major.service";
 import { type Department, type CreateMajorInput } from "../types";
 
@@ -37,36 +36,51 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
     useEffect(() => {
         if (!isOpen) return;
 
+        // Toi uu: Khoi tao AbortController de chan loi unmount
+        const abortController = new AbortController();
+
         if (editId) {
             const fetchMajorDetail = async () => {
                 setIsFetching(true);
                 try {
                     const data = await majorService.getMajorById(editId);
-                    setFormData({
-                        code: data.code,
-                        name: data.name,
-                        requiredMinimumCredits: data.requiredMinimumCredits,
-                        departmentId: data.departmentId,
-                        description: data.description || "",
-                    });
-                } catch (error) {
-                    toast.error("Không thể tải thông tin ngành học.");
-                    onClose();
+                    if (!abortController.signal.aborted) {
+                        setFormData({
+                            code: data.code,
+                            name: data.name,
+                            requiredMinimumCredits: data.requiredMinimumCredits,
+                            departmentId: data.departmentId,
+                            description: data.description || "",
+                        });
+                    }
+                } catch {
+                    if (!abortController.signal.aborted) {
+                        toast.error("Không thể tải thông tin ngành học.");
+                        onClose();
+                    }
                 } finally {
-                    setIsFetching(false);
+                    if (!abortController.signal.aborted) {
+                        setIsFetching(false);
+                    }
                 }
             };
             fetchMajorDetail();
         } else {
             setFormData(initialFormState);
         }
+
+        // Toi uu: Huy cac request hoac logic con dang chay neu modal bi dong
+        return () => abortController.abort();
     }, [isOpen, editId, onClose]);
 
-    const handleChange = (field: keyof CreateMajorInput, value: string | number) => {
+    // Toi uu: Su dung Generic type de dam bao tinh toan ven du lieu khi cap nhat form
+    const handleChange = <K extends keyof CreateMajorInput>(
+        field: K,
+        value: CreateMajorInput[K]
+    ) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    // Xử lý gửi API Thêm mới hoặc Cập nhật
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -100,8 +114,10 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
             }
             onSuccess();
             onClose();
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message || "Đã xảy ra lỗi hệ thống.";
+        } catch (error: unknown) {
+            // Toi uu: Ep kieu an toan voi AxiosError
+            const axiosError = error as AxiosError<{ message: string }>;
+            const errorMessage = axiosError.response?.data?.message || "Đã xảy ra lỗi hệ thống.";
             toast.error(errorMessage);
         } finally {
             setIsSubmitting(false);
@@ -117,7 +133,7 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
             <div className="absolute inset-0" onClick={!isSubmitting ? onClose : undefined} />
 
             <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0 z-10">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">
                             {isEditMode ? "Cập nhật ngành học" : "Thêm ngành học mới"}
@@ -135,7 +151,7 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden relative">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden relative" noValidate>
                     {isFetching && (
                         <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-sm flex items-center justify-center">
                             <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -151,7 +167,7 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
                                 <input
                                     type="text"
                                     required
-                                    disabled={isEditMode}
+                                    disabled={isEditMode || isSubmitting}
                                     value={formData.code}
                                     onChange={(e) => handleChange("code", e.target.value)}
                                     placeholder="VD: PM"
@@ -166,10 +182,11 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
                                 <input
                                     type="text"
                                     required
+                                    disabled={isSubmitting}
                                     value={formData.name}
                                     onChange={(e) => handleChange("name", e.target.value)}
                                     placeholder="Nhập tên ngành học chính thức"
-                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none disabled:opacity-70"
                                 />
                             </div>
                         </div>
@@ -181,7 +198,7 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
                                 </label>
                                 <select
                                     required
-                                    disabled={isEditMode}
+                                    disabled={isEditMode || isSubmitting}
                                     value={formData.departmentId || ""}
                                     onChange={(e) => handleChange("departmentId", Number(e.target.value))}
                                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none appearance-none disabled:opacity-70 disabled:cursor-not-allowed"
@@ -203,9 +220,10 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
                                     type="number"
                                     required
                                     min={1}
+                                    disabled={isSubmitting}
                                     value={formData.requiredMinimumCredits}
                                     onChange={(e) => handleChange("requiredMinimumCredits", Number(e.target.value))}
-                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-center font-semibold"
+                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-center font-semibold disabled:opacity-70"
                                 />
                             </div>
                         </div>
@@ -214,15 +232,16 @@ export const MajorFormModal: React.FC<MajorFormModalProps> = ({
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mô tả tóm tắt</label>
                             <textarea
                                 rows={4}
+                                disabled={isSubmitting}
                                 value={formData.description || ""}
                                 onChange={(e) => handleChange("description", e.target.value)}
                                 placeholder="Nhập một vài thông tin mô tả giới thiệu về ngành đào tạo này (tùy chọn)..."
-                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none leading-relaxed"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none leading-relaxed disabled:opacity-70"
                             />
                         </div>
                     </div>
 
-                    <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0">
+                    <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-end gap-3 shrink-0 z-10">
                         <button
                             type="button"
                             onClick={onClose}

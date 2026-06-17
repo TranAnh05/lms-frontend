@@ -48,8 +48,5 @@ export interface CreateMajorInput {
     description: string | null;
 }
 
-export interface UpdateMajorInput {
-    name: string;
-    requiredMinimumCredits: number;
-    description: string | null;
-}
+// Toi uu: Dung Omit de ke thua va loai bo code trung lap tu CreateMajorInput
+export type UpdateMajorInput = Omit<CreateMajorInput, "code" | "departmentId">;
