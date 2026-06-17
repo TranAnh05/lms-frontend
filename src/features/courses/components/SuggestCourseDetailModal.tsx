@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
 import {
     X,
     BookOpen,
@@ -27,11 +27,12 @@ const STATUS_UI_CONFIG: Record<string, { label: string; color: string }> = {
     },
 };
 
-const InfoBlock: React.FC<{
+// Sử dụng memo để tránh re-render InfoBlock không cần thiết
+const InfoBlock = memo<{
     label: string;
     value: React.ReactNode;
     isFullWidth?: boolean;
-}> = ({ label, value, isFullWidth = false }) => (
+}>(({ label, value, isFullWidth = false }) => (
     <div
         className={clsx(
             "flex flex-col gap-1.5 p-3 rounded-lg bg-gray-50/50 border border-gray-100",
@@ -49,7 +50,91 @@ const InfoBlock: React.FC<{
             )}
         </div>
     </div>
-);
+));
+
+InfoBlock.displayName = "InfoBlock";
+
+// Tách riêng cụm xử lý Modal Từ chối để mã nguồn gọn gàng và cô lập re-render
+interface RejectModalProps {
+    isOpen: boolean;
+    isProcessing: boolean;
+    courseName?: string;
+    reasonInput: string;
+    onReasonChange: (val: string) => void;
+    onClose: () => void;
+    onConfirm: () => void;
+}
+
+const RejectModal: React.FC<RejectModalProps> = ({
+    isOpen,
+    isProcessing,
+    courseName,
+    reasonInput,
+    onReasonChange,
+    onClose,
+    onConfirm,
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="h-1.5 w-full bg-red-500"></div>
+                <div className="p-5 border-b border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                        Từ chối đề xuất
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Vui lòng cho biết lý do từ chối đề xuất môn học{" "}
+                        <span className="font-semibold text-gray-700">
+                            {courseName}
+                        </span>
+                        .
+                    </p>
+                </div>
+                <div className="p-5">
+                    <div className="relative">
+                        <div className="absolute top-3 left-3 pointer-events-none">
+                            <MessageSquare className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <textarea
+                            autoFocus
+                            rows={4}
+                            placeholder="Nhập lý do chi tiết..."
+                            value={reasonInput}
+                            onChange={(e) => onReasonChange(e.target.value)}
+                            className="block w-full pl-10 pr-3 py-2 sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors custom-scrollbar"
+                        />
+                    </div>
+                </div>
+                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                    <button
+                        onClick={onClose}
+                        disabled={isProcessing}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:ring-4 focus:ring-gray-100 disabled:opacity-50"
+                    >
+                        Hủy bỏ
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={isProcessing}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors focus:ring-4 focus:ring-red-500/20 disabled:bg-red-400"
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Đang xử lý...
+                            </>
+                        ) : (
+                            "Xác nhận từ chối"
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 interface CourseDetailModalProps {
     isOpen: boolean;
@@ -64,7 +149,7 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
     onClose,
     courseId,
     canApprove = false,
-    onSuccess
+    onSuccess,
 }) => {
     const [course, setCourse] = useState<Course | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -72,32 +157,46 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
     const [isRejectModalOpen, setIsRejectModalOpen] = useState<boolean>(false);
     const [rejectReasonInput, setRejectReasonInput] = useState<string>("");
 
+    // Đồng bộ hóa dữ liệu và dọn dẹp bộ nhớ chống rò rỉ (Memory leak)
     useEffect(() => {
+        let isCurrentRequest = true;
+        let cleanupTimer: ReturnType<typeof setTimeout>;
+
         const fetchCourseDetail = async () => {
             if (!courseId) return;
-
             setIsLoading(true);
             try {
                 const data = await courseService.getCourseById(courseId);
-                setCourse(data);
+                if (isCurrentRequest) {
+                    setCourse(data);
+                }
             } catch (error) {
                 console.error("Lỗi khi tải chi tiết môn học:", error);
                 toast.error("Không thể lấy thông tin chi tiết môn học.");
                 onClose();
             } finally {
-                setIsLoading(false);
+                if (isCurrentRequest) {
+                    setIsLoading(false);
+                }
             }
         };
 
         if (isOpen) {
             fetchCourseDetail();
         } else {
-            setTimeout(() => {
-                setCourse(null);
-                setIsRejectModalOpen(false);
-                setRejectReasonInput("");
+            cleanupTimer = setTimeout(() => {
+                if (isCurrentRequest) {
+                    setCourse(null);
+                    setIsRejectModalOpen(false);
+                    setRejectReasonInput("");
+                }
             }, 200);
         }
+
+        return () => {
+            isCurrentRequest = false;
+            if (cleanupTimer) clearTimeout(cleanupTimer);
+        };
     }, [isOpen, courseId, onClose]);
 
     const handleApprove = async () => {
@@ -106,9 +205,8 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
         setIsProcessing(true);
         try {
             await courseService.approveCourse({ courseId });
-
             toast.success("Đã phê duyệt đề xuất môn học thành công!");
-            if (onSuccess) onSuccess(); // Gọi reload bảng
+            if (onSuccess) onSuccess();
             onClose();
         } catch (error) {
             console.error("Lỗi khi duyệt môn học:", error);
@@ -126,21 +224,22 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
     const handleConfirmReject = async () => {
         if (!courseId) return;
 
-        if (rejectReasonInput.trim() === "") {
+        const reason = rejectReasonInput.trim();
+        if (!reason) {
             toast.warning("Bạn phải nhập lý do khi từ chối đề xuất!");
             return;
         }
 
         setIsProcessing(true);
         try {
-            await courseService.rejectCourse({ 
-                courseId, 
-                rejectReason: rejectReasonInput.trim() 
+            await courseService.rejectCourse({
+                courseId,
+                rejectReason: reason,
             });
 
             toast.success("Đã từ chối đề xuất môn học.");
             setIsRejectModalOpen(false);
-            if (onSuccess) onSuccess(); 
+            if (onSuccess) onSuccess();
             onClose();
         } catch (error) {
             console.error("Lỗi khi từ chối môn học:", error);
@@ -152,9 +251,10 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
 
     if (!isOpen) return null;
 
-    const statusConfig = course?.status
-        ? STATUS_UI_CONFIG[course.status.toLowerCase()]
-        : STATUS_UI_CONFIG["pending"];
+    const statusKey = course?.status?.toLowerCase() || "pending";
+    const statusConfig =
+        STATUS_UI_CONFIG[statusKey] || STATUS_UI_CONFIG.pending;
+    const isPendingStatus = statusKey === "pending";
 
     return (
         <>
@@ -246,10 +346,10 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
                                             <span
                                                 className={clsx(
                                                     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border",
-                                                    statusConfig?.color,
+                                                    statusConfig.color,
                                                 )}
                                             >
-                                                {statusConfig?.label}
+                                                {statusConfig.label}
                                             </span>
                                         }
                                     />
@@ -271,32 +371,31 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
                     </div>
 
                     <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex items-center justify-end gap-3">
-                        {canApprove &&
-                            course?.status.toLowerCase() === "pending" && (
-                                <div className="flex items-center gap-2 mr-auto">
-                                    <button
-                                        onClick={handleOpenRejectModal}
-                                        disabled={isProcessing}
-                                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors focus:ring-4 focus:ring-red-100 disabled:opacity-50"
-                                    >
-                                        <XCircle className="w-4 h-4" />
-                                        Từ chối
-                                    </button>
+                        {canApprove && isPendingStatus && (
+                            <div className="flex items-center gap-2 mr-auto">
+                                <button
+                                    onClick={handleOpenRejectModal}
+                                    disabled={isProcessing}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors focus:ring-4 focus:ring-red-100 disabled:opacity-50"
+                                >
+                                    <XCircle className="w-4 h-4" />
+                                    Từ chối
+                                </button>
 
-                                    <button
-                                        onClick={handleApprove}
-                                        disabled={isProcessing}
-                                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 transition-colors focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50"
-                                    >
-                                        {isProcessing && !isRejectModalOpen ? (
-                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        ) : (
-                                            <CheckCircle2 className="w-4 h-4" />
-                                        )}
-                                        Phê duyệt
-                                    </button>
-                                </div>
-                            )}
+                                <button
+                                    onClick={handleApprove}
+                                    disabled={isProcessing}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-lg hover:bg-emerald-700 transition-colors focus:ring-4 focus:ring-emerald-500/20 disabled:opacity-50"
+                                >
+                                    {isProcessing ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        <CheckCircle2 className="w-4 h-4" />
+                                    )}
+                                    Phê duyệt
+                                </button>
+                            </div>
+                        )}
 
                         <button
                             onClick={onClose}
@@ -309,69 +408,16 @@ export const SuggestCourseDetailModal: React.FC<CourseDetailModalProps> = ({
                 </div>
             </div>
 
-            {isRejectModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="h-1.5 w-full bg-red-500"></div>
-
-                        <div className="p-5 border-b border-gray-100">
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5 text-red-500" />
-                                Từ chối đề xuất
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Vui lòng cho biết lý do từ chối đề xuất môn học{" "}
-                                <span className="font-semibold text-gray-700">
-                                    {course?.name}
-                                </span>
-                                .
-                            </p>
-                        </div>
-
-                        <div className="p-5">
-                            <div className="relative">
-                                <div className="absolute top-3 left-3 pointer-events-none">
-                                    <MessageSquare className="h-4 w-4 text-gray-400" />
-                                </div>
-                                <textarea
-                                    autoFocus
-                                    rows={4}
-                                    placeholder="Nhập lý do chi tiết..."
-                                    value={rejectReasonInput}
-                                    onChange={(e) =>
-                                        setRejectReasonInput(e.target.value)
-                                    }
-                                    className="block w-full pl-10 pr-3 py-2 sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors custom-scrollbar"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                            <button
-                                onClick={() => setIsRejectModalOpen(false)}
-                                disabled={isProcessing}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:ring-4 focus:ring-gray-100 disabled:opacity-50"
-                            >
-                                Hủy bỏ
-                            </button>
-                            <button
-                                onClick={handleConfirmReject}
-                                disabled={isProcessing}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors focus:ring-4 focus:ring-red-500/20 disabled:bg-red-400"
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Đang xử lý...
-                                    </>
-                                ) : (
-                                    "Xác nhận từ chối"
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Gọi Sub-component đã tách rời */}
+            <RejectModal
+                isOpen={isRejectModalOpen}
+                isProcessing={isProcessing}
+                courseName={course?.name}
+                reasonInput={rejectReasonInput}
+                onReasonChange={setRejectReasonInput}
+                onClose={() => setIsRejectModalOpen(false)}
+                onConfirm={handleConfirmReject}
+            />
         </>
     );
 };

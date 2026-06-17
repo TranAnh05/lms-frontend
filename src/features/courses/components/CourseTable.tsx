@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 import {
     Eye,
     Edit,
@@ -26,93 +26,115 @@ const STATUS_UI_CONFIG: Record<string, { label: string; colorClass: string }> =
         },
     };
 
-const ActionMenu: React.FC<{
+interface ActionMenuProps {
     course: Course;
     index: number;
     total: number;
     onView: (id: number) => void;
     onEdit: (id: number) => void;
     onDelete: (id: number, code: string) => void;
-}> = ({ course, index, total, onView, onEdit, onDelete }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+}
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
+const ActionMenu: React.FC<ActionMenuProps> = memo(
+    ({ course, index, total, onView, onEdit, onDelete }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        const menuRef = useRef<HTMLDivElement>(null);
+
+        // Lắng nghe sự kiện click ngoài để đóng menu
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (
+                    menuRef.current &&
+                    !menuRef.current.contains(event.target as Node)
+                ) {
+                    setIsOpen(false);
+                }
+            };
+
+            if (isOpen) {
+                document.addEventListener("mousedown", handleClickOutside);
             }
-        };
-        if (isOpen) document.addEventListener("mousedown", handleClickOutside);
-        return () =>
-            document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen]);
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
+        }, [isOpen]);
 
-    const isBottomRow = index === total - 1 && total > 2;
+        // Đẩy menu lên trên nếu là dòng cuối cùng để tránh bị che khuất
+        const isBottomRow = index === total - 1 && total > 2;
 
-    return (
-        <div className={clsx("relative flex justify-center", isOpen ? "z-[60]" : "z-10")} ref={menuRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
+        return (
+            <div
                 className={clsx(
-                    "p-1.5 transition-colors rounded-md focus:outline-none",
-                    isOpen
-                        ? "bg-gray-200 text-gray-900"
-                        : "text-gray-400 hover:text-gray-800 hover:bg-gray-100",
+                    "relative flex justify-center",
+                    isOpen ? "z-[60]" : "z-10",
                 )}
+                ref={menuRef}
             >
-                <MoreHorizontal className="w-5 h-5" />
-            </button>
-
-            {isOpen && (
-                <div
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
                     className={clsx(
-                        "absolute right-0 w-48 bg-white border border-gray-100 rounded-lg shadow-xl py-1",
-                        isBottomRow ? "bottom-full mb-1" : "top-full mt-1",
+                        "p-1.5 transition-colors rounded-md focus:outline-none",
+                        isOpen
+                            ? "bg-gray-200 text-gray-900"
+                            : "text-gray-400 hover:text-gray-800 hover:bg-gray-100",
                     )}
                 >
-                    <button
-                        onClick={() => {
-                            setIsOpen(false);
-                            onView(course.id);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors text-left"
-                    >
-                        <Eye className="w-4 h-4" />
-                        Xem chi tiết
-                    </button>
+                    <MoreHorizontal className="w-5 h-5" />
+                </button>
 
-                    <button
-                        onClick={() => {
-                            setIsOpen(false);
-                            onEdit(course.id);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 transition-colors text-left"
+                {isOpen && (
+                    <div
+                        className={clsx(
+                            "absolute right-0 w-48 bg-white border border-gray-100 rounded-lg shadow-xl py-1",
+                            isBottomRow ? "bottom-full mb-1" : "top-full mt-1",
+                        )}
                     >
-                        <Edit className="w-4 h-4" />
-                        Cập nhật môn học
-                    </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsOpen(false);
+                                onView(course.id);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors text-left"
+                        >
+                            <Eye className="w-4 h-4" />
+                            Xem chi tiết
+                        </button>
 
-                    <div className="h-px bg-gray-100 my-1 mx-2"></div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsOpen(false);
+                                onEdit(course.id);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-amber-600 transition-colors text-left"
+                        >
+                            <Edit className="w-4 h-4" />
+                            Cập nhật môn học
+                        </button>
 
-                    <button
-                        onClick={() => {
-                            setIsOpen(false);
-                            onDelete(course.id, course.code);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        Xóa môn học
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-};
+                        <div className="h-px bg-gray-100 my-1 mx-2"></div>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsOpen(false);
+                                onDelete(course.id, course.code);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa môn học
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    },
+);
+
+ActionMenu.displayName = "ActionMenu";
 
 interface CourseTableProps {
     courses: Course[];
@@ -124,140 +146,145 @@ interface CourseTableProps {
     onDelete: (id: number, code: string) => void;
 }
 
-export const CourseTable: React.FC<CourseTableProps> = ({
-    courses,
-    currentPage,
-    totalPages,
-    onPageChange,
-    onView,
-    onEdit,
-    onDelete,
-}) => {
-    return (
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-            <div className="w-full overflow-visible min-h-[250px] pb-4">
-                <table className="w-full table-fixed text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
-                        <tr>
-                            <th scope="col" className="w-[15%] px-6 py-4">
-                                Mã môn
-                            </th>
-                            <th scope="col" className="w-[35%] px-6 py-4">
-                                Tên môn học
-                            </th>
-                            <th scope="col" className="w-[15%] px-6 py-4">
-                                Tín chỉ
-                            </th>
-                            <th scope="col" className="w-[20%] px-6 py-4">
-                                Trạng thái
-                            </th>
-                            <th scope="col" className="w-[15%] px-6 py-4 text-center">
-                                Hành động
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-gray-100">
-                        {courses.length === 0 ? (
+export const CourseTable: React.FC<CourseTableProps> = memo(
+    ({
+        courses,
+        currentPage,
+        totalPages,
+        onPageChange,
+        onView,
+        onEdit,
+        onDelete,
+    }) => {
+        return (
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="w-full overflow-visible min-h-[250px] pb-4">
+                    <table className="w-full table-fixed text-left text-sm text-gray-600">
+                        <thead className="bg-gray-50 text-gray-700 text-xs uppercase font-semibold border-b border-gray-200">
                             <tr>
-                                <td
-                                    colSpan={5} 
-                                    className="px-6 py-12 text-center text-gray-500"
+                                <th scope="col" className="w-[15%] px-6 py-4">
+                                    Mã môn
+                                </th>
+                                <th scope="col" className="w-[35%] px-6 py-4">
+                                    Tên môn học
+                                </th>
+                                <th scope="col" className="w-[15%] px-6 py-4">
+                                    Tín chỉ
+                                </th>
+                                <th scope="col" className="w-[20%] px-6 py-4">
+                                    Trạng thái
+                                </th>
+                                <th
+                                    scope="col"
+                                    className="w-[15%] px-6 py-4 text-center"
                                 >
-                                    Không tìm thấy môn học nào khớp với bộ lọc.
-                                </td>
+                                    Hành động
+                                </th>
                             </tr>
-                        ) : (
-                            courses.map((course, index) => {
-                                const statusConfig = STATUS_UI_CONFIG[
-                                    course.status?.toLowerCase()
-                                ] || {
-                                    label: course.status || "Chưa xác định",
-                                    colorClass:
-                                        "bg-gray-50 text-gray-700 border-gray-200",
-                                };
+                        </thead>
 
-                                return (
-                                    <tr
-                                        key={course.id}
-                                        className="hover:bg-blue-50/50 transition-colors group"
+                        <tbody className="divide-y divide-gray-100">
+                            {courses.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={5}
+                                        className="px-6 py-12 text-center text-gray-500"
                                     >
-                                        <td className="px-6 py-4">
-                                            <span className="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-100">
-                                                {course.code}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 truncate">
-                                            <div className="flex items-start gap-3">
-                                                <div className="flex items-center">
-                                                    {/* Thêm truncate để nếu tên môn quá dài sẽ có dấu 3 chấm */}
-                                                    <p className="font-semibold text-gray-900 leading-snug truncate">
-                                                        {course.name}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
+                                        Không tìm thấy môn học nào khớp với bộ
+                                        lọc.
+                                    </td>
+                                </tr>
+                            ) : (
+                                courses.map((course, index) => {
+                                    const statusConfig = STATUS_UI_CONFIG[
+                                        course.status?.toLowerCase() || ""
+                                    ] || {
+                                        label: course.status || "Chưa xác định",
+                                        colorClass:
+                                            "bg-gray-50 text-gray-700 border-gray-200",
+                                    };
 
-                                        <td className="px-6 py-4">
-                                            <p className="font-medium text-gray-900">
-                                                {course.credits}
-                                            </p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className={clsx(
-                                                    "inline-flex items-center px-2 py-1 rounded text-[11px] font-medium border",
-                                                    statusConfig.colorClass,
-                                                )}
-                                            >
-                                                {statusConfig.label}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <ActionMenu
-                                                course={course}
-                                                index={index}
-                                                total={courses.length}
-                                                onView={onView}
-                                                onEdit={onEdit}
-                                                onDelete={onDelete}
-                                            />
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50/50">
-                    <span className="text-sm text-gray-700">
-                        Trang{" "}
-                        <span className="font-semibold text-gray-900">
-                            {currentPage + 1}
-                        </span>{" "}
-                        / {totalPages}
-                    </span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => onPageChange(currentPage - 1)}
-                            disabled={currentPage === 0}
-                            className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => onPageChange(currentPage + 1)}
-                            disabled={currentPage >= totalPages - 1}
-                            className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <ChevronRight className="w-5 h-5" />
-                        </button>
-                    </div>
+                                    return (
+                                        <tr
+                                            key={course.id}
+                                            className="hover:bg-blue-50/50 transition-colors group"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <span className="font-mono text-sm font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                                    {course.code}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 truncate">
+                                                <p className="font-semibold text-gray-900 leading-snug truncate">
+                                                    {course.name}
+                                                </p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-medium text-gray-900">
+                                                    {course.credits}
+                                                </p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={clsx(
+                                                        "inline-flex items-center px-2 py-1 rounded text-[11px] font-medium border",
+                                                        statusConfig.colorClass,
+                                                    )}
+                                                >
+                                                    {statusConfig.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <ActionMenu
+                                                    course={course}
+                                                    index={index}
+                                                    total={courses.length}
+                                                    onView={onView}
+                                                    onEdit={onEdit}
+                                                    onDelete={onDelete}
+                                                />
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
-        </div>
-    );
-};
+
+                {/* Thanh phân trang */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50/50">
+                        <span className="text-sm text-gray-700">
+                            Trang{" "}
+                            <span className="font-semibold text-gray-900">
+                                {currentPage + 1}
+                            </span>{" "}
+                            / {totalPages}
+                        </span>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => onPageChange(currentPage - 1)}
+                                disabled={currentPage === 0}
+                                className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onPageChange(currentPage + 1)}
+                                disabled={currentPage >= totalPages - 1}
+                                className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    },
+);
+
+CourseTable.displayName = "CourseTable";
