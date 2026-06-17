@@ -1,12 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
-
 import {
     type StudentClassResponse,
     type StudentLessonBasic,
     type StudentExamBasic,
     type ExamTakingResponse,
-    type ExamSubmitPayload,
     type ExamSubmitResponse,
     type StudentGradeResponse,
     type ExamAttemptResponse,
@@ -18,65 +15,76 @@ export const studentService = {
         return apiClient.get("/enrollments/my");
     },
 
-    getMyClassesRegitered: async (): Promise<StudentClassResponse[]> => {
-        return apiClient.get("/enrollments/my/registered")
+    getMyClassesRegistered: async (): Promise<StudentClassResponse[]> => {
+        return apiClient.get("/enrollments/my/registered");
     },
 
     getLessons: async (classId: number): Promise<StudentLessonBasic[]> => {
-        const response = await apiClient.get(`/classes/${classId}/lessons`);
-        return (response as any).data || [];
+        const response = (await apiClient.get(
+            `/classes/${classId}/lessons`,
+        )) as { data: StudentLessonBasic[] };
+        return response.data || [];
     },
 
     getExams: async (classId: number): Promise<StudentExamBasic[]> => {
-        const response = await apiClient.get(
+        const response = (await apiClient.get(
             `/classes/${classId}/exams/active`,
-        );
-        return (response as any).data || [];
+        )) as { data: StudentExamBasic[] };
+        return response.data || [];
     },
 
     startExam: async (examId: number): Promise<ExamAttemptResponse> => {
-        const response = await apiClient.post(`/exams/${examId}/attempts`);
-        return (response as any).data;
+        const response = (await apiClient.post(
+            `/exams/${examId}/attempts`,
+        )) as { data: ExamAttemptResponse };
+        return response.data;
     },
 
     getExamQuestions: async (examId: number): Promise<ExamTakingResponse> => {
-        const response = await apiClient.get(`/exams/${examId}/paper`);
-        return (response as any).data;
+        const response = (await apiClient.get(`/exams/${examId}/paper`)) as {
+            data: ExamTakingResponse;
+        };
+        return response.data;
     },
 
     saveStudentAnswer: async (
         attemptId: number,
-        payload: SaveAnswerRequest
+        payload: SaveAnswerRequest,
     ): Promise<string> => {
-        const response = await apiClient.put(
+        const response = (await apiClient.put(
             `/attempts/${attemptId}/answers`,
-            payload
-        );
-        return (response as any).data;
+            payload,
+        )) as { data: string };
+        return response.data;
     },
 
     submitExam: async (
         attemptId: number,
-        acceptIncomplete: boolean = false
+        acceptIncomplete: boolean = false,
     ): Promise<ExamSubmitResponse> => {
-        const response = await apiClient.post(
-            `/attempts/${attemptId}/submit?acceptIncomplete=${acceptIncomplete}`
-        );
-        return (response as any).data;
+        const response = (await apiClient.post(
+            `/attempts/${attemptId}/submit?acceptIncomplete=${acceptIncomplete}`,
+        )) as { data: ExamSubmitResponse };
+        return response.data;
     },
 
     getGradeByClass: async (
         classId: number,
     ): Promise<StudentGradeResponse | null> => {
-        const response = await apiClient.get(`/classes/${classId}/my-grade`);
-        return (response as any).data || null;
+        const response = (await apiClient.get(
+            `/classes/${classId}/my-grade`,
+        )) as { data: StudentGradeResponse | null };
+        return response.data || null;
     },
 
     downloadMaterial: async (materialId: number): Promise<Blob> => {
-        const response = await apiClient.get(`/classes/materials/${materialId}/download`, {
-            responseType: "blob",
-        });
-        
-        return response as unknown as Blob; 
+        const response = (await apiClient.get(
+            `/classes/materials/${materialId}/download`,
+            {
+                responseType: "blob",
+            },
+        )) as { data: Blob };
+
+        return response.data;
     },
 };
