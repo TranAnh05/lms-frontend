@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Save, Layers, ShieldAlert, Check } from "lucide-react";
 import clsx from "clsx";
-import { type Permission, type RolePermissionDetail } from "../types";
+import type { Permission, RolePermissionDetail } from "../types";
 
 const MODULE_LABELS: Record<string, string> = {
     USER_MGT: "Quản lý người dùng",
@@ -12,7 +12,7 @@ const MODULE_LABELS: Record<string, string> = {
     PUBLIC_VIEW: "Tra cứu công khai",
     ENROLLMENT_MGT: "Đăng ký học phần",
     SCHEDULE_MGT: "Thời khóa biểu",
-    LESSON_MGT: "Quản lý bài học",
+    LESSSON_MGT: "Quản lý bài học",
     EXAM_MGT: "Quản lý bài kiểm tra",
     EXAM_TAKE: "Làm bài kiểm tra",
     GRADE_VIEW: "Tra cứu điểm số",
@@ -25,11 +25,7 @@ interface PermissionMatrixProps {
     permissions: Permission[];
     matrix: Record<number, Set<number>>;
     isSubmitting: boolean;
-    onCheckboxChange: (
-        roleId: number,
-        permId: number,
-        checked: boolean,
-    ) => void;
+    onCheckboxChange: (roleId: number, permId: number, checked: boolean) => void;
     onSaveRole: (roleId: number) => void;
 }
 
@@ -41,6 +37,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
     onCheckboxChange,
     onSaveRole,
 }) => {
+    // Gom nhóm các quyền hạn theo từng module chức năng độc lập
     const groupedPermissions = useMemo(() => {
         return permissions.reduce<Record<string, Permission[]>>((acc, perm) => {
             const moduleName = perm.module || "HỆ THỐNG CHUNG";
@@ -52,6 +49,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
         }, {});
     }, [permissions]);
 
+    // Hiển thị trạng thái trống nếu không có dữ liệu đầu vào
     if (!roles.length || !permissions.length) {
         return (
             <div className="flex flex-col items-center justify-center py-12 bg-white border border-gray-200 rounded-xl">
@@ -88,6 +86,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                                             </p>
                                         </div>
                                         <button
+                                            type="button"
                                             disabled={isSubmitting}
                                             onClick={() => onSaveRole(role.id)}
                                             className="mt-1 flex items-center justify-center gap-1.5 w-full px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
@@ -103,93 +102,84 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({
                     </thead>
 
                     <tbody className="divide-y divide-gray-100">
-                        {Object.entries(groupedPermissions).map(
-                            ([moduleCode, permList]) => {
-                                const moduleDisplayName =
-                                    MODULE_LABELS[moduleCode] || moduleCode;
+                        {Object.entries(groupedPermissions).map(([moduleCode, permList]) => {
+                            const moduleDisplayName = MODULE_LABELS[moduleCode] || moduleCode;
 
-                                return (
-                                    <React.Fragment key={moduleCode}>
-                                        <tr className="bg-slate-100/80">
-                                            <td className="px-6 py-3 font-bold text-slate-700 text-xs tracking-widest uppercase sticky left-0 z-10 bg-slate-100/90 border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                                                <div className="flex items-center gap-2">
-                                                    <Layers className="w-4 h-4 text-slate-500" />
-                                                    {moduleDisplayName}
-                                                </div>
+                            return (
+                                <React.Fragment key={moduleCode}>
+                                    {/* Dòng tiêu đề phân nhóm Module */}
+                                    <tr className="bg-slate-100/80">
+                                        <td className="px-6 py-3 font-bold text-slate-700 text-xs tracking-widest uppercase sticky left-0 z-10 bg-slate-100/90 border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                            <div className="flex items-center gap-2">
+                                                <Layers className="w-4 h-4 text-slate-500" />
+                                                {moduleDisplayName}
+                                            </div>
+                                        </td>
+                                        <td
+                                            colSpan={roles.length}
+                                            className="bg-slate-100/80 border-t border-b border-slate-200/60"
+                                        ></td>
+                                    </tr>
+
+                                    {/* Danh sách các quyền chi tiết thuộc Module */}
+                                    {permList.map((perm) => (
+                                        <tr
+                                            key={perm.id}
+                                            className="hover:bg-blue-50/40 transition-colors group"
+                                        >
+                                            <td className="px-6 py-4 sticky left-0 z-10 bg-white group-hover:bg-blue-50/40 border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors whitespace-normal">
+                                                <p className="font-semibold text-gray-800 text-sm leading-snug">
+                                                    {perm.name}
+                                                </p>
                                             </td>
-                                            <td
-                                                colSpan={roles.length}
-                                                className="bg-slate-100/80 border-t border-b border-slate-200/60"
-                                            ></td>
-                                        </tr>
 
-                                        {permList.map((perm) => (
-                                            <tr
-                                                key={perm.id}
-                                                className="hover:bg-blue-50/40 transition-colors group"
-                                            >
-                                                <td className="px-6 py-4 sticky left-0 z-10 bg-white group-hover:bg-blue-50/40 border-r border-gray-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] transition-colors whitespace-normal">
-                                                    <p className="font-semibold text-gray-800 text-sm leading-snug">
-                                                        {perm.name}
-                                                    </p>
-                                                </td>
-
-                                                {roles.map((role) => {
-                                                    const isChecked =
-                                                        matrix[role.id]?.has(
-                                                            perm.id,
-                                                        ) || false;
-                                                    return (
-                                                        <td
-                                                            key={`${role.id}-${perm.id}`}
-                                                            className="px-4 py-4 text-center border-l border-gray-100/50 align-middle"
+                                            {roles.map((role) => {
+                                                const isChecked = matrix[role.id]?.has(perm.id) || false;
+                                                
+                                                return (
+                                                    <td
+                                                        key={`${role.id}-${perm.id}`}
+                                                        className="px-4 py-4 text-center border-l border-gray-100/50 align-middle"
+                                                    >
+                                                        <label 
+                                                            className={clsx(
+                                                                "relative flex items-center justify-center p-2 rounded-full transition-colors group/checkbox",
+                                                                isSubmitting 
+                                                                    ? "cursor-not-allowed opacity-50" 
+                                                                    : "cursor-pointer hover:bg-blue-100/50"
+                                                            )}
                                                         >
-                                                            <label className="relative flex items-center justify-center p-2 rounded-full cursor-pointer hover:bg-blue-100/50 transition-colors group/checkbox">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={
-                                                                        isChecked
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        onCheckboxChange(
-                                                                            role.id,
-                                                                            perm.id,
-                                                                            e
-                                                                                .target
-                                                                                .checked,
-                                                                        )
-                                                                    } 
-                                                                    className="peer sr-only"
-                                                                />
-                                                                <div
+                                                            <input
+                                                                type="checkbox"
+                                                                disabled={isSubmitting}
+                                                                checked={isChecked}
+                                                                onChange={(e) => onCheckboxChange(role.id, perm.id, e.target.checked)}
+                                                                className="peer sr-only disabled:cursor-not-allowed"
+                                                            />
+                                                            <div
+                                                                className={clsx(
+                                                                    "w-5 h-5 rounded border-2 transition-all flex items-center justify-center",
+                                                                    isChecked
+                                                                        ? "bg-blue-600 border-blue-600 shadow-sm shadow-blue-500/30 scale-110"
+                                                                        : "bg-white border-gray-300 peer-focus:border-blue-400 group-hover/checkbox:border-blue-400"
+                                                                )}
+                                                            >
+                                                                <Check
                                                                     className={clsx(
-                                                                        "w-5 h-5 rounded border-2 transition-all flex items-center justify-center",
-                                                                        isChecked
-                                                                            ? "bg-blue-600 border-blue-600 shadow-sm shadow-blue-500/30 scale-110"
-                                                                            : "bg-white border-gray-300 peer-focus:border-blue-400 group-hover/checkbox:border-blue-400",
+                                                                        "w-3.5 h-3.5 text-white transition-transform duration-200",
+                                                                        isChecked ? "scale-100" : "scale-0"
                                                                     )}
-                                                                >
-                                                                    <Check
-                                                                        className={clsx(
-                                                                            "w-3.5 h-3.5 text-white transition-transform duration-200",
-                                                                            isChecked
-                                                                                ? "scale-100"
-                                                                                : "scale-0",
-                                                                        )}
-                                                                    />
-                                                                </div>
-                                                            </label>
-                                                        </td>
-                                                    );
-                                                })}
-                                            </tr>
-                                        ))}
-                                    </React.Fragment>
-                                );
-                            },
-                        )}
+                                                                />
+                                                            </div>
+                                                        </label>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </React.Fragment>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
