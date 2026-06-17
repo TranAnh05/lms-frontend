@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, KeyRound, MailCheck } from "lucide-react";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios"; 
+
 import { authService } from "../services/auth.service";
 import { ForgotPasswordForm } from "../components/ForgotPasswordForm";
 import { type ForgotPasswordPayload } from "../types";
@@ -12,15 +13,15 @@ export const ForgotPasswordPage: React.FC = () => {
     const [isSuccess, setIsSuccess] = useState(false);
     const [submittedEmail, setSubmittedEmail] = useState("");
 
-    // Xử lý gọi API yêu cầu cấp lại mật khẩu
     const handleForgotPassword = async (data: ForgotPasswordPayload) => {
         setIsLoading(true);
         try {
             await authService.forgotPassword(data);
             setSubmittedEmail(data.email);
             setIsSuccess(true);
-        } catch (error: any) {
-            const errorMsg = error.response?.data?.message || "Không thể gửi yêu cầu. Vui lòng thử lại sau.";
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message: string }>;
+            const errorMsg = axiosError.response?.data?.message || "Không thể gửi yêu cầu. Vui lòng thử lại sau.";
             toast.error(errorMsg);
         } finally {
             setIsLoading(false);

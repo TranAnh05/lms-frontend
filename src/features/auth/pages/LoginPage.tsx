@@ -1,15 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GraduationCap, BookOpen, Users } from 'lucide-react';
+import { AxiosError } from 'axios'; 
 
 import { LoginForm, type LoginFormData } from '../components/LoginForm';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 import { getDefaultPathByRole } from '@/config/menu.config';
 
-const BrandingSidebar: React.FC = () => (
+const BrandingSidebar: React.FC = React.memo(() => (
   <div className="hidden md:flex md:w-1/2 bg-blue-600 p-12 flex-col justify-between relative overflow-hidden">
     <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-blue-500 opacity-50 blur-3xl" />
     <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-blue-700 opacity-50 blur-3xl" />
@@ -40,34 +40,41 @@ const BrandingSidebar: React.FC = () => (
       </div>
     </div>
   </div>
-);
+));
+
+BrandingSidebar.displayName = 'BrandingSidebar';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const loginSuccess = useAuthStore((state) => state.loginSuccess);
+  const { loginSuccess, logout } = useAuthStore((state) => ({
+    loginSuccess: state.loginSuccess,
+    logout: state.logout,
+  }));
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLoginSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
+      
+      logout();
+
       const response = await authService.login(data);
       
       if (response.code === 200) {
-        // Lưu thông tin User & Token vào Store
         loginSuccess(response.data); 
-        toast.success(response.message);
+        toast.success(response.message || 'Đăng nhập thành công!');
         
-        // Tính toán trang đích dựa trên (Role) của user
         const userRoles = response.data.user?.roles || [];
         const targetPath = getDefaultPathByRole(userRoles);
         
         navigate(targetPath, { replace: true });
       } else {
-        toast.error(response.message || 'Đăng nhập thất bại');
+        toast.error(response.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!');
       }
       
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Không thể kết nối đến máy chủ!';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      const errorMessage = axiosError.response?.data?.message || 'Không thể kết nối đến máy chủ!';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -83,7 +90,6 @@ export const LoginPage: React.FC = () => {
             <LoginForm onSubmit={handleLoginSubmit} isLoading={isLoading} />
           </div>
         </div>
-        
       </div>
     </div>
   );
