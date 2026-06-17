@@ -1,3 +1,16 @@
+export type RegistrationStatus = "PENDING" | "ACTIVE" | "CLOSED";
+
+export interface SemesterResponse {
+    id: number;
+    semesterCode: string;
+    academicYear: string;
+}
+
+export interface DepartmentResponse {
+    id: number;
+    code: string;
+    name: string;
+}
 
 export interface ClassPendingResponse {
     id: number;
@@ -12,44 +25,6 @@ export interface ClassPendingResponse {
     departmentName: string;
 }
 
-export interface RegistrationPeriodResponse {
-    id: number;
-    // semester: SemesterBasic;
-    semesterId: number;
-    semesterCode: string;
-    name: string;
-    type: string;
-    startTime: string; 
-    endTime: string;   
-    targetCohorts: number[];
-    targetDepartments: number[];
-    status: "PENDING" | "ACTIVE" | "CLOSED";
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface CreateRegistrationPayload {
-    semesterId: number;
-    name: string;
-    type: string;
-    startTime: string; 
-    endTime: string;
-    targetCohorts: number[];
-    targetDepartments: number[];
-}
-
-export interface SemesterResponse {
-    id: number;
-    semesterCode: string;
-    academicYear: string;
-}
-
-export interface DepartmentResponse {
-    id: number;
-    code: string;
-    name: string;
-}
-
 export interface ClassInPeriodResponse {
     id: number;
     code: string;
@@ -59,13 +34,31 @@ export interface ClassInPeriodResponse {
     lecturerName: string | null;
 }
 
-export interface RegistrationPeriodDetailResponse {
+export interface RegistrationPeriodResponse {
     id: number;
-    name: string;
-    startTime: string;
-    endTime: string;
-    status: string;
     semesterId: number;
+    semesterCode: string;
+    name: string;
+    type: string;
+    startTime: string; 
+    endTime: string;   
+    targetCohorts: number[];
+    targetDepartments: number[];
+    status: RegistrationStatus; 
+    createdAt: string;
+    updatedAt: string;
+}
+
+export type CreateRegistrationPayload = Pick<
+    RegistrationPeriodResponse,
+    "semesterId" | "name" | "type" | "startTime" | "endTime" | "targetCohorts" | "targetDepartments"
+>;
+
+export interface RegistrationPeriodDetailResponse extends Pick<
+    RegistrationPeriodResponse,
+    "id" | "name" | "startTime" | "endTime" | "semesterId"
+> {
+    status: string;
     semesterName: string;
     totalClasses: number;
     totalEnrollments: number;

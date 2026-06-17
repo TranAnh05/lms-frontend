@@ -1,15 +1,35 @@
-export interface CourseBasic {
+export type RoomType = "THEORY" | "LAB" | "HALL";
+export type SortDirection = "asc" | "desc";
+
+export interface DropdownResponseDto {
     id: number;
-    code: string;
     name: string;
-    credits: number;
-    departmentId: number;
 }
 
 export interface UserBasic {
     id: number;
     fullName: string;
     email?: string;
+}
+
+export interface DepartmentBasic {
+    id: number;
+    code: string;
+    name: string;
+}
+
+export interface SemesterBasic {
+    id: number;
+    semesterCode: string;
+    academicYear: string;
+}
+
+export interface CourseBasic {
+    id: number;
+    code: string;
+    name: string;
+    credits: number;
+    departmentId: number;
 }
 
 export interface LecturerBasic {
@@ -20,7 +40,28 @@ export interface LecturerBasic {
     departmentId: number;
 }
 
-export interface DropdownResponseDto {
+export interface ShiftBasic {
+    id: number;
+    name: string;
+    startTime: string;
+    endTime: string;
+}
+
+export interface RoomBasic {
+    id: number;
+    name: string;
+    type: RoomType;
+    capacity: number;
+}
+
+export interface ScheduleBasic {
+    id: number;
+    dayOfWeek: number;
+    shift: ShiftBasic;
+    room: RoomBasic;
+}
+
+export interface RegistrationPeriodBasic {
     id: number;
     name: string;
 }
@@ -29,21 +70,15 @@ export interface AssignLecturerPayload {
     lecturerId: number;
 }
 
-export interface ScheduleBasic {
-    id: number;
-    dayOfWeek: number;
-    shift: {
-        id: number;
-        name: string;
-        startTime: string;
-        endTime: string;
-    };
-    room: {
-        id: number;
-        name: string;
-        type: "THEORY" | "LAB" | "HALL";
-        capacity: number;
-    };
+export interface ClassListParams {
+    keyword?: string;
+    semesterId?: number;
+    departmentId?: number;
+    status?: string;
+    page: number;
+    size: number;
+    sortBy?: string;
+    sortDirection?: SortDirection;
 }
 
 export interface ClassDetailResponse {
@@ -65,47 +100,9 @@ export interface ClassDetailResponse {
     lecturerId?: number;
     lecturerName?: string;
     createdAt: string;
-    registrationPeriod?: {
-        id: number;
-        name: string;
-    };
+    registrationPeriod?: RegistrationPeriodBasic;
     schedules?: ScheduleBasic[];
     lockReason?: string;
-}
-
-export interface ClassListParams {
-    keyword?: string;
-    semesterId?: number;
-    departmentId?: number;
-    status?: string;
-    page: number;
-    size: number;
-    sortBy?: string;
-    sortDirection?: "asc" | "desc";
-}
-
-export interface PageResponse<T> {
-    content: T[];
-    pageable?: {
-        pageNumber: number;
-        pageSize: number;
-    };
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
-}
-
-export interface DepartmentBasic {
-    id: number;
-    code: string;
-    name: string;
-}
-
-export interface SemesterBasic {
-    id: number;
-    semesterCode: string;
-    academicYear: string;
 }
 
 export interface ScheduleInfoForStudent {
@@ -129,4 +126,18 @@ export interface ClassDetailForStudentResponse {
     credits: number;
     lecturerName: string | null;
     schedules: ScheduleInfoForStudent[];
+}
+
+export interface PageableInfo {
+    pageNumber: number;
+    pageSize: number;
+}
+
+export interface PageResponse<T> {
+    content: T[];
+    pageable?: PageableInfo;
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
 }

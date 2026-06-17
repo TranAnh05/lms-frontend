@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, memo } from "react";
 import { Eye, MoreHorizontal, ShieldAlert, UserPlus } from "lucide-react";
 import clsx from "clsx";
 import { type ClassDetailResponse, type PageResponse } from "../types";
@@ -11,6 +11,7 @@ const STATUS_UI = {
     CANCELED: { label: "Đã hủy", style: "bg-red-50 text-red-700 border-red-200" },
 } as const;
 
+// Sử dụng React.memo cho ActionMenu để tránh re-render khi các dòng khác thay đổi
 const ActionMenu: React.FC<{
     classItem: ClassDetailResponse;
     index: number;
@@ -18,19 +19,20 @@ const ActionMenu: React.FC<{
     isHead: boolean;
     onViewDetail: (id: number) => void;
     onAssignLecturer: (id: number) => void;
-}> = ({ classItem, index, total, isHead, onViewDetail, onAssignLecturer }) => {
+}> = memo(({ classItem, index, total, isHead, onViewDetail, onAssignLecturer }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false);
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
         };
         if (isOpen) document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen]);
 
-    // Tránh menu bị che: Chỉ xổ lên trên nếu danh sách có nhiều dòng VÀ đang ở 2 dòng cuối cùng
     const isBottomRow = total > 2 && index >= total - 2;
 
     return (
@@ -69,7 +71,32 @@ const ActionMenu: React.FC<{
             )}
         </div>
     );
-};
+});
+
+ActionMenu.displayName = "ActionMenu";
+
+// Tách tiến trình hiển thị sĩ số thành component độc lập để cô lập tính toán toán học
+const StudentCapacity: React.FC<{ currentStudents?: number; maxStudents?: number }> = memo(({ currentStudents = 0, maxStudents = 1 }) => {
+    const max = maxStudents || 1;
+    const isFull = currentStudents >= max;
+    const percent = Math.min(Math.round((currentStudents / max) * 100), 100);
+
+    return (
+        <div className="flex flex-col items-center gap-1.5 w-full max-w-[80px] mx-auto">
+            <div className="flex items-center justify-center text-xs font-semibold whitespace-nowrap">
+                <span className="text-gray-600">{max}</span>
+            </div>
+            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                    className={clsx("h-full rounded-full transition-all duration-500", isFull ? "bg-red-500" : "bg-blue-500")} 
+                    style={{ width: `${percent}%` }} 
+                />
+            </div>
+        </div>
+    );
+});
+
+StudentCapacity.displayName = "StudentCapacity";
 
 interface ClassTableProps {
     data: PageResponse<ClassDetailResponse> | null;
@@ -80,7 +107,14 @@ interface ClassTableProps {
     onPageChange: (page: number) => void;
 }
 
-export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead, onViewDetail, onAssignLecturer, onPageChange }) => {
+export const ClassTable: React.FC<ClassTableProps> = ({ 
+    data, 
+    isLoading, 
+    isHead, 
+    onViewDetail, 
+    onAssignLecturer, 
+    onPageChange 
+}) => {
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col relative w-full">
             <div className="overflow-x-auto overflow-y-visible custom-scrollbar pb-4 min-h-[300px]">
@@ -120,10 +154,6 @@ export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead,
                             </tr>
                         ) : (
                             data.content.map((item, index) => {
-                                const current = item.currentStudents || 0;
-                                const max = item.maxStudents || 1;
-                                const isFull = current >= max;
-                                const percent = Math.min(Math.round((current / max) * 100), 100);
                                 const status = STATUS_UI[item.status as keyof typeof STATUS_UI] || { label: item.status, style: "bg-gray-100 text-gray-700" };
 
                                 return (
@@ -148,14 +178,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead,
                                             )}
                                         </td>
                                         <td className="px-5 py-4 text-center">
-                                            <div className="flex flex-col items-center gap-1.5 w-full max-w-[80px] mx-auto">
-                                                <div className="flex items-center justify-center text-xs font-semibold whitespace-nowrap">
-                                                    <span className="text-gray-600">{max}</span>
-                                                </div>
-                                                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div className={clsx("h-full rounded-full transition-all duration-500", isFull ? "bg-red-500" : "bg-blue-500")} style={{ width: `${percent}%` }} />
-                                                </div>
-                                            </div>
+                                            <StudentCapacity currentStudents={item.currentStudents} maxStudents={item.maxStudents} />
                                         </td>
                                         <td className="px-5 py-4 text-center whitespace-nowrap">
                                             <span className={clsx("inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border", status.style)}>{status.label}</span>
@@ -171,6 +194,7 @@ export const ClassTable: React.FC<ClassTableProps> = ({ data, isLoading, isHead,
                 </table>
             </div>
             
+            {/* Thanh phân trang */}
             {data && data.totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 bg-gray-50/50 border-t border-gray-100 text-sm">
                     <span className="text-gray-500">Hiển thị {data.number * data.size + 1} - {Math.min((data.number + 1) * data.size, data.totalElements)} trong tổng {data.totalElements} lớp</span>
