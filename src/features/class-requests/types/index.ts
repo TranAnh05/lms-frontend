@@ -1,3 +1,9 @@
+// --- COMMON UNIONS & CONSTANTS ---
+export type ClassStatus = "PENDING" | "REGISTRATION" | "ONGOING" | "COMPLETED" | "CANCELED";
+export type ClassRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type RoomType = "THEORY" | "LAB" | "HALL";
+export type SortDirection = "asc" | "desc";
+
 // --- SHARED / BASIC TYPES ---
 export interface DropdownResponseDto {
     id: number;
@@ -76,7 +82,7 @@ export interface ClassResponse {
     lecturer: UserBasic | null;
     maxStudents: number;
     currentStudents: number;
-    status: "PENDING" | "REGISTRATION" | "ONGOING" | "COMPLETED" | "CANCELED";
+    status: ClassStatus;
     lockReason?: string;
     createdAt: string;
     updatedAt: string;
@@ -94,7 +100,7 @@ export interface ScheduleBasic {
     room: {
         id: number;
         name: string;
-        type: "THEORY" | "LAB" | "HALL";
+        type: RoomType;
         capacity: number;
     };
 }
@@ -114,7 +120,7 @@ export interface ClassListParams {
     page: number;
     size: number;
     sortBy?: string;
-    sortDirection?: "asc" | "desc";
+    sortDirection?: SortDirection;
 }
 
 // --- CLASS REQUEST TYPES ---
@@ -128,7 +134,7 @@ export interface ClassOpeningRequestPayload {
 export interface RequestFilterParams {
     page?: number;
     size?: number;
-    status?: "PENDING" | "APPROVED" | "REJECTED" | "";
+    status?: ClassRequestStatus | "";
     search?: string;
     semesterId?: number;
 }
@@ -142,7 +148,7 @@ export interface ClassOpeningResponseDto {
     semesterCode: string;
     expectedStudents: number;
     note?: string;
-    status: "PENDING" | "APPROVED" | "REJECTED";
+    status: ClassRequestStatus;
     rejectReason?: string;
     createdAt: string;
     updatedAt?: string;
