@@ -1,21 +1,23 @@
-import React from "react";
+import React, { memo } from "react";
 import { Search } from "lucide-react";
-import {  type Department, type RoleDropdown } from "../types";
+import { type Department, type RoleDropdown } from "../types";
 
 interface UserFilterProps {
     searchTerm: string;
     onSearchChange: (value: string) => void;
-
     roles: RoleDropdown[];
     selectedRoleCode: string;
     onRoleChange: (code: string) => void;
-
     departments: Department[];
     selectedDeptId: number | null;
     onDeptChange: (id: number | null) => void;
 }
 
-export const UserFilter: React.FC<UserFilterProps> = ({
+// Toi uu: Khai bao hinh anh SVG mui ten dropdown thanh hang so de tai su dung
+const DROPDOWN_ARROW_SVG = `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`;
+
+// Toi uu: Boc React.memo de chan re-render Component loc khi dong mo cac Modal khong lien quan o UserPage
+export const UserFilter: React.FC<UserFilterProps> = memo(({
     searchTerm,
     onSearchChange,
     roles,
@@ -25,6 +27,10 @@ export const UserFilter: React.FC<UserFilterProps> = ({
     selectedDeptId,
     onDeptChange,
 }) => {
+
+    // Toi uu: Tai su dung chuoi class chung cho the select
+    const selectBaseClass = "bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 outline-none cursor-pointer transition-all appearance-none";
+
     return (
         <div className="flex flex-col md:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6 w-full">
             <div className="relative w-full md:flex-1 min-w-[240px]">
@@ -45,9 +51,9 @@ export const UserFilter: React.FC<UserFilterProps> = ({
                     <select
                         value={selectedRoleCode}
                         onChange={(e) => onRoleChange(e.target.value)}
-                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 outline-none cursor-pointer transition-all appearance-none"
+                        className={selectBaseClass}
                         style={{
-                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                            backgroundImage: DROPDOWN_ARROW_SVG,
                             backgroundPosition: "right 0.75rem center",
                             backgroundSize: "1rem",
                             backgroundRepeat: "no-repeat",
@@ -66,14 +72,10 @@ export const UserFilter: React.FC<UserFilterProps> = ({
                 <div className="w-full sm:w-56">
                     <select
                         value={selectedDeptId || ""}
-                        onChange={(e) =>
-                            onDeptChange(
-                                e.target.value ? Number(e.target.value) : null,
-                            )
-                        }
-                        className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full p-2.5 outline-none cursor-pointer transition-all appearance-none"
+                        onChange={(e) => onDeptChange(e.target.value ? Number(e.target.value) : null)}
+                        className={selectBaseClass}
                         style={{
-                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                            backgroundImage: DROPDOWN_ARROW_SVG,
                             backgroundPosition: "right 0.75rem center",
                             backgroundSize: "1rem",
                             backgroundRepeat: "no-repeat",
@@ -91,4 +93,6 @@ export const UserFilter: React.FC<UserFilterProps> = ({
             </div>
         </div>
     );
-};
+});
+
+UserFilter.displayName = "UserFilter";

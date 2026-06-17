@@ -6,6 +6,17 @@ export interface PageResponse<T> {
     number: number;
 }
 
+export interface ApiResponse<T> {
+    code: number;
+    message: string;
+    data: T;
+}
+
+export interface DropdownOption {
+    id: number;
+    name: string;
+}
+
 export interface Role {
     id: number;
     code: string;
@@ -14,11 +25,7 @@ export interface Role {
     permissionCodes: string[];
 }
 
-export interface RoleDropdown {
-    id: number;
-    code: string;
-    name: string;
-}
+export type RoleDropdown = Pick<Role, "id" | "code" | "name">;
 
 export interface Department {
     id: number;
@@ -36,6 +43,7 @@ export interface User {
     createdAt: string;
     updatedAt: string;
 
+    // Thông tin cá nhân
     fullName: string | null;
     phone: string | null;
     birthday: string | null;
@@ -45,6 +53,7 @@ export interface User {
     
     roles: string[];
 
+    // Thông tin Giảng viên (Có thể null nếu là Sinh viên)
     employeeCode?: string | null;
     academicTitle?: string | null;
     specialization?: string | null;
@@ -53,6 +62,7 @@ export interface User {
     departmentId?: number | null;
     departmentName?: string | null;
 
+    // Thông tin Sinh viên (Có thể null nếu là Giảng viên)
     studentCode?: string | null;
     cohort?: number | null;
     studentStatus?: string | null; 
@@ -83,33 +93,21 @@ export interface CreateUserPayload {
     roleIds: number[];
 }
 
-export interface ApiResponse<T> {
-    code: number;
-    message: string;
-    data: T;
-}
-
-
-export interface DropdownOption {
-    id: number;
-    name: string;
-}
-
 export interface UpdateUserPayload {
-    // === CHUNG ===
+    // Thông tin chung
     phone?: string | null;
     birthday?: string | null;
     gender?: string | null; 
     address?: string | null;
 
-    // === GIẢNG VIÊN ===
+    // Thông tin Giảng viên
     employeeCode?: string | null;
     departmentId?: number | null;
     academicTitle?: string | null;
     specialization?: string | null;
     isVisiting?: boolean | null;
 
-    // === SINH VIÊN ===
+    // Thông tin Sinh viên
     studentCode?: string | null;
     cohort?: number | null;
     majorId?: number | null;
