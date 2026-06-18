@@ -24,3 +24,9 @@ export interface ChangePasswordPayload {
     newPassword: string;
 }
 
+export interface ApiResponse<T> {
+    code: number;
+    message: string;
+    data: T;
+}
+

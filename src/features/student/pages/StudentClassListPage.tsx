@@ -4,7 +4,12 @@ import { ChevronRight, Loader2, Inbox } from "lucide-react";
 import { toast } from "react-toastify";
 import clsx from "clsx";
 import { studentService } from "../services/student.service";
-import { type StudentClassResponse, type ClassStatus } from "../types";
+// Toi uu: Import ApiResponse de xu ly boc tach du lieu an toan
+import {
+    type StudentClassResponse,
+    type ClassStatus,
+    type ApiResponse,
+} from "../types";
 
 type FilterStatus = "ONGOING" | "COMPLETED";
 
@@ -23,7 +28,7 @@ const STATUS_CONFIG: Record<
         bg: "bg-gray-100",
         text: "text-gray-600",
         border: "border-gray-200",
-    },
+    }
 };
 
 export const StudentClassListPage: React.FC = () => {
@@ -33,22 +38,34 @@ export const StudentClassListPage: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Dung co hieu de huy cap nhat state neu component bi unmount truoc khi API tra ve ket qua
         let isMounted = true;
+        const abortController = new AbortController();
 
         const fetchClasses = async () => {
             try {
                 const res = await studentService.getMyClassesRegistered();
-                if (isMounted) {
-                    // Loai bo hoan toan ep kieu 'any', du lieu luon luon la mang chuan tu kieu tra ve cua phuong thuc service
-                    setClasses(res || []);
+
+                if (isMounted && !abortController.signal.aborted) {
+                    // Toi uu: Boc tach lop vo API an toan va kiem tra mang truoc khi set state
+                    const responseWrapper = res as unknown as ApiResponse<
+                        StudentClassResponse[]
+                    >;
+                    const actualClasses = responseWrapper?.data
+                        ? responseWrapper.data
+                        : (res as unknown as StudentClassResponse[]);
+
+                    // Dam bao state luon la mang de tranh loi .filter is not a function
+                    setClasses(
+                        Array.isArray(actualClasses) ? actualClasses : [],
+                    );
                 }
-            } catch {
-                if (isMounted) {
+            } catch (error) {
+                if (isMounted && !abortController.signal.aborted) {
+                    console.error("Lỗi tải danh sách lớp:", error);
                     toast.error("Không thể tải danh sách lớp học.");
                 }
             } finally {
-                if (isMounted) {
+                if (isMounted && !abortController.signal.aborted) {
                     setIsLoading(false);
                 }
             }
@@ -58,10 +75,10 @@ export const StudentClassListPage: React.FC = () => {
 
         return () => {
             isMounted = false;
+            abortController.abort();
         };
     }, []);
 
-    // Dung useMemo de cache lai mang da loc, tranh tinh toan lai va re-render ca danh sach khi component cha thay doi state khac
     const filteredClasses = useMemo(() => {
         return classes.filter((cls) => cls.status === filter);
     }, [classes, filter]);
@@ -82,7 +99,6 @@ export const StudentClassListPage: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
-            {/* Bo loc trang thai lop hoc */}
             <div
                 className="flex items-center gap-2 border-b border-gray-200 pb-1"
                 role="tablist"
@@ -95,7 +111,7 @@ export const StudentClassListPage: React.FC = () => {
                         aria-selected={filter === status}
                         onClick={() => setFilter(status)}
                         className={clsx(
-                            "px-4 py-2 text-sm font-semibold border-b-2 transition-all relative top-[1px] select-none",
+                            "px-4 py-2 text-sm font-semibold border-b-2 transition-all relative top-[1px] select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-t-md",
                             filter === status
                                 ? "border-blue-600 text-blue-600"
                                 : "border-transparent text-gray-500 hover:text-gray-700",
@@ -106,7 +122,6 @@ export const StudentClassListPage: React.FC = () => {
                 ))}
             </div>
 
-            {/* Giao dien khi danh sach rong */}
             {filteredClasses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-200 border-dashed shadow-sm">
                     <div className="p-5 bg-gray-50 rounded-full mb-4 text-gray-400">
@@ -120,7 +135,6 @@ export const StudentClassListPage: React.FC = () => {
                     </p>
                 </div>
             ) : (
-                /* Luoi hien thi danh sach cac card lop hoc */
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredClasses.map((cls) => {
                         const statusConfig =
@@ -152,7 +166,6 @@ export const StudentClassListPage: React.FC = () => {
                                         >
                                             {statusConfig.label}
                                         </span>
-                                        {/* Bo sung ma lop vao giao dien de tang thong tin dinh danh va lam dep layout */}
                                         <span
                                             className="text-xs font-mono text-gray-400 truncate"
                                             title={cls.classCode}
@@ -169,7 +182,7 @@ export const StudentClassListPage: React.FC = () => {
                                     </h3>
                                 </div>
 
-                                <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between group-hover:bg-blue-50/30 transition-colors">
+                                <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between group-hover:bg-blue-50/30 transition-colors shrink-0">
                                     <span className="text-sm font-semibold text-gray-600 group-hover:text-blue-600 transition-colors">
                                         Vào không gian lớp
                                     </span>

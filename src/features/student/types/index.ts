@@ -109,3 +109,9 @@ export interface StudentGradeResponse {
     readonly totalScore: number | null;
     readonly status: GradeStatus;
 }
+
+export interface ApiResponse<T> {
+    code: number;
+    message: string;
+    data: T;
+}

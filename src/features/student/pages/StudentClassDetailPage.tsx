@@ -5,7 +5,8 @@ import { ArrowLeft, Loader2, BookOpen } from "lucide-react";
 import { toast } from "react-toastify";
 import clsx from "clsx";
 import { studentService } from "../services/student.service";
-import { type StudentClassResponse } from "../types";
+// Toi uu: Import ApiResponse de boc tach du lieu
+import { type StudentClassResponse, type ApiResponse } from "../types";
 import {
     StudentClassTabs,
     type StudentTabType,
@@ -15,7 +16,6 @@ import { StudentExamList } from "../components/exams/StudentExamList";
 import { StudentGradeView } from "../components/class-detail/StudentGradeView";
 
 export const StudentClassDetailPage: React.FC = () => {
-    // Ep kieu tham so URL sang number ngay tu dau de thong nhat kieu du lieu so sanh
     const { classId: classIdParam } = useParams<{ classId: string }>();
     const classId = useMemo(() => Number(classIdParam), [classIdParam]);
     const navigate = useNavigate();
@@ -33,15 +33,32 @@ export const StudentClassDetailPage: React.FC = () => {
         }
 
         let isMounted = true;
+        const abortController = new AbortController();
 
         const fetchClassDetail = async () => {
             try {
-                // Toi uu hoa: Goi ham lay danh sach da duoc chuan hoa kieu du lieu o tang service, khong can dung "as any"
-                const classList = await studentService.getMyClassesRegistered();
+                const res = await studentService.getMyClassesRegistered();
 
-                if (isMounted) {
-                    const currentClass = classList?.find(
-                        (c) => c.classId === classId,
+                if (isMounted && !abortController.signal.aborted) {
+                    // Toi uu: Unwrap du lieu an toan thong qua ApiResponse
+                    const responseWrapper = res as unknown as ApiResponse<
+                        StudentClassResponse[]
+                    >;
+                    const actualClasses = responseWrapper?.data
+                        ? responseWrapper.data
+                        : (res as unknown as StudentClassResponse[]);
+
+                    // Toi uu: Dam bao actualClasses la mot mang truoc khi su dung .find()
+                    const classesArray = Array.isArray(actualClasses)
+                        ? actualClasses
+                        : [];
+
+                    // Toi uu: Tuong thich an toan ca 2 truong hop property 'id' hoac 'classId'
+                    const currentClass = classesArray.find(
+                        (c) =>
+                            c.classId === classId ||
+                            (c as unknown as { classId?: number }).classId ===
+                                classId,
                     );
 
                     if (currentClass) {
@@ -50,12 +67,13 @@ export const StudentClassDetailPage: React.FC = () => {
                         toast.error("Không tìm thấy thông tin lớp học.");
                     }
                 }
-            } catch {
-                if (isMounted) {
+            } catch (error) {
+                if (isMounted && !abortController.signal.aborted) {
+                    console.error("Lỗi khi tải chi tiết lớp học:", error);
                     toast.error("Lỗi kết nối: Không thể tải thông tin lớp.");
                 }
             } finally {
-                if (isMounted) {
+                if (isMounted && !abortController.signal.aborted) {
                     setIsLoading(false);
                 }
             }
@@ -65,15 +83,14 @@ export const StudentClassDetailPage: React.FC = () => {
 
         return () => {
             isMounted = false;
+            abortController.abort();
         };
     }, [classId]);
 
-    // Dung useCallback de giu nguyen tham chieu ham dieu huong, tranh re-render khong dang co o the button
     const handleBackToList = useCallback(() => {
         navigate("/dashboard/student-classes");
     }, [navigate]);
 
-    // Dung useMemo de cache noi dung tab, ngan chan viec re-render ca sub-component con khi tab khong thay doi
     const tabContent = useMemo(() => {
         if (!classId) return null;
 
@@ -124,6 +141,11 @@ export const StudentClassDetailPage: React.FC = () => {
     }
 
     const isOngoing = classInfo.status === "ONGOING";
+    // Toi uu: Lay dung thuoc tinh code hoac classCode tuong thich tuy thuoc vao API thuc te
+    const displayCode =
+        classInfo.classCode ||
+        (classInfo as unknown as { classCode?: string }).classCode ||
+        "N/A";
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
@@ -155,9 +177,8 @@ export const StudentClassDetailPage: React.FC = () => {
                             >
                                 {isOngoing ? "Đang diễn ra" : "Đã kết thúc"}
                             </span>
-                            {/* Bo sung hien thi truc quan ClassCode len banner detail */}
                             <span className="text-xs font-mono opacity-70 tracking-wide">
-                                Mã lớp: {classInfo.classCode}
+                                Mã lớp: {displayCode}
                             </span>
                         </div>
 
@@ -173,7 +194,6 @@ export const StudentClassDetailPage: React.FC = () => {
                 />
             </div>
 
-            {/* Phan render noi dung cac component con */}
             <div className="mt-6">{tabContent}</div>
         </div>
     );
