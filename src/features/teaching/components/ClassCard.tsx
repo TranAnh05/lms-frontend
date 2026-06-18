@@ -8,52 +8,81 @@ interface ClassCardProps {
     onClick: (classId: number) => void;
 }
 
+// Cấu hình màu sắc cố định theo từng trạng thái lớp học
 const STATUS_CONFIG: Record<ClassStatus, { label: string; color: string }> = {
     PENDING: { label: "Chờ mở", color: "bg-amber-100 text-amber-700" },
     REGISTRATION: { label: "Đang đăng ký", color: "bg-blue-100 text-blue-700" },
-    ONGOING: { label: "Đang diễn ra", color: "bg-emerald-100 text-emerald-700" },
+    ONGOING: {
+        label: "Đang diễn ra",
+        color: "bg-emerald-100 text-emerald-700",
+    },
     COMPLETED: { label: "Đã kết thúc", color: "bg-gray-100 text-gray-600" },
     CANCELED: { label: "Đã hủy", color: "bg-rose-100 text-rose-700" },
 };
 
-export const ClassCard: React.FC<ClassCardProps> = ({ classData, onClick }) => {
-    const statusConfig = STATUS_CONFIG[classData.status];
+// Cấu hình dự phòng nếu hệ thống trả về trạng thái không xác định
+const DEFAULT_STATUS = {
+    label: "Không xác định",
+    color: "bg-gray-100 text-gray-700",
+};
 
-    return (
-        <div
-            onClick={() => onClick(classData.classId)}
-            className="group flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer overflow-hidden"
-        >
-            <div className="p-5 flex-1">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                    <span className={clsx("px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide rounded-md", statusConfig.color)}>
-                        {statusConfig.label}
-                    </span>
-                </div>
+// Tối ưu: Dùng React.memo ngăn re-render dư thừa khi danh sách cha thay đổi bộ lọc
+export const ClassCard = React.memo<ClassCardProps>(
+    ({ classData, onClick }) => {
+        // Tối ưu: Thêm cơ chế fallback an toàn phòng lỗi runtime dữ liệu trạng thái
+        const statusConfig = STATUS_CONFIG[classData.status] || DEFAULT_STATUS;
 
-                <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
-                    {classData.courseName}
-                </h3>
-
-                <div className="mt-4 flex flex-col gap-1.5">
-                    <div className="text-sm text-gray-600">
-                        <span className="text-gray-500">Mã lớp:</span>{" "}
-                        <span className="font-semibold text-gray-900">{classData.classCode}</span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                        <span className="text-gray-500">Sĩ số:</span>{" "}
-                        <span className="font-semibold text-gray-900">
-                            {classData.currentStudents} / {classData.maxStudents}
+        return (
+            <div
+                onClick={() => onClick(classData.classId)}
+                className="group flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer overflow-hidden"
+            >
+                <div className="p-5 flex-1">
+                    {/* Nhãn trạng thái lớp */}
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                        <span
+                            className={clsx(
+                                "px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide rounded-md",
+                                statusConfig.color,
+                            )}
+                        >
+                            {statusConfig.label}
                         </span>
                     </div>
-                </div>
-            </div>
 
-            <div className="px-5 py-3.5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-end mt-auto">
-                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                    {/* Tên học phần */}
+                    <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {classData.courseName}
+                    </h3>
+
+                    {/* Mã lớp và thông tin sĩ số sinh viên */}
+                    <div className="mt-4 flex flex-col gap-1.5">
+                        <div className="text-sm text-gray-600">
+                            <span className="text-gray-500">Mã lớp:</span>{" "}
+                            <span className="font-semibold text-gray-900">
+                                {classData.classCode}
+                            </span>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                            <span className="text-gray-500">Sĩ số:</span>{" "}
+                            <span className="font-semibold text-gray-900">
+                                {classData.currentStudents} /{" "}
+                                {classData.maxStudents}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Nút mũi tên chỉ hướng góc dưới thẻ */}
+                <div className="px-5 py-3.5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-end mt-auto">
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-200 group-hover:border-blue-200 group-hover:bg-blue-50 transition-colors">
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-};
+        );
+    },
+);
+
+// Định danh component hỗ trợ DevTools debug hiệu quả hơn
+ClassCard.displayName = "ClassCard";

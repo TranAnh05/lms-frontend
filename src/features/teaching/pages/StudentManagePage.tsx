@@ -10,36 +10,54 @@ export const StudentManagePage: React.FC = () => {
     const [students, setStudents] = useState<StudentOfClassResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Goi API lay danh sach sinh vien khi id lop hoc thay doi
     useEffect(() => {
+        let isMounted = true;
+
         const fetchStudents = async () => {
             if (!classId) return;
             setIsLoading(true);
+
             try {
-                const data = await teachingService.getStudentsOfClass(Number(classId));
-                setStudents(data);
-            } catch (error) {
-                toast.error("Không thể tải danh sách sinh viên.");
+                const data = await teachingService.getStudentsOfClass(
+                    Number(classId),
+                );
+                if (isMounted) {
+                    setStudents(data);
+                }
+            } catch {
+                if (isMounted) {
+                    toast.error("Không thể tải danh sách sinh viên.");
+                }
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         fetchStudents();
+
+        // Huy theo doi trang thai khi unmount de tranh memory leak
+        return () => {
+            isMounted = false;
+        };
     }, [classId]);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Khung tieu de trang */}
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <h2 className="text-lg font-bold text-gray-900">Quản lý Sinh viên</h2>
+                <h2 className="text-lg font-bold text-gray-900">
+                    Quản lý Sinh viên
+                </h2>
                 <p className="text-sm text-gray-500 mt-0.5">
                     Theo dõi và quản lý danh sách sinh viên thuộc học phần
                 </p>
             </div>
 
-            <StudentListTable 
-                students={students} 
-                isLoading={isLoading} 
-            />
+            {/* Bang hien thi danh sach sinh vien */}
+            <StudentListTable students={students} isLoading={isLoading} />
         </div>
     );
 };
