@@ -60,3 +60,9 @@ export interface SemesterListParams {
     sortBy: string;
     sortDirection: "asc" | "desc";
 }
+
+export interface ApiResponse<T> {
+    code: number;
+    message: string;
+    data: T;
+}

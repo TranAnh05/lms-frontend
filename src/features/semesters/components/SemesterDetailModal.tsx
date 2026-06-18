@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { semesterService } from "../services/semester.service";
-import { type SemesterDetailResponse } from "../types";
+import { type ApiResponse, type SemesterResponse } from "../types";
 
 interface SemesterDetailModalProps {
     isOpen: boolean;
@@ -18,7 +18,6 @@ interface SemesterDetailModalProps {
     semesterId: number | null;
 }
 
-// Toi uu: Dua mang tinh va ham ho tro ra ngoai Component de tiet kiem bo nho
 const SKELETON_ITEMS = [1, 2, 3, 4, 5, 6];
 
 const formatDate = (dateStr?: string) => {
@@ -27,33 +26,32 @@ const formatDate = (dateStr?: string) => {
     return `${day}/${month}/${year}`;
 };
 
-// Toi uu: Su dung React.memo de ngan chan re-render tu Component cha
 export const SemesterDetailModal: React.FC<SemesterDetailModalProps> = memo(
     ({ isOpen, onClose, semesterId }) => {
-        const [semester, setSemester] = useState<SemesterDetailResponse | null>(
-            null,
-        );
+        // Lưu y: Backend tra ve co ca thoi gian tao/cap nhat nen dung luon SemesterResponse thay vi Omit
+        const [semester, setSemester] = useState<SemesterResponse | null>(null);
         const [isFetching, setIsFetching] = useState<boolean>(true);
 
         useEffect(() => {
             if (!isOpen || !semesterId) return;
 
-            // Toi uu: Su dung AbortController de huy request neu Component bi huy
             const abortController = new AbortController();
 
             const fetchDetails = async () => {
                 setIsFetching(true);
                 try {
-                    // Toi uu: Loai bo ep kieu 'any' va su dung data truc tiep tu service
-                    const semesterData =
+                    const semesterRes =
                         await semesterService.getSemesterById(semesterId);
 
                     if (!abortController.signal.aborted) {
-                        // Ep kieu tam thoi hoac xu ly dong bo type giua SemesterResponse va SemesterDetailResponse
-                        // tuy thuoc vao dinh nghia API tra ve thuc te
-                        setSemester(
-                            semesterData as unknown as SemesterDetailResponse,
-                        );
+                        // Toi uu: Dung ApiResponse ket hop dung Type tu file tap trung, sach se va an toan
+                        const resWrapper =
+                            semesterRes as unknown as ApiResponse<SemesterResponse>;
+                        const actualDetail = resWrapper?.data
+                            ? resWrapper.data
+                            : (semesterRes as unknown as SemesterResponse);
+
+                        setSemester(actualDetail);
                     }
                 } catch (error) {
                     if (!abortController.signal.aborted) {

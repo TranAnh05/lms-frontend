@@ -3,7 +3,7 @@ import { X, Calendar, Loader2, Save } from "lucide-react";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import { semesterService } from "../services/semester.service";
-import { type SemesterUpdateRequest } from "../types";
+import { type ApiResponse, type SemesterResponse, type SemesterUpdateRequest } from "../types";
 
 interface SemesterUpdateModalProps {
     isOpen: boolean;
@@ -12,7 +12,6 @@ interface SemesterUpdateModalProps {
     semesterId: number | null;
 }
 
-// Toi uu: Dua hang so, Regex va chuoi CSS ra ngoai vong doi render
 const ACADEMIC_YEARS = ["2024-2025", "2025-2026", "2026-2027", "2027-2028"];
 const EMPTY_REGEX = /^\s*$/;
 const ACADEMIC_YEAR_REGEX = /^\d{4}-\d{4}$/;
@@ -24,7 +23,6 @@ const INPUT_NORMAL_CLASS =
     "border-gray-200 focus:border-blue-500 focus:ring-blue-500/10 text-gray-800 shadow-sm hover:border-gray-300";
 const SELECT_BG_IMAGE = `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`;
 
-// Toi uu: Su dung React.memo de ngan re-render tu Component cha
 export const SemesterUpdateModal: React.FC<SemesterUpdateModalProps> = memo(
     ({ isOpen, onClose, onSuccess, semesterId }) => {
         const [formData, setFormData] = useState<SemesterUpdateRequest>({
@@ -42,23 +40,29 @@ export const SemesterUpdateModal: React.FC<SemesterUpdateModalProps> = memo(
         useEffect(() => {
             if (!isOpen || !semesterId) return;
 
-            // Toi uu: Su dung AbortController chan memory leak
             const abortController = new AbortController();
 
             const loadSemesterDetail = async () => {
                 setIsFetching(true);
                 setErrors({});
                 try {
-                    const detail =
+                    const semesterRes =
                         await semesterService.getSemesterById(semesterId);
 
                     if (!abortController.signal.aborted) {
-                        setSemesterCode(detail.semesterCode);
+                        // Toi uu: Map du lieu thong qua ApiResponse<SemesterResponse> giup giam thieu trung lap code
+                        const resWrapper =
+                            semesterRes as unknown as ApiResponse<SemesterResponse>;
+                        const actualDetail = resWrapper?.data
+                            ? resWrapper.data
+                            : (semesterRes as unknown as SemesterResponse);
+
+                        setSemesterCode(actualDetail.semesterCode);
                         setFormData({
-                            academicYear: detail.academicYear,
-                            semesterNumber: detail.semesterNumber,
-                            startDate: detail.startDate,
-                            endDate: detail.endDate,
+                            academicYear: actualDetail.academicYear,
+                            semesterNumber: actualDetail.semesterNumber,
+                            startDate: actualDetail.startDate,
+                            endDate: actualDetail.endDate,
                         });
                     }
                 } catch (error) {
