@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ShieldCheck, AlertCircle, ArrowLeft, KeyRound } from "lucide-react";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios"; 
+
 import { authService } from "../services/auth.service";
 import { ResetPasswordForm } from "../components/ResetPasswordForm";
 
@@ -18,7 +19,6 @@ export const ResetPasswordPage: React.FC = () => {
         return typeof token === "string" && token.trim().length > 10;
     }, [token]);
 
-    // Xử lý gọi API đặt lại mật khẩu mới
     const handleResetPassword = async (newPassword: string) => {
         if (!token) return;
 
@@ -26,8 +26,9 @@ export const ResetPasswordPage: React.FC = () => {
         try {
             await authService.resetPassword({ token, newPassword });
             setIsSuccess(true);
-        } catch (error: any) {
-            const errorMsg = error.response?.data?.message || "Đã xảy ra lỗi. Token có thể đã hết hạn.";
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message: string }>;
+            const errorMsg = axiosError.response?.data?.message || "Đã xảy ra lỗi. Đường dẫn có thể đã hết hạn.";
             toast.error(errorMsg);
         } finally {
             setIsLoading(false);
@@ -38,7 +39,6 @@ export const ResetPasswordPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-500">
                 {!isTokenValid ? (
-                    // UI: Không tìm thấy Token trên URL hoặc URL bị hỏng
                     <div className="flex flex-col items-center text-center">
                         <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-6 shadow-sm border border-rose-200">
                             <AlertCircle className="w-8 h-8" />
@@ -51,13 +51,12 @@ export const ResetPasswordPage: React.FC = () => {
                         </p>
                         <Link
                             to="/forgot-password"
-                            className="w-full flex items-center justify-center py-3 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+                            className="w-full flex items-center justify-center py-3 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                         >
                             Yêu cầu cấp lại mật khẩu
                         </Link>
                     </div>
                 ) : isSuccess ? (
-                    // UI: Đặt lại mật khẩu thành công
                     <div className="flex flex-col items-center text-center">
                         <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-sm border border-emerald-200">
                             <ShieldCheck className="w-8 h-8" />
@@ -70,13 +69,12 @@ export const ResetPasswordPage: React.FC = () => {
                         </p>
                         <Link
                             to="/login"
-                            className="w-full flex items-center justify-center py-3 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-sm"
+                            className="w-full flex items-center justify-center py-3 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20"
                         >
                             Tiến hành Đăng nhập
                         </Link>
                     </div>
                 ) : (
-                    // UI: Form nhập mật khẩu mới
                     <div className="flex flex-col">
                         <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-blue-100">
                             <KeyRound className="w-6 h-6" />
@@ -96,7 +94,7 @@ export const ResetPasswordPage: React.FC = () => {
                         <div className="mt-8 text-center">
                             <Link
                                 to="/login"
-                                className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors"
+                                className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors focus:outline-none focus:underline"
                             >
                                 <ArrowLeft className="w-4 h-4" />
                                 Hủy và Quay lại Đăng nhập

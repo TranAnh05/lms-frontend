@@ -1,7 +1,7 @@
 import apiClient from "@/services/apiClient";
 import {
     type User,
-    type Role,
+    type RoleDropdown,
     type Department,
     type UserFilterParams,
     type PageResponse,
@@ -10,82 +10,47 @@ import {
     type UpdateUserPayload,
     type DropdownOption,
     type LockUserRequest,
-    type RoleDropdown,
 } from "../types";
-
-interface ServerResponse<T> {
-    code: number;
-    message: string;
-    data: T;
-}
 
 export const userService = {
     getUsers: async (params: UserFilterParams): Promise<PageResponse<User>> => {
-        return (await apiClient.get("/users", {
-            params,
-        })) as PageResponse<User>;
+        return apiClient.get<never, PageResponse<User>>("/users", { params });
     },
 
     getUserById: async (id: number): Promise<User> => {
-        return (await apiClient.get(`/users/${id}`)) as User;
+        return apiClient.get<never, User>(`/users/${id}`);
     },
 
     getRoles: async (): Promise<RoleDropdown[]> => {
-        const response = (await apiClient.get(
-            "/users/roles/dropdown",
-        )) as ServerResponse<Role[]>;
-        return response.data;
+        const response = await apiClient.get<never, ApiResponse<RoleDropdown[]>>("/users/roles/dropdown");
+        return response.data; 
     },
 
-    getDepartments: async (
-        keyword?: string,
-        isActive?: boolean,
-    ): Promise<Department[]> => {
-        return (await apiClient.get("/departments", {
+    getDepartments: async (keyword?: string, isActive?: boolean): Promise<Department[]> => {
+        return apiClient.get<never, Department[]>("/departments", {
             params: { keyword, isActive },
-        })) as Department[];
+        });
     },
 
-    createUser: async (
-        payload: CreateUserPayload,
-    ): Promise<ApiResponse<string>> => {
-        return (await apiClient.post(
-            "/users/create-with-roles",
-            payload,
-        )) as ApiResponse<string>;
+    createUser: async (payload: CreateUserPayload): Promise<ApiResponse<string>> => {
+        return apiClient.post<never, ApiResponse<string>>("/users/create-with-roles", payload);
     },
 
-    updateUser: async (
-        id: number,
-        payload: UpdateUserPayload,
-    ): Promise<ApiResponse<User>> => {
-        return (await apiClient.put(
-            `/users/${id}`,
-            payload
-        )) as ApiResponse<User>;
+    updateUser: async (id: number, payload: UpdateUserPayload): Promise<ApiResponse<User>> => {
+        return apiClient.put<never, ApiResponse<User>>(`/users/${id}`, payload);
     },
 
-    getMajorsDropdown: async (
-        departmentId?: number | null
-    ): Promise<DropdownOption[]> => {
-        return (await apiClient.get("/majors/dropdown", {
+    getMajorsDropdown: async (departmentId?: number | null): Promise<DropdownOption[]> => {
+        return apiClient.get<never, DropdownOption[]>("/majors/dropdown", {
             params: { departmentId: departmentId || undefined },
-        })) as DropdownOption[];
+        });
     },
 
-    lockUser: async (
-        id: number,
-        payload: LockUserRequest
-    ): Promise<ApiResponse<void>> => {
-        return (await apiClient.patch(
-            `/users/${id}/lock`,
-            payload
-        )) as ApiResponse<void>;
+    lockUser: async (id: number, payload: LockUserRequest): Promise<ApiResponse<void>> => {
+        return apiClient.patch<never, ApiResponse<void>>(`/users/${id}/lock`, payload);
     },
 
     unlockUser: async (id: number): Promise<ApiResponse<void>> => {
-        return (await apiClient.patch(
-            `/users/${id}/unlock`
-        )) as ApiResponse<void>;
+        return apiClient.patch<never, ApiResponse<void>>(`/users/${id}/unlock`);
     },
 };

@@ -1,3 +1,12 @@
+export type RoomType = "THEORY" | "LAB" | "HALL";
+export type EnrollmentStatus = "REGISTERED" | "OFFICIAL" | "DROPPED";
+export type ClassStatus =
+    | "PENDING"
+    | "REGISTRATION"
+    | "ONGOING"
+    | "COMPLETED"
+    | "CANCELED";
+
 export interface CourseBasic {
     id: number;
     code: string;
@@ -13,7 +22,7 @@ export interface LecturerBasic {
 
 export interface ScheduleBasic {
     id: number;
-    dayOfWeek: number; 
+    dayOfWeek: number;
     shift: {
         id: number;
         name: string;
@@ -23,11 +32,10 @@ export interface ScheduleBasic {
     room: {
         id: number;
         name: string;
-        type: "THEORY" | "LAB" | "HALL";
+        type: RoomType;
     };
 }
 
-// API Responses
 export interface CourseWithClassesResponse {
     courseId: number;
     courseName: string;
@@ -41,8 +49,8 @@ export interface ClassInfo {
     lecturerName: string;
     dayOfWeek: number;
     shiftName: string;
-    startTimeShilf: string; 
-    endTimeShilf: string;  
+    startTimeShilf: string;
+    endTimeShilf: string;
     roomName: string;
     currentStudents: number;
     maxStudents: number;
@@ -58,17 +66,16 @@ export interface EnrollmentResponse {
     dayOfWeek: number;
     shiftName: string;
     roomName: string;
-    status: "REGISTERED" | "OFFICIAL" | "DROPPED";
+    status: EnrollmentStatus;
     enrolledAt: string;
 }
 
-// Old DTOs (For backward compatibility)
 export interface ClassRegistrationDTO {
     id: number;
     code: string;
     maxStudents: number;
     currentStudents: number;
-    status: "PENDING" | "REGISTRATION" | "ONGOING" | "COMPLETED" | "CANCELED";
+    status: ClassStatus;
     lecturer: LecturerBasic | null;
     schedules: ScheduleBasic[];
 }
@@ -80,7 +87,7 @@ export interface CourseWithClassesDTO {
 
 export interface RegisteredClassDTO {
     enrollmentId: number;
-    status: "REGISTERED" | "OFFICIAL" | "DROPPED";
+    status: EnrollmentStatus;
     enrolledAt: string;
     classId: number;
     classCode: string;
@@ -91,7 +98,6 @@ export interface RegisteredClassDTO {
     schedules: ScheduleBasic[];
 }
 
-// Params & Payloads
 export interface RegisterClassPayload {
     classId: number;
 }

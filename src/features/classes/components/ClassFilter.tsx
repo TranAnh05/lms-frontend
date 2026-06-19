@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Search, Filter, Calendar, SlidersHorizontal, Building2, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 
@@ -22,6 +22,16 @@ interface ClassFilterProps {
     onDepartmentChange?: (value: string) => void;
 }
 
+// Đưa hằng số ra ngoài để tránh tái khởi tạo khi re-render
+const SELECT_STYLES = "bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full pl-9 pr-10 py-2.5 outline-none cursor-pointer appearance-none transition-all";
+
+const SELECT_BG_STYLE = {
+    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+    backgroundPosition: "right 0.75rem center",
+    backgroundSize: "1rem",
+    backgroundRepeat: "no-repeat",
+};
+
 export const ClassFilter: React.FC<ClassFilterProps> = ({
     searchTerm,
     onSearchChange,
@@ -36,16 +46,17 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
 }) => {
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-    const activeAdvancedFiltersCount = [
-        selectedStatus,
-        onDepartmentChange ? selectedDepartment : "",
-    ].filter(Boolean).length;
-
-    const selectStyles = "bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block w-full pl-9 pr-10 py-2.5 outline-none cursor-pointer appearance-none transition-all";
-    const selectBgImage = `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`;
+    // Chỉ tính toán lại số lượng bộ lọc khi giá trị thực sự thay đổi
+    const activeAdvancedFiltersCount = useMemo(() => {
+        return [
+            selectedStatus,
+            onDepartmentChange ? selectedDepartment : "",
+        ].filter(Boolean).length;
+    }, [selectedStatus, selectedDepartment, onDepartmentChange]);
 
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-6 w-full transition-all duration-300">
+            {/* Khu vực bộ lọc chính */}
             <div className="flex flex-col xl:flex-row items-center gap-4 p-4">
                 <div className="relative w-full xl:flex-1 min-w-[240px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -64,8 +75,8 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
                         <select
                             value={selectedSemester}
                             onChange={(e) => onSemesterChange(e.target.value)}
-                            className={selectStyles}
-                            style={{ backgroundImage: selectBgImage, backgroundPosition: "right 0.75rem center", backgroundSize: "1rem", backgroundRepeat: "no-repeat" }}
+                            className={SELECT_STYLES}
+                            style={SELECT_BG_STYLE}
                         >
                             <option value="" className="text-gray-900">Tất cả học kỳ</option>
                             {semesters.map((sem) => {
@@ -98,6 +109,7 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
                 </div>
             </div>
 
+            {/* Khu vực bộ lọc nâng cao */}
             <div className={clsx("grid transition-all duration-300", isAdvancedOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
                 <div className="overflow-hidden">
                     <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-wrap gap-4 rounded-b-xl">
@@ -108,8 +120,8 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
                                 <select
                                     value={selectedStatus}
                                     onChange={(e) => onStatusChange(e.target.value)}
-                                    className={selectStyles}
-                                    style={{ backgroundImage: selectBgImage, backgroundPosition: "right 0.75rem center", backgroundSize: "1rem", backgroundRepeat: "no-repeat" }}
+                                    className={SELECT_STYLES}
+                                    style={SELECT_BG_STYLE}
                                 >
                                     <option value="">Tất cả trạng thái</option>
                                     <option value="PENDING">Lên kế hoạch</option>
@@ -129,8 +141,8 @@ export const ClassFilter: React.FC<ClassFilterProps> = ({
                                     <select
                                         value={selectedDepartment}
                                         onChange={(e) => onDepartmentChange(e.target.value)}
-                                        className={selectStyles}
-                                        style={{ backgroundImage: selectBgImage, backgroundPosition: "right 0.75rem center", backgroundSize: "1rem", backgroundRepeat: "no-repeat" }}
+                                        className={SELECT_STYLES}
+                                        style={SELECT_BG_STYLE}
                                     >
                                         <option value="">Tất cả Khoa</option>
                                         {departments.map((dept) => (

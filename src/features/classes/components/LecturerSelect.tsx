@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, memo } from "react";
 import { UserCircle, ChevronDown, Search, Check, Loader2 } from "lucide-react";
 import clsx from "clsx";
 
-// Định nghĩa kiểu dữ liệu linh hoạt cho cả LecturerBasic cũ và DropdownResponseDto mới
 interface LecturerOption {
     id: number | string;
     fullName?: string;
@@ -20,7 +19,7 @@ interface LecturerSelectProps {
     placeholder?: string;
 }
 
-export const LecturerSelect: React.FC<LecturerSelectProps> = ({
+export const LecturerSelect: React.FC<LecturerSelectProps> = memo(({
     lecturers,
     value,
     onChange,
@@ -33,41 +32,63 @@ export const LecturerSelect: React.FC<LecturerSelectProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const selectedLecturer = useMemo(() => 
-        lecturers.find((lec) => lec.id.toString() === value), 
-    [lecturers, value]);
+    // Tìm kiếm giảng viên được chọn dựa trên mảng tĩnh đầu vào
+    const selectedLecturer = useMemo(() => {
+        const targetId = value.toString();
+        return lecturers.find((lec) => lec.id.toString() === targetId);
+    }, [lecturers, value]);
 
+    // Lọc danh sách giảng viên theo chuỗi tìm kiếm đầu vào
     const filteredLecturers = useMemo(() => {
-        if (!searchQuery.trim()) return lecturers;
-        const q = searchQuery.toLowerCase();
-        return lecturers.filter(
-            (lec) =>
-                (lec.fullName?.toLowerCase() || lec.name?.toLowerCase())?.includes(q) ||
-                lec.employeeCode?.toLowerCase().includes(q),
-        );
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return lecturers;
+        
+        return lecturers.filter((lec) => {
+            const nameMatch = (lec.fullName || lec.name || "").toLowerCase().includes(q);
+            const codeMatch = lec.employeeCode ? lec.employeeCode.toLowerCase().includes(q) : false;
+            return nameMatch || codeMatch;
+        });
     }, [lecturers, searchQuery]);
 
+    // Đăng ký sự kiện click chuột bên ngoài và phím Escape để đóng dropdown nhanh
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 setIsOpen(false);
             }
         };
-        if (isOpen) document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setIsOpen(false);
+        };
+
+        if (isOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+            document.addEventListener("keydown", handleKeyDown);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
     }, [isOpen]);
 
+    // Tự động focus ô input khi dropdown mở hoặc clear dữ liệu cũ khi đóng
     useEffect(() => {
-        if (isOpen && inputRef.current) inputRef.current.focus();
-        else setSearchQuery("");
+        if (isOpen) {
+            inputRef.current?.focus();
+        } else {
+            setSearchQuery("");
+        }
     }, [isOpen]);
 
     const handleToggle = () => {
-        if (!disabled && !isLoading) setIsOpen(!isOpen);
+        if (!disabled && !isLoading) setIsOpen((prev) => !prev);
     };
 
     return (
         <div className="relative w-full" ref={containerRef}>
+            {/* Thanh hiển thị trạng thái nút kích hoạt */}
             <button
                 type="button"
                 onClick={handleToggle}
@@ -98,6 +119,7 @@ export const LecturerSelect: React.FC<LecturerSelectProps> = ({
                 )}
             </button>
 
+            {/* Menu danh sách kết quả tìm kiếm đổ xuống */}
             {isOpen && (
                 <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                     <div className="p-2 border-b border-gray-100 bg-gray-50/50">
@@ -119,7 +141,7 @@ export const LecturerSelect: React.FC<LecturerSelectProps> = ({
                             <li className="px-4 py-6 text-sm text-center text-gray-500">Không tìm thấy giảng viên</li>
                         ) : (
                             filteredLecturers.map((lec) => {
-                                const isSelected = lec.id.toString() === value;
+                                const isSelected = lec.id.toString() === value.toString();
                                 return (
                                     <li
                                         key={lec.id}
@@ -150,4 +172,6 @@ export const LecturerSelect: React.FC<LecturerSelectProps> = ({
             )}
         </div>
     );
-};
+});
+
+LecturerSelect.displayName = "LecturerSelect";

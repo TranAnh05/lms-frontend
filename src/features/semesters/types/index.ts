@@ -1,14 +1,11 @@
-export interface SemesterResponse {
-    id: number;
-    semesterCode: string;
-    academicYear: string;
-    semesterNumber: number;
-    startDate: string;
-    endDate: string;
-    status: "ACTIVE" | "CLOSED";
-    createdAt: string;
-    updatedAt: string;
-}
+export type SemesterStatus = "ACTIVE" | "CLOSED";
+
+export type ClassStatus =
+    | "PENDING"
+    | "REGISTRATION"
+    | "ONGOING"
+    | "COMPLETED"
+    | "CANCELED";
 
 export interface PageResponse<T> {
     content: T[];
@@ -22,6 +19,38 @@ export interface PageResponse<T> {
     number: number;
 }
 
+export interface SemesterResponse {
+    id: number;
+    semesterCode: string;
+    academicYear: string;
+    semesterNumber: number;
+    startDate: string;
+    endDate: string;
+    status: SemesterStatus;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface SemesterClassResponse {
+    id: number;
+    code: string;
+    courseName: string;
+    lecturerName: string | null;
+    status: ClassStatus;
+}
+
+export type SemesterDetailResponse = Omit<
+    SemesterResponse,
+    "createdAt" | "updatedAt"
+>;
+
+export type SemesterCreatePayload = Pick<
+    SemesterResponse,
+    "semesterCode" | "academicYear" | "semesterNumber" | "startDate" | "endDate"
+>;
+
+export type SemesterUpdateRequest = Omit<SemesterCreatePayload, "semesterCode">;
+
 export interface SemesterListParams {
     keyword?: string;
     status?: string;
@@ -32,37 +61,8 @@ export interface SemesterListParams {
     sortDirection: "asc" | "desc";
 }
 
-export interface SemesterCreatePayload {
-    semesterCode: string;
-    academicYear: string;
-    semesterNumber: number;
-    startDate: string;
-    endDate: string;
-}
-
-export type ClassStatus = 'PENDING' | 'REGISTRATION' | 'ONGOING' | 'COMPLETED' | 'CANCELED';
-
-export interface SemesterClassResponse {
-    id: number;
-    code: string;
-    courseName: string;
-    lecturerName: string | null;
-    status: ClassStatus;
-}
-
-export interface SemesterDetailResponse {
-    id: number;
-    semesterCode: string;
-    academicYear: string;
-    semesterNumber: number;
-    startDate: string; 
-    endDate: string;
-    status: "ACTIVE" | "CLOSED";
-}
-
-export interface SemesterUpdateRequest {
-    academicYear: string;
-    semesterNumber: number;
-    startDate: string;
-    endDate: string;
+export interface ApiResponse<T> {
+    code: number;
+    message: string;
+    data: T;
 }

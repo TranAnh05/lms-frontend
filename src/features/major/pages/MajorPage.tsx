@@ -1,60 +1,59 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "@/hooks/useDebounce";
 import { majorService } from "../services/major.service";
 import { type Major, type Department } from "../types";
 import { MajorFilter } from "../components/MajorFilter";
 import { MajorTable } from "../components/MajorTable";
-import { MajorDetailModal } from "../components/MajorDetailModal";
-import { MajorFormModal } from "../components/MajorFormModal";
-import { MajorDeleteModal } from "../components/MajorDeleteModal"; 
 import { useAuthStore } from "@/store/authStore";
 
+// Toi uu: Ap dung Code Splitting cho cac modal
+const MajorDetailModal = lazy(() => import("../components/MajorDetailModal").then(m => ({ default: m.MajorDetailModal })));
+const MajorFormModal = lazy(() => import("../components/MajorFormModal").then(m => ({ default: m.MajorFormModal })));
+const MajorDeleteModal = lazy(() => import("../components/MajorDeleteModal").then(m => ({ default: m.MajorDeleteModal })));
+
 export const MajorPage: React.FC = () => {
+    // --- STATE ---
     const [majors, setMajors] = useState<Major[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     
-    // States cho bộ lọc & phân trang
+    // Filter & Pagination States
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     
-    // States cho Modal Xem chi tiết
+    // Modals States
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [selectedMajorId, setSelectedMajorId] = useState<number | null>(null);
     
-    // States cho Modal Thêm/Sửa (Form Modal 2-trong-1)
     const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
     const [editMajorId, setEditMajorId] = useState<number | null>(null);
     
-    // States cho Modal Xác nhận xóa
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
     const [majorToDelete, setMajorToDelete] = useState<{ id: number; name: string; code: string } | null>(null);
 
+    // --- AUTH & PERMISSIONS ---
     const { user } = useAuthStore();
     const isTrainingDept = user?.roles?.includes("TRAINING_DEPT");
     const hasAddEditPermission = !isTrainingDept;
+    
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
+    // --- EFFECTS ---
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
                 const data = await majorService.getDepartments(undefined, true);
                 setDepartments(data);
-            } catch (error) {
+            } catch {
                 toast.error("Không thể tải danh sách khoa.");
             }
         };
         fetchDepartments();
     }, []);
-
-    useEffect(() => {
-        setCurrentPage(0);
-    }, [debouncedSearchTerm, selectedDeptId]);
 
     const fetchMajors = useCallback(async () => {
         setIsLoading(true);
@@ -70,7 +69,7 @@ export const MajorPage: React.FC = () => {
 
             setMajors(response.content);
             setTotalPages(response.totalPages);
-        } catch (error) {
+        } catch {
             toast.error("Không thể tải danh sách ngành học.");
         } finally {
             setIsLoading(false);
@@ -81,25 +80,31 @@ export const MajorPage: React.FC = () => {
         fetchMajors();
     }, [fetchMajors]);
 
-    const handlePageChange = useCallback((newPage: number) => {
-        setCurrentPage(newPage);
-    }, []);
+    // Reset page ve 0 neu bo loc thay doi
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [debouncedSearchTerm, selectedDeptId]);
 
-    // ---------------- XỬ LÝ THÊM/SỬA ---------------- //
+
+    // --- EVENT HANDLERS (Toi uu bang useCallback) ---
+    
+    // Handlers cho Filter & Table
+    const handleSearchChange = useCallback((val: string) => setSearchTerm(val), []);
+    const handleDeptChange = useCallback((id: number | null) => setSelectedDeptId(id), []);
+    const handlePageChange = useCallback((newPage: number) => setCurrentPage(newPage), []);
+
+    // Handlers cho Form (Them/Sua)
     const handleAddClick = useCallback(() => {
         if (!hasAddEditPermission) return;
-        setEditMajorId(null); // Clear editId để hiển thị form Thêm mới
+        setEditMajorId(null);
         setIsFormModalOpen(true);
     }, [hasAddEditPermission]);
 
-    const handleEdit = useCallback(
-        (id: number) => {
-            if (!hasAddEditPermission) return;
-            setEditMajorId(id); // Gán editId để Form tự fetch data và chuyển sang form Cập nhật
-            setIsFormModalOpen(true);
-        },
-        [hasAddEditPermission],
-    );
+    const handleEdit = useCallback((id: number) => {
+        if (!hasAddEditPermission) return;
+        setEditMajorId(id);
+        setIsFormModalOpen(true);
+    }, [hasAddEditPermission]);
 
     const handleCloseFormModal = useCallback(() => {
         setIsFormModalOpen(false);
@@ -110,12 +115,11 @@ export const MajorPage: React.FC = () => {
         if (currentPage === 0) {
             fetchMajors();
         } else {
-            setCurrentPage(0); // Về trang đầu tiên để thấy dữ liệu mới/cập nhật
+            setCurrentPage(0);
         }
     }, [currentPage, fetchMajors]);
 
-
-    // ---------------- XỬ LÝ XEM CHI TIẾT ---------------- //
+    // Handlers cho View Modal
     const handleView = useCallback((id: number) => {
         setSelectedMajorId(id);
         setIsViewModalOpen(true);
@@ -126,19 +130,16 @@ export const MajorPage: React.FC = () => {
         setSelectedMajorId(null);
     }, []);
 
-
-    // ---------------- XỬ LÝ XÓA ---------------- //
-    const handleDelete = useCallback(
-        (id: number) => {
-            if (!hasAddEditPermission) return;
-            const targetMajor = majors.find((m) => m.id === id);
-            if (targetMajor) {
-                setMajorToDelete({ id: targetMajor.id, name: targetMajor.name, code: targetMajor.code });
-                setIsDeleteModalOpen(true);
-            }
-        },
-        [hasAddEditPermission, majors],
-    );
+    // Handlers cho Delete Modal
+    const handleDelete = useCallback((id: number) => {
+        if (!hasAddEditPermission) return;
+        // Chi su dung functional update neu can, o day majors da co trong the hien nen phai them vao dependency array
+        const targetMajor = majors.find((m) => m.id === id);
+        if (targetMajor) {
+            setMajorToDelete({ id: targetMajor.id, name: targetMajor.name, code: targetMajor.code });
+            setIsDeleteModalOpen(true);
+        }
+    }, [hasAddEditPermission, majors]);
 
     const handleCloseDeleteModal = useCallback(() => {
         setIsDeleteModalOpen(false);
@@ -151,6 +152,7 @@ export const MajorPage: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full space-y-6">
+            {/* --- HEADER --- */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                     Quản lý Ngành học
@@ -161,18 +163,20 @@ export const MajorPage: React.FC = () => {
                 </p>
             </div>
 
+            {/* --- FILTER --- */}
             <MajorFilter
                 searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
+                onSearchChange={handleSearchChange}
                 departments={departments}
                 selectedDeptId={selectedDeptId}
-                onDeptChange={setSelectedDeptId}
+                onDeptChange={handleDeptChange}
                 onAddClick={hasAddEditPermission ? handleAddClick : undefined}
                 canCreate={hasAddEditPermission}
             />
 
+            {/* --- TABLE & LOADING --- */}
             <div className="flex-1 relative">
-                {isLoading ? (
+                {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10 rounded-xl border border-gray-100">
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -181,7 +185,7 @@ export const MajorPage: React.FC = () => {
                             </span>
                         </div>
                     </div>
-                ) : null}
+                )}
 
                 <MajorTable
                     majors={majors}
@@ -196,27 +200,35 @@ export const MajorPage: React.FC = () => {
                 />
             </div>
 
-            {/* Các Modals */}
-            <MajorDetailModal
-                isOpen={isViewModalOpen}
-                onClose={handleCloseViewModal}
-                majorId={selectedMajorId}
-            />
+            {/* --- MODALS (Suspense bao boc) --- */}
+            <Suspense fallback={null}>
+                {isViewModalOpen && (
+                    <MajorDetailModal
+                        isOpen={isViewModalOpen}
+                        onClose={handleCloseViewModal}
+                        majorId={selectedMajorId}
+                    />
+                )}
 
-            <MajorFormModal
-                isOpen={isFormModalOpen}
-                onClose={handleCloseFormModal}
-                onSuccess={handleFormSuccess}
-                departments={departments}
-                editId={editMajorId}
-            />
+                {isFormModalOpen && (
+                    <MajorFormModal
+                        isOpen={isFormModalOpen}
+                        onClose={handleCloseFormModal}
+                        onSuccess={handleFormSuccess}
+                        departments={departments}
+                        editId={editMajorId}
+                    />
+                )}
 
-            <MajorDeleteModal
-                isOpen={isDeleteModalOpen}
-                onClose={handleCloseDeleteModal}
-                onSuccess={handleDeleteSuccess}
-                majorInfo={majorToDelete}
-            />
+                {isDeleteModalOpen && (
+                    <MajorDeleteModal
+                        isOpen={isDeleteModalOpen}
+                        onClose={handleCloseDeleteModal}
+                        onSuccess={handleDeleteSuccess}
+                        majorInfo={majorToDelete}
+                    />
+                )}
+            </Suspense>
         </div>
     );
 };

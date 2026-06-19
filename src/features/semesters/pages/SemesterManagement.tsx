@@ -1,44 +1,70 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { toast } from "react-toastify";
 import { CalendarDays } from "lucide-react";
+
 import { useDebounce } from "@/hooks/useDebounce";
 import { semesterService } from "../services/semester.service";
 import { type SemesterResponse, type PageResponse } from "../types";
 
 import { SemesterFilter } from "../components/SemesterFilter";
 import { SemesterListTable } from "../components/SemesterListTable";
-import { SemesterFormModal } from "../components/SemesterFormModal";
-import { SemesterClosingModal } from "../components/SemesterClosingModal";
-import { SemesterUpdateModal } from "../components/SemesterUpdateModal";
-import { SemesterDetailModal } from "../components/SemesterDetailModal";
+
+// Toi uu: Ap dung Code Splitting de chia nho bundle, chi tai code Modal khi thuc su mo
+const SemesterFormModal = lazy(() =>
+    import("../components/SemesterFormModal").then((m) => ({
+        default: m.SemesterFormModal,
+    })),
+);
+const SemesterClosingModal = lazy(() =>
+    import("../components/SemesterClosingModal").then((m) => ({
+        default: m.SemesterClosingModal,
+    })),
+);
+const SemesterUpdateModal = lazy(() =>
+    import("../components/SemesterUpdateModal").then((m) => ({
+        default: m.SemesterUpdateModal,
+    })),
+);
+const SemesterDetailModal = lazy(() =>
+    import("../components/SemesterDetailModal").then((m) => ({
+        default: m.SemesterDetailModal,
+    })),
+);
 
 const ACADEMIC_YEARS = ["2023-2024", "2024-2025", "2025-2026", "2026-2027"];
 
 export const SemesterManagement: React.FC = () => {
+    // --- STATE ---
     const [data, setData] = useState<PageResponse<SemesterResponse> | null>(
         null,
     );
     const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    // Filter & Pagination States
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedStatus, setSelectedStatus] = useState<string>("");
     const [selectedAcademicYear, setSelectedAcademicYear] =
         useState<string>("");
     const [currentPage, setCurrentPage] = useState<number>(0);
     const pageSize = 10;
+
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
+
+    // Modal States
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+    const [isClosingModalOpen, setIsClosingModalOpen] =
+        useState<boolean>(false);
+
     const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
         null,
     );
-    const [isClosingModalOpen, setIsClosingModalOpen] =
-        useState<boolean>(false);
     const [selectedSemesterForClose, setSelectedSemesterForClose] =
         useState<SemesterResponse | null>(null);
 
+    // --- EFFECTS ---
     const fetchSemesters = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -52,8 +78,7 @@ export const SemesterManagement: React.FC = () => {
                 sortDirection: "desc",
             });
             setData(response);
-        } catch (error) {
-            console.error("Lỗi khi tải danh sách học kỳ:", error);
+        } catch {
             toast.error(
                 "Không thể tải dữ liệu học kỳ. Vui lòng kiểm tra lại kết nối.",
             );
@@ -71,48 +96,85 @@ export const SemesterManagement: React.FC = () => {
         fetchSemesters();
     }, [fetchSemesters]);
 
-    const handleSearchChange = (value: string) => {
-        setSearchTerm(value);
+    // Toi uu: Gom chung logic reset trang khi bo loc thay doi de chong Double-fetch
+    useEffect(() => {
         setCurrentPage(0);
-    };
+    }, [debouncedSearchTerm, selectedStatus, selectedAcademicYear]);
 
-    const handleStatusChange = (status: string) => {
-        setSelectedStatus(status);
-        setCurrentPage(0);
-    };
+    // --- EVENT HANDLERS (Boc useCallback de giu tham chieu on dinh) ---
 
-    const handleAcademicYearChange = (year: string) => {
-        setSelectedAcademicYear(year);
-        setCurrentPage(0);
-    };
+    // Filter Handlers
+    const handleSearchChange = useCallback(
+        (value: string) => setSearchTerm(value),
+        [],
+    );
+    const handleStatusChange = useCallback(
+        (status: string) => setSelectedStatus(status),
+        [],
+    );
+    const handleAcademicYearChange = useCallback(
+        (year: string) => setSelectedAcademicYear(year),
+        [],
+    );
+    const handlePageChange = useCallback(
+        (page: number) => setCurrentPage(page),
+        [],
+    );
 
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
+    // Create Handlers
+    const handleOpenCreateModal = useCallback(
+        () => setIsCreateModalOpen(true),
+        [],
+    );
+    const handleCloseCreateModal = useCallback(
+        () => setIsCreateModalOpen(false),
+        [],
+    );
 
-    const handleOpenCreateModal = () => {
-        setIsCreateModalOpen(true);
-    };
-
-    const handleViewDetail = (id: number) => {
+    // Detail Handlers
+    const handleViewDetail = useCallback((id: number) => {
         setSelectedSemesterId(id);
         setIsDetailModalOpen(true);
-    };
+    }, []);
+    const handleCloseDetailModal = useCallback(() => {
+        setIsDetailModalOpen(false);
+        setSelectedSemesterId(null);
+    }, []);
 
-    const handleUpdate = (id: number) => {
-        setSelectedSemesterId(id);       
-        setIsUpdateModalOpen(true);      
-    };
+    // Update Handlers
+    const handleUpdate = useCallback((id: number) => {
+        setSelectedSemesterId(id);
+        setIsUpdateModalOpen(true);
+    }, []);
+    const handleCloseUpdateModal = useCallback(() => {
+        setIsUpdateModalOpen(false);
+        setSelectedSemesterId(null);
+    }, []);
 
-    const handleToggleStatus = (semester: SemesterResponse) => {
+    // Close Semester Handlers
+    const handleToggleStatus = useCallback((semester: SemesterResponse) => {
         if (semester.status === "ACTIVE") {
             setSelectedSemesterForClose(semester);
             setIsClosingModalOpen(true);
-        } 
-    };
+        }
+    }, []);
+    const handleCloseClosingModal = useCallback(() => {
+        setIsClosingModalOpen(false);
+        setSelectedSemesterForClose(null);
+    }, []);
+
+    // Common Success Handler
+    const handleActionSuccess = useCallback(() => {
+        if (currentPage === 0) {
+            fetchSemesters();
+        } else {
+            setCurrentPage(0); // View tu dong cap nhat thong qua useEffect
+        }
+    }, [currentPage, fetchSemesters]);
 
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
+            {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
                     <CalendarDays className="w-7 h-7 text-blue-600" />
@@ -124,6 +186,7 @@ export const SemesterManagement: React.FC = () => {
                 </p>
             </div>
 
+            {/* Filter */}
             <SemesterFilter
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
@@ -135,6 +198,7 @@ export const SemesterManagement: React.FC = () => {
                 onAddClick={handleOpenCreateModal}
             />
 
+            {/* Table & Loading Overlay */}
             <div className="flex-1 relative">
                 {isLoading && data !== null && (
                     <div className="absolute inset-0 z-10 bg-white/40 backdrop-blur-[1px] rounded-xl border border-transparent"></div>
@@ -150,47 +214,42 @@ export const SemesterManagement: React.FC = () => {
                 />
             </div>
 
-            <SemesterFormModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onSuccess={() => {
-                    setCurrentPage(0);
-                    fetchSemesters();
-                }}
-            />
+            {/* Modals (Boc Suspense de Lazy Load hieu qua) */}
+            <Suspense fallback={null}>
+                {isCreateModalOpen && (
+                    <SemesterFormModal
+                        isOpen={isCreateModalOpen}
+                        onClose={handleCloseCreateModal}
+                        onSuccess={handleActionSuccess}
+                    />
+                )}
 
-            <SemesterClosingModal
-                isOpen={isClosingModalOpen}
-                onClose={() => {
-                    setIsClosingModalOpen(false);
-                    setSelectedSemesterForClose(null);
-                }}
-                semester={selectedSemesterForClose}
-                onSuccess={() => {
-                    fetchSemesters();
-                }}
-            />
+                {isClosingModalOpen && (
+                    <SemesterClosingModal
+                        isOpen={isClosingModalOpen}
+                        onClose={handleCloseClosingModal}
+                        semester={selectedSemesterForClose}
+                        onSuccess={handleActionSuccess}
+                    />
+                )}
 
-            <SemesterUpdateModal
-                isOpen={isUpdateModalOpen}
-                onClose={() => {
-                    setIsUpdateModalOpen(false);
-                    setSelectedSemesterId(null);
-                }}
-                onSuccess={() => {
-                    fetchSemesters(); 
-                }}
-                semesterId={selectedSemesterId}
-            />
+                {isUpdateModalOpen && (
+                    <SemesterUpdateModal
+                        isOpen={isUpdateModalOpen}
+                        onClose={handleCloseUpdateModal}
+                        semesterId={selectedSemesterId}
+                        onSuccess={handleActionSuccess}
+                    />
+                )}
 
-            <SemesterDetailModal
-                isOpen={isDetailModalOpen}
-                onClose={() => {
-                    setIsDetailModalOpen(false);
-                    setSelectedSemesterId(null);
-                }}
-                semesterId={selectedSemesterId}
-            />
+                {isDetailModalOpen && (
+                    <SemesterDetailModal
+                        isOpen={isDetailModalOpen}
+                        onClose={handleCloseDetailModal}
+                        semesterId={selectedSemesterId}
+                    />
+                )}
+            </Suspense>
         </div>
     );
 };

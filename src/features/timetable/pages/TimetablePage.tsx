@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { TimetableHeader } from "../components/TimetableHeader";
@@ -13,36 +11,58 @@ export const TimetablePage: React.FC = () => {
     const [currentDate, setCurrentDate] = useState<Date>(new Date());
     const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    
+
     const { user } = useAuthStore();
 
+    // Phan quyen nguoi dung dua tren thong tin luu tru trong global store
     const role: TimetableRole = useMemo(() => {
         return user?.roles?.includes("INSTRUCTOR") ? "INSTRUCTOR" : "STUDENT";
     }, [user]);
 
-    const fetchSchedule = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const data = role === "INSTRUCTOR" 
-                ? await timetableService.getLecturerSchedule() 
-                : await timetableService.getMySchedule();
-            
-            setScheduleData(data);
-        } catch (error) {
-            toast.error("Không thể tải thời khóa biểu. Vui lòng thử lại.");
-            setScheduleData([]);
-        } finally {
-            setIsLoading(false);
-        }
+    // Tu dong tai du lieu thoi khoa bieu khi vai tro (role) thay doi
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchSchedule = async () => {
+            setIsLoading(true);
+            try {
+                const data =
+                    role === "INSTRUCTOR"
+                        ? await timetableService.getLecturerSchedule()
+                        : await timetableService.getMySchedule();
+
+                if (isMounted) {
+                    setScheduleData(data);
+                }
+            } catch {
+                toast.error("Không thể tải thời khóa biểu. Vui lòng thử lại.");
+                if (isMounted) {
+                    setScheduleData([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        fetchSchedule();
+
+        return () => {
+            isMounted = false;
+        };
     }, [role]);
 
-    useEffect(() => {
-        fetchSchedule();
-    }, [fetchSchedule]);
-
-    const handlePrevWeek = () => setCurrentDate((prev) => addWeeks(prev, -1));
-    const handleNextWeek = () => setCurrentDate((prev) => addWeeks(prev, 1));
-    const handleToday = () => setCurrentDate(new Date());
+    // Giu nguyen vung nho cac ham dieu huong tuan de ghi nho props cho TimetableHeader
+    const handlePrevWeek = useCallback(
+        () => setCurrentDate((prev) => addWeeks(prev, -1)),
+        [],
+    );
+    const handleNextWeek = useCallback(
+        () => setCurrentDate((prev) => addWeeks(prev, 1)),
+        [],
+    );
+    const handleToday = useCallback(() => setCurrentDate(new Date()), []);
 
     return (
         <div className="min-h-screen bg-gray-50/50 p-2 sm:p-2 lg:p-3">
@@ -53,7 +73,7 @@ export const TimetablePage: React.FC = () => {
                     onNextWeek={handleNextWeek}
                     onToday={handleToday}
                 />
-                
+
                 <TimetableGrid
                     currentDate={currentDate}
                     data={scheduleData}

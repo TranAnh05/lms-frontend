@@ -13,48 +13,30 @@ export const majorService = {
         keyword?: string,
         isActive?: boolean,
     ): Promise<Department[]> => {
-        const response = await apiClient.get("/departments", {
+        return apiClient.get<never, Department[]>("/departments", {
             params: { keyword, isActive },
         });
-        return (
-            response.data !== undefined ? response.data : response
-        ) as Department[];
     },
 
     getMajors: async (
         params: MajorFilterParams,
     ): Promise<PageResponse<Major>> => {
-        const response = await apiClient.get("/majors", { params });
-        return (
-            response.data !== undefined ? response.data : response
-        ) as PageResponse<Major>;
+        return apiClient.get<never, PageResponse<Major>>("/majors", { params });
     },
 
     getMajorById: async (id: number): Promise<Major> => {
-        const response = await apiClient.get(`/majors/${id}`);
-        return (
-            response.data !== undefined ? response.data : response
-        ) as Major;
+        return apiClient.get<never, Major>(`/majors/${id}`);
     },
 
     createMajor: async (data: CreateMajorInput): Promise<Major> => {
-        const response = await apiClient.post("/majors", data);
-        return (
-            response.data !== undefined ? response.data : response
-        ) as Major;
+        return apiClient.post<never, Major>("/majors", data);
     },
 
     updateMajor: async (id: number, data: UpdateMajorInput): Promise<Major> => {
-        const response = await apiClient.put(`/majors/${id}`, data);
-        return (
-            response.data !== undefined ? response.data : response
-        ) as Major;
+        return apiClient.put<never, Major>(`/majors/${id}`, data);
     },
 
     deleteMajor: async (id: number): Promise<string> => {
-        const response = await apiClient.delete(`/majors/${id}`);
-        return (
-            response.data !== undefined ? response.data : response
-        ) as string;
+        return apiClient.delete<never, string>(`/majors/${id}`);
     },
 };

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState, useCallback } from "react";
 import {
     User,
@@ -13,7 +11,8 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { profileService } from "../services/profile.service";
-import { type UserProfileResponse } from "../types";
+// Toi uu: Import ApiResponse de xu ly boc tach data tu API
+import { type UserProfileResponse, type ApiResponse } from "../types";
 import { AvatarUploader } from "../components/AvatarUploader";
 import { StudentInfoSection } from "../components/StudentInfoSection";
 import { TeacherInfoSection } from "../components/TeacherInfoSection";
@@ -31,46 +30,76 @@ const ROLE_LABELS: Record<string, string> = {
     STUDENT: "Sinh viên",
 };
 
+const formatDate = (dateStr?: string): string => {
+    if (!dateStr) return "Chưa cập nhật";
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+    } catch {
+        return dateStr;
+    }
+};
+
 export const ProfilePage: React.FC = () => {
     const [profile, setProfile] = useState<UserProfileResponse | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    const updateUserAvatar = useAuthStore((state) => state.updateUserAvatar)
+
+    // Toi uu: Khong tao vong lap vo han khi lay tu Store
+    const updateUserAvatar = useAuthStore((state) => state.updateUserAvatar);
 
     useEffect(() => {
+        let isMounted = true;
+        // Toi uu: Su dung AbortController thay the luong co ban de cham dứt Race condition
+        const abortController = new AbortController();
+
         const fetchProfile = async () => {
             setIsLoading(true);
             try {
-                const data = await profileService.getCurrentProfile();
-                setProfile(data);
-            } catch (error) {
-                toast.error("Không thể tải thông tin hồ sơ cá nhân.");
+                const response = await profileService.getCurrentProfile();
+
+                if (isMounted && !abortController.signal.aborted) {
+                    // Toi uu: Unwrap du lieu an toan tu structural envelope cua backend
+                    const responseWrapper =
+                        response as unknown as ApiResponse<UserProfileResponse>;
+                    const actualProfile = responseWrapper?.data
+                        ? responseWrapper.data
+                        : (response as unknown as UserProfileResponse);
+
+                    setProfile(actualProfile);
+                }
+            } catch {
+                if (isMounted && !abortController.signal.aborted) {
+                    toast.error("Không thể tải thông tin hồ sơ cá nhân.");
+                }
             } finally {
-                setIsLoading(false);
+                if (isMounted && !abortController.signal.aborted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         fetchProfile();
+
+        return () => {
+            isMounted = false;
+            abortController.abort();
+        };
     }, []);
 
-    const handleAvatarUpdate = useCallback((newUrl: string) => {
-        setProfile((prev) => (prev ? { ...prev, avatarUrl: newUrl } : prev));
-        updateUserAvatar(newUrl);
-    }, []);
-
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return "Chưa cập nhật";
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString("vi-VN", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-        } catch {
-            return dateStr;
-        }
-    };
+    const handleAvatarUpdate = useCallback(
+        (newUrl: string) => {
+            setProfile((prev) =>
+                prev ? { ...prev, avatarUrl: newUrl } : prev,
+            );
+            updateUserAvatar(newUrl);
+        },
+        [updateUserAvatar],
+    );
 
     if (isLoading) {
         return (
@@ -100,10 +129,9 @@ export const ProfilePage: React.FC = () => {
     }
 
     const isStudent = profile.role === "STUDENT";
-    const isTeacher =
-        profile.role === "TEACHER" ||
-        profile.role === "INSTRUCTOR" ||
-        profile.role === "HEAD_OF_DEPT";
+    const isTeacher = ["TEACHER", "INSTRUCTOR", "HEAD_OF_DEPT"].includes(
+        profile.role,
+    );
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -117,7 +145,6 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* Cột trái: Avatar & Card tóm tắt */}
                 <div className="w-full lg:w-1/3 space-y-6">
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col items-center text-center">
                         <AvatarUploader
@@ -150,6 +177,7 @@ export const ProfilePage: React.FC = () => {
                             khoản của bạn.
                         </p>
                         <button
+                            type="button"
                             onClick={() => setIsPasswordModalOpen(true)}
                             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-xl border border-gray-300 transition-colors focus:ring-4 focus:ring-gray-100 focus:outline-none"
                         >
@@ -159,9 +187,7 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Cột phải: Form thông tin chi tiết */}
                 <div className="w-full lg:w-2/3 space-y-6">
-                    {/* Section 1: Thông tin cơ bản (Dành cho mọi role) */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
                         <div className="flex items-center gap-2 pb-4 border-b border-gray-100 mb-6">
                             <User className="w-5 h-5 text-gray-600" />
@@ -267,7 +293,6 @@ export const ProfilePage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Section 2: Thông tin đặc thù theo Role */}
                     {(isStudent || isTeacher) && (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
                             {isStudent && (
@@ -280,6 +305,7 @@ export const ProfilePage: React.FC = () => {
                     )}
                 </div>
             </div>
+
             <ChangePasswordModal
                 isOpen={isPasswordModalOpen}
                 onClose={() => setIsPasswordModalOpen(false)}

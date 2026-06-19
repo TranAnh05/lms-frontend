@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import apiClient from "@/services/apiClient";
 import {
     type SemesterResponse,
@@ -17,48 +15,48 @@ export const semesterService = {
     ): Promise<PageResponse<SemesterResponse>> => {
         const cleanParams = Object.fromEntries(
             Object.entries(params).filter(
-                ([value]) =>
+                ([, value]) =>
                     value !== null && value !== undefined && value !== "",
             ),
         );
 
-        return (await apiClient.get("/semesters", {
-            params: cleanParams,
-        })) as PageResponse<SemesterResponse>;
+        return apiClient.get<never, PageResponse<SemesterResponse>>(
+            "/semesters",
+            {
+                params: cleanParams,
+            },
+        );
     },
 
     createSemester: async (
         payload: SemesterCreatePayload,
     ): Promise<SemesterResponse> => {
-        return (await apiClient.post(
-            "/semesters",
-            payload,
-        )) as SemesterResponse;
+        return apiClient.post<never, SemesterResponse>("/semesters", payload);
     },
 
     getClassesBySemester: async (
         semesterId: number,
     ): Promise<SemesterClassResponse[]> => {
-        const response: any = await apiClient.get(`/classes/semesters/${semesterId}/classes`)
-        return response.data || response
+        return apiClient.get<never, SemesterClassResponse[]>(
+            `/classes/semesters/${semesterId}/classes`,
+        );
     },
 
     closeSemester: async (semesterId: number): Promise<string> => {
-        const response: any = await apiClient.post(`/semesters/${semesterId}/close`)
-        return response.data || response
+        return apiClient.post<never, string>(`/semesters/${semesterId}/close`);
     },
 
     getSemesterById: async (id: number): Promise<SemesterResponse> => {
-        return (await apiClient.get(`/semesters/${id}`)) as SemesterResponse;
+        return apiClient.get<never, SemesterResponse>(`/semesters/${id}`);
     },
 
     updateSemester: async (
         id: number,
-        payload: SemesterUpdateRequest
+        payload: SemesterUpdateRequest,
     ): Promise<SemesterDetailResponse> => {
-        return (await apiClient.put(
-            `/semesters/${id}`, 
-            payload
-        )) as SemesterDetailResponse;
+        return apiClient.put<never, SemesterDetailResponse>(
+            `/semesters/${id}`,
+            payload,
+        );
     },
 };

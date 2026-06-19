@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Unlock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 import { userService } from "../services/user.service";
 
 interface UnlockUserModalProps {
@@ -27,11 +28,10 @@ export const UnlockUserModal: React.FC<UnlockUserModalProps> = ({
             toast.success("Mở khóa tài khoản thành công!");
             onSuccess();
             onClose();
-        } catch (err: any) {
-            console.error("Lỗi khi mở khóa tài khoản:", err);
-            const errorMsg =
-                err.response?.data?.message ||
-                "Không thể mở khóa tài khoản. Vui lòng thử lại sau.";
+        } catch (err: unknown) {
+            // Toi uu: Su dung AxiosError de dam bao an toan kieu du lieu, loai bo bat loi dang any
+            const axiosError = err as AxiosError<{ message: string }>;
+            const errorMsg = axiosError.response?.data?.message || "Không thể mở khóa tài khoản. Vui lòng thử lại sau.";
             toast.error(errorMsg);
         } finally {
             setIsSubmitting(false);
@@ -40,12 +40,13 @@ export const UnlockUserModal: React.FC<UnlockUserModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            {/* Toi uu: Lop phu (Backdrop) rieng biet de xu ly viec bam ra ngoai */}
             <div
                 className="absolute inset-0"
                 onClick={!isSubmitting ? onClose : undefined}
-            ></div>
+            />
 
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100 overflow-hidden">
+            <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-emerald-100 bg-emerald-50/50">
                     <h2 className="text-base font-bold text-emerald-700 flex items-center gap-2">
@@ -94,7 +95,7 @@ export const UnlockUserModal: React.FC<UnlockUserModalProps> = ({
                                 Đang xử lý...
                             </>
                         ) : (
-                            <>Xác nhận Mở khóa</>
+                            "Xác nhận Mở khóa"
                         )}
                     </button>
                 </div>

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Loader2, FileX } from "lucide-react";
 import { toast } from "react-toastify";
 import { studentService } from "../../services/student.service";
@@ -7,36 +6,59 @@ import { type StudentExamBasic } from "../../types";
 import { StudentExamItem } from "./StudentExamItem";
 
 interface StudentExamListProps {
-    classId: number;
+    readonly classId: number;
 }
 
-export const StudentExamList: React.FC<StudentExamListProps> = ({ classId }) => {
+export const StudentExamList: React.FC<StudentExamListProps> = ({
+    classId,
+}) => {
     const [exams, setExams] = useState<StudentExamBasic[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    // Su dung ref de theo doi trang thai mount, ngan chan cap nhat state khi component da bi huy
+    const isMounted = useRef<boolean>(true);
 
     useEffect(() => {
+        isMounted.current = true;
+
         const fetchExams = async () => {
             if (!classId) return;
 
             setIsLoading(true);
             try {
                 const data = await studentService.getExams(classId);
-                setExams(data || []);
-            } catch (error) {
-                toast.error("Không thể tải danh sách bài kiểm tra.");
+
+                if (isMounted.current) {
+                    setExams(data || []);
+                }
+            } catch {
+                if (isMounted.current) {
+                    toast.error("Không thể tải danh sách bài kiểm tra.");
+                }
             } finally {
-                setIsLoading(false);
+                if (isMounted.current) {
+                    setIsLoading(false);
+                }
             }
         };
 
         fetchExams();
+
+        return () => {
+            isMounted.current = false;
+        };
     }, [classId]);
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm mt-6">
+            <div
+                className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm mt-6"
+                aria-live="polite"
+            >
                 <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
-                <p className="text-sm font-medium text-gray-500">Đang tải danh sách bài kiểm tra...</p>
+                <p className="text-sm font-medium text-gray-500">
+                    Đang tải danh sách bài kiểm tra...
+                </p>
             </div>
         );
     }
@@ -47,7 +69,9 @@ export const StudentExamList: React.FC<StudentExamListProps> = ({ classId }) => 
                 <div className="p-4 bg-gray-50 rounded-full mb-4 text-gray-400">
                     <FileX className="w-10 h-10" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Chưa có bài kiểm tra</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                    Chưa có bài kiểm tra
+                </h3>
                 <p className="text-sm text-gray-500 mt-1 max-w-sm text-center">
                     Giảng viên chưa công bố bài kiểm tra nào cho lớp học này.
                 </p>

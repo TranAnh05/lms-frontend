@@ -1,9 +1,14 @@
+// --- 1. Cac kieu trang thai (Status & Types) ---
+
 export type ClassStatus = 'PENDING' | 'REGISTRATION' | 'ONGOING' | 'COMPLETED' | 'CANCELED';
 export type EnrollmentStatus = 'REGISTERED' | 'OFFICIAL' | 'DROPPED';
 export type ExamType = 'REGULAR' | 'MIDTERM' | 'FINAL';
 export type ExamStatus = 'CREATED' | 'OPEN' | 'CLOSED';
 export type GradeStatus = 'PENDING' | 'PASS' | 'FAIL';
 
+// --- 2. Cac Interface lien quan den Lop hoc (Class) ---
+
+// Thong tin co ban cua lop hoc hien thi o danh sach
 export interface LecturerClassResponse {
     classId: number;
     classCode: string;
@@ -13,20 +18,16 @@ export interface LecturerClassResponse {
     currentStudents: number;
 }
 
-export interface LecturerClassDetailResponse {
-    classId: number;
-    classCode: string;
-    courseName: string;
+// Toi uu: Ke thua tu LecturerClassResponse de tranh trung lap thuoc tinh
+export interface LecturerClassDetailResponse extends LecturerClassResponse {
     courseCode: string;
     credits: number;
-    status: ClassStatus;
-    maxStudents: number;
-    currentStudents: number;
     dayOfWeek: number;
     shiftName: string;
     roomName: string;
 }
 
+// Thong tin hoc sinh trong lop hoc
 export interface StudentOfClassResponse {
     studentId: number;
     fullName: string;
@@ -35,6 +36,8 @@ export interface StudentOfClassResponse {
     email: string;
     enrollmentStatus: EnrollmentStatus;
 }
+
+// --- 3. Cac Interface lien quan den Bai hoc (Lesson) ---
 
 export interface LessonMaterial {
     id: number;
@@ -62,6 +65,8 @@ export interface CreateLessonPayload {
     isPublished?: boolean;
     files?: File[];
 }
+
+// --- 4. Cac Interface lien quan den De thi & Cau hoi (Exam & Question) ---
 
 export interface ExamBasic {
     id: number;
@@ -95,6 +100,8 @@ export interface CreateExamPayload {
     timeLimit: number;
     questions: QuestionDto[];
 }
+
+// --- 5. Cac Interface lien quan den Diem so (Grade) ---
 
 export interface StudentGrade {
     studentId: number;

@@ -8,35 +8,53 @@ interface UseAssignLecturerProps {
     onSuccess: () => void;
 }
 
-export const useAssignLecturer = ({ classId, onSuccess }: UseAssignLecturerProps) => {
+export const useAssignLecturer = ({
+    classId,
+    onSuccess,
+}: UseAssignLecturerProps) => {
     const [selectedLecturerId, setSelectedLecturerId] = useState<string>("");
     const [instructors, setInstructors] = useState<DropdownResponseDto[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     useEffect(() => {
+        let isCancelled = false;
+
         const fetchInstructors = async () => {
             if (!classId) return;
+
             setIsLoading(true);
             try {
                 const data = await classService.getInstructorsDropdown(classId);
-                setInstructors(data);
+                if (!isCancelled) {
+                    setInstructors(data);
+                }
             } catch {
                 toast.error("Không thể tải danh sách giảng viên.");
             } finally {
-                setIsLoading(false);
+                if (!isCancelled) {
+                    setIsLoading(false);
+                }
             }
         };
+
         fetchInstructors();
+
+        return () => {
+            isCancelled = true;
+        };
     }, [classId]);
 
     const handleSubmitAssign = useCallback(async () => {
         if (!classId || !selectedLecturerId) return;
 
+        const lecturerIdNum = Number(selectedLecturerId);
+        if (isNaN(lecturerIdNum)) return;
+
         setIsSubmitting(true);
         try {
             await classService.assignLecturer(classId, {
-                lecturerId: Number(selectedLecturerId),
+                lecturerId: lecturerIdNum,
             });
             toast.success("Phân công giảng viên thành công!");
             onSuccess();
@@ -49,10 +67,10 @@ export const useAssignLecturer = ({ classId, onSuccess }: UseAssignLecturerProps
 
     return {
         selectedLecturerId,
+        setSelectedLecturerId,
         instructors,
         isLoading,
         isSubmitting,
-        setSelectedLecturerId, // Export hàm này để Modal sử dụng
         handleSubmitAssign,
         isSubmitDisabled: !selectedLecturerId || isSubmitting,
     };

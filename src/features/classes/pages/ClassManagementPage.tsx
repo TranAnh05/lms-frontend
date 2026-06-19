@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import { Layers } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/authStore";
 import { classService } from "../services/class.service";
 import {
     type ClassDetailResponse,
-    type ClassDetailForStudentResponse, 
+    type ClassDetailForStudentResponse,
     type PageResponse,
     type DepartmentBasic,
     type SemesterBasic,
@@ -23,7 +23,9 @@ export const ClassManagementPage: React.FC = () => {
     const isHeadOfDept = user?.roles.includes("HEAD_OF_DEPT") ?? false;
     const mockDepartmentId = userId === 5 ? 1 : 2;
 
-    const [data, setData] = useState<PageResponse<ClassDetailResponse> | null>(null);
+    const [data, setData] = useState<PageResponse<ClassDetailResponse> | null>(
+        null,
+    );
     const [departments, setDepartments] = useState<DepartmentBasic[]>([]);
     const [semesters, setSemesters] = useState<SemesterBasic[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -37,80 +39,132 @@ export const ClassManagementPage: React.FC = () => {
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-    const [selectedClassForAssign, setSelectedClassForAssign] = useState<ClassDetailResponse | null>(null);
+    const [selectedClassForAssign, setSelectedClassForAssign] =
+        useState<ClassDetailResponse | null>(null);
 
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    
-    // Cập nhật Type của state để chứa dữ liệu từ API mới
-    const [selectedClassDetail, setSelectedClassDetail] = useState<ClassDetailForStudentResponse | null>(null);
+    const [selectedClassDetail, setSelectedClassDetail] =
+        useState<ClassDetailForStudentResponse | null>(null);
     const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
+    // Lưu trữ ID của request phục vụ khử Race Condition và Memory Leak
+    const fetchIdRef = useRef<number>(0);
+    const isMountedRef = useRef<boolean>(true);
+
+    // Theo dõi vòng đời component unmount
     useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+
+    // Tải danh sách khoa ban đầu
+    useEffect(() => {
+        let isCurrent = true;
         const fetchDepartments = async () => {
             try {
                 const res = await classService.getDepartments();
-                setDepartments(res);
+                if (isCurrent) setDepartments(res);
             } catch {
                 toast.error("Không thể tải danh sách Khoa.");
             }
         };
+
         if (!isHeadOfDept) fetchDepartments();
+        return () => {
+            isCurrent = false;
+        };
     }, [isHeadOfDept]);
 
+    // Tải danh sách học kỳ ban đầu
     useEffect(() => {
+        let isCurrent = true;
         const fetchSemesters = async () => {
             try {
                 const res = await classService.getSemesters();
-                setSemesters(res);
+                if (isCurrent) setSemesters(res);
             } catch {
                 toast.error("Không thể tải danh sách học kỳ.");
             }
         };
+
         fetchSemesters();
+        return () => {
+            isCurrent = false;
+        };
     }, []);
 
+    // Gọi danh sách lớp có cơ chế loại bỏ xung đột phản hồi API cũ/mới
     const fetchClasses = useCallback(async () => {
+        const currentFetchId = ++fetchIdRef.current;
         setIsLoading(true);
+
         try {
             const params = {
                 keyword: debouncedSearchTerm.trim() || undefined,
-                semesterId: selectedSemester ? Number(selectedSemester) : undefined,
+                semesterId: selectedSemester
+                    ? Number(selectedSemester)
+                    : undefined,
                 status: selectedStatus || undefined,
-                departmentId: isHeadOfDept 
-                    ? mockDepartmentId 
-                    : (selectedDepartment ? Number(selectedDepartment) : undefined),
+                departmentId: isHeadOfDept
+                    ? mockDepartmentId
+                    : selectedDepartment
+                      ? Number(selectedDepartment)
+                      : undefined,
                 page: currentPage,
                 size: pageSize,
             };
 
             const response = await classService.getClasses(params);
-            setData(response);
+
+            // Chỉ cập nhật state nếu đây là request mới nhất và component còn mount
+            if (currentFetchId === fetchIdRef.current && isMountedRef.current) {
+                setData(response);
+            }
         } catch {
-            toast.error("Không thể tải danh sách lớp học.");
+            if (currentFetchId === fetchIdRef.current && isMountedRef.current) {
+                toast.error("Không thể tải danh sách lớp học.");
+            }
         } finally {
-            setIsLoading(false);
+            if (currentFetchId === fetchIdRef.current && isMountedRef.current) {
+                setIsLoading(false);
+            }
         }
-    }, [debouncedSearchTerm, selectedSemester, selectedStatus, selectedDepartment, currentPage, isHeadOfDept, mockDepartmentId]);
+    }, [
+        debouncedSearchTerm,
+        selectedSemester,
+        selectedStatus,
+        selectedDepartment,
+        currentPage,
+        isHeadOfDept,
+        mockDepartmentId,
+    ]);
 
     useEffect(() => {
         fetchClasses();
     }, [fetchClasses]);
 
+    // Xem chi tiết lớp học
     const handleViewDetail = async (id: number) => {
         setIsDetailModalOpen(true);
         setIsFetchingDetail(true);
+        setSelectedClassDetail(null);
+
         try {
-            // Thay đổi hàm gọi API sang hàm mới
             const detail = await classService.getClassDetailForStudent(id);
-            setSelectedClassDetail(detail);
+            if (isMountedRef.current) {
+                setSelectedClassDetail(detail);
+            }
         } catch {
             toast.error("Không thể tải thông tin chi tiết.");
-            setIsDetailModalOpen(false);
+            if (isMountedRef.current) setIsDetailModalOpen(false);
         } finally {
-            setIsFetchingDetail(false);
+            if (isMountedRef.current) setIsFetchingDetail(false);
         }
     };
 
+    // Kích hoạt modal phân công giảng viên
     const handleAssignLecturer = (id: number) => {
         const classItem = data?.content.find((item) => item.id === id);
         if (classItem) {
@@ -124,22 +178,39 @@ export const ClassManagementPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Layers className="w-7 h-7 text-blue-600" /> Quản lý Lớp học phần
+                        <Layers className="w-7 h-7 text-blue-600" /> Quản lý Lớp
+                        học phần
                     </h1>
                 </div>
             </div>
 
             <ClassFilter
                 searchTerm={searchTerm}
-                onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(0); }}
+                onSearchChange={(v) => {
+                    setSearchTerm(v);
+                    setCurrentPage(0);
+                }}
                 semesters={semesters}
                 selectedSemester={selectedSemester}
-                onSemesterChange={(v) => { setSelectedSemester(v); setCurrentPage(0); }}
+                onSemesterChange={(v) => {
+                    setSelectedSemester(v);
+                    setCurrentPage(0);
+                }}
                 selectedStatus={selectedStatus}
-                onStatusChange={(v) => { setSelectedStatus(v); setCurrentPage(0); }}
+                onStatusChange={(v) => {
+                    setSelectedStatus(v);
+                    setCurrentPage(0);
+                }}
                 departments={isHeadOfDept ? undefined : departments}
                 selectedDepartment={selectedDepartment}
-                onDepartmentChange={isHeadOfDept ? undefined : (v) => { setSelectedDepartment(v); setCurrentPage(0); }}
+                onDepartmentChange={
+                    isHeadOfDept
+                        ? undefined
+                        : (v) => {
+                              setSelectedDepartment(v);
+                              setCurrentPage(0);
+                          }
+                }
             />
 
             <div className="flex-1 relative">

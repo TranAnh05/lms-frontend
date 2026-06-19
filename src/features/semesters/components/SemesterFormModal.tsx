@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { AxiosError } from "axios";
 import {
     X,
     CalendarPlus,
@@ -56,6 +56,14 @@ interface SemesterFormModalProps {
     onSuccess: () => void;
 }
 
+// Toi uu: Gom chung CSS class de tranh lap code va giam dung luong JSX
+const INPUT_BASE_CLASS =
+    "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors";
+const INPUT_ERROR_CLASS =
+    "border-red-300 focus:ring-red-500/20 focus:border-red-500";
+const INPUT_NORMAL_CLASS =
+    "border-gray-300 focus:ring-blue-500/20 focus:border-blue-500";
+
 export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
     isOpen,
     onClose,
@@ -97,10 +105,12 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
             toast.success("Tạo học kỳ mới thành công!");
             onSuccess();
             onClose();
-        } catch (error: any) {
-            console.error("Lỗi khi tạo học kỳ:", error);
+        } catch (error: unknown) {
+            // Toi uu: Su dung AxiosError de dam bao an toan kieu du lieu, loai bo type 'any'
+            const axiosError = error as AxiosError<{ message: string }>;
+            console.error("Lỗi khi tạo học kỳ:", axiosError);
             const errorMsg =
-                error.response?.data?.message ||
+                axiosError.response?.data?.message ||
                 "Đã xảy ra lỗi khi tạo học kỳ. Vui lòng thử lại.";
             toast.error(errorMsg);
         }
@@ -115,14 +125,15 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
+            {/* Toi uu: Lop phu lang nghe su kien dong */}
             <div
                 className="absolute inset-0"
                 onClick={!isSubmitting ? onClose : undefined}
-            ></div>
+            />
 
-            <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
                 {/* HEADER */}
-                <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl">
+                <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl shrink-0">
                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <CalendarPlus className="w-5 h-5 text-blue-600" />
                         Tạo học kỳ mới
@@ -142,6 +153,7 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                         id="createSemesterForm"
                         onSubmit={handleSubmit(onSubmitHandler)}
                         className="flex flex-col gap-6"
+                        noValidate
                     >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div>
@@ -156,6 +168,7 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                     <input
                                         type="text"
                                         placeholder="VD: HK1_2026_2027"
+                                        disabled={isSubmitting}
                                         {...semesterCodeRest}
                                         onChange={(e) => {
                                             e.target.value =
@@ -163,10 +176,12 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                             onSemesterCodeChange(e);
                                         }}
                                         className={clsx(
-                                            "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
+                                            INPUT_BASE_CLASS,
                                             errors.semesterCode
-                                                ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
-                                                : "border-gray-300 focus:ring-blue-500/20 focus:border-blue-500",
+                                                ? INPUT_ERROR_CLASS
+                                                : INPUT_NORMAL_CLASS,
+                                            isSubmitting &&
+                                                "opacity-70 cursor-not-allowed",
                                         )}
                                     />
                                 </div>
@@ -189,6 +204,7 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                     <input
                                         type="text"
                                         placeholder="VD: 2026-2027"
+                                        disabled={isSubmitting}
                                         {...academicYearRest}
                                         onChange={(e) => {
                                             e.target.value =
@@ -199,10 +215,12 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                             onAcademicYearChange(e);
                                         }}
                                         className={clsx(
-                                            "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
+                                            INPUT_BASE_CLASS,
                                             errors.academicYear
-                                                ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
-                                                : "border-gray-300 focus:ring-blue-500/20 focus:border-blue-500",
+                                                ? INPUT_ERROR_CLASS
+                                                : INPUT_NORMAL_CLASS,
+                                            isSubmitting &&
+                                                "opacity-70 cursor-not-allowed",
                                         )}
                                     />
                                 </div>
@@ -224,14 +242,18 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                     <Hash className="h-4 w-4 text-gray-400" />
                                 </div>
                                 <select
+                                    disabled={isSubmitting}
                                     {...register("semesterNumber", {
                                         valueAsNumber: true,
                                     })}
                                     className={clsx(
-                                        "bg-white block w-full pl-10 pr-10 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors appearance-none cursor-pointer",
+                                        INPUT_BASE_CLASS,
+                                        "appearance-none cursor-pointer pr-10",
                                         errors.semesterNumber
                                             ? "border-red-300 focus:ring-red-500/20 focus:border-red-500 text-red-900"
                                             : "border-gray-300 focus:ring-blue-500/20 focus:border-blue-500 text-gray-900",
+                                        isSubmitting &&
+                                            "opacity-70 cursor-not-allowed",
                                     )}
                                     style={{
                                         backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
@@ -270,12 +292,15 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                     </div>
                                     <input
                                         type="date"
+                                        disabled={isSubmitting}
                                         {...register("startDate")}
                                         className={clsx(
-                                            "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
+                                            INPUT_BASE_CLASS,
                                             errors.startDate
-                                                ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
-                                                : "border-gray-300 focus:ring-blue-500/20 focus:border-blue-500",
+                                                ? INPUT_ERROR_CLASS
+                                                : INPUT_NORMAL_CLASS,
+                                            isSubmitting &&
+                                                "opacity-70 cursor-not-allowed",
                                         )}
                                     />
                                 </div>
@@ -297,12 +322,15 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                                     </div>
                                     <input
                                         type="date"
+                                        disabled={isSubmitting}
                                         {...register("endDate")}
                                         className={clsx(
-                                            "block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 transition-colors",
+                                            INPUT_BASE_CLASS,
                                             errors.endDate
-                                                ? "border-red-300 focus:ring-red-500/20 focus:border-red-500"
-                                                : "border-gray-300 focus:ring-blue-500/20 focus:border-blue-500",
+                                                ? INPUT_ERROR_CLASS
+                                                : INPUT_NORMAL_CLASS,
+                                            isSubmitting &&
+                                                "opacity-70 cursor-not-allowed",
                                         )}
                                     />
                                 </div>
@@ -317,7 +345,7 @@ export const SemesterFormModal: React.FC<SemesterFormModalProps> = ({
                 </div>
 
                 {/* FOOTER */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex items-center justify-end gap-3">
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl flex items-center justify-end gap-3 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}

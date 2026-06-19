@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { X, Lock, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 import { userService } from "../services/user.service";
 import clsx from "clsx";
 
@@ -23,6 +23,7 @@ export const LockUserModal: React.FC<LockUserModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
+    // Toi uu: Reset form gon gang moi khi modal mo len
     useEffect(() => {
         if (isOpen) {
             setLockReason("");
@@ -50,11 +51,10 @@ export const LockUserModal: React.FC<LockUserModalProps> = ({
             toast.success("Khóa tài khoản thành công!");
             onSuccess();
             onClose();
-        } catch (err: any) {
-            console.error("Lỗi khi khóa tài khoản:", err);
-            const errorMsg =
-                err.response?.data?.message ||
-                "Không thể khóa tài khoản. Vui lòng thử lại sau.";
+        } catch (err: unknown) {
+            // Toi uu: Xu ly bat loi dung chuan TypeScript
+            const axiosError = err as AxiosError<{ message: string }>;
+            const errorMsg = axiosError.response?.data?.message || "Không thể khóa tài khoản. Vui lòng thử lại sau.";
             toast.error(errorMsg);
         } finally {
             setIsSubmitting(false);
@@ -63,12 +63,13 @@ export const LockUserModal: React.FC<LockUserModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            {/* Toi uu: Lop phu (Backdrop) ngan tuong tac */}
             <div
                 className="absolute inset-0"
                 onClick={!isSubmitting ? onClose : undefined}
-            ></div>
+            />
 
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100 overflow-hidden">
+            <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-rose-100 bg-rose-50/50">
                     <h2 className="text-base font-bold text-rose-700 flex items-center gap-2">
@@ -85,7 +86,7 @@ export const LockUserModal: React.FC<LockUserModalProps> = ({
                 </div>
 
                 {/* Body - Form */}
-                <form onSubmit={handleSubmit} className="flex flex-col">
+                <form onSubmit={handleSubmit} className="flex flex-col" noValidate>
                     <div className="p-6">
                         <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex gap-3 text-sm text-amber-800">
                             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
@@ -98,8 +99,7 @@ export const LockUserModal: React.FC<LockUserModalProps> = ({
 
                         <div className="space-y-1.5">
                             <label className="block text-sm font-semibold text-gray-700">
-                                Lý do khóa{" "}
-                                <span className="text-rose-500">*</span>
+                                Lý do khóa <span className="text-rose-500">*</span>
                             </label>
                             <textarea
                                 value={lockReason}
@@ -146,7 +146,7 @@ export const LockUserModal: React.FC<LockUserModalProps> = ({
                                     Đang xử lý...
                                 </>
                             ) : (
-                                <>Xác nhận Khóa</>
+                                "Xác nhận Khóa"
                             )}
                         </button>
                     </div>

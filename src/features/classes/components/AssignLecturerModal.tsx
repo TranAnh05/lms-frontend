@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, memo } from "react";
 import { X, BookOpen, AlertCircle, UserCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { type ClassDetailResponse } from "../types";
 import { useAssignLecturer } from "../hooks/useAssignLecturer";
@@ -11,7 +11,7 @@ interface AssignLecturerModalProps {
     classItem: ClassDetailResponse | null;
 }
 
-export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
+export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = memo(({
     isOpen,
     onClose,
     onSuccess,
@@ -30,13 +30,33 @@ export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
         onSuccess,
     });
 
+    // Lắng nghe sự kiện bàn phím Escape để đóng nhanh cửa sổ
+    useEffect(() => {
+        if (!isOpen || isSubmitting) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, isSubmitting, onClose]);
+
+    // Ghi nhớ mảng giảng viên đã format để tránh tạo tham chiếu mới khi re-render
+    const formattedLecturers = useMemo(() => {
+        return instructors.map(ins => ({ id: ins.id, fullName: ins.name }));
+    }, [instructors]);
+
     if (!isOpen || !classItem) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="absolute inset-0" onClick={!isSubmitting ? onClose : undefined}></div>
+            {/* Lớp phủ nền sau, chặn bấm đóng khi đang trong tiến trình submit */}
+            <div className="absolute inset-0" onClick={!isSubmitting ? onClose : undefined} />
 
             <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+                
+                {/* Tiêu đề Modal */}
                 <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl">
                     <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <UserCircle className="w-5 h-5 text-blue-600" />
@@ -51,7 +71,9 @@ export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
                     </button>
                 </div>
 
+                {/* Nội dung chính */}
                 <div className="p-6 flex flex-col gap-5">
+                    {/* Cảnh báo ghi đè giảng viên cũ */}
                     {classItem.lecturerName && (
                         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
                             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
@@ -62,6 +84,7 @@ export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
                         </div>
                     )}
 
+                    {/* Tóm tắt thông tin lớp học */}
                     <div className="bg-gray-50/50 border border-gray-100 p-4 rounded-xl flex items-start gap-3">
                         <BookOpen className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                         <div>
@@ -75,14 +98,15 @@ export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
                         </div>
                     </div>
 
+                    {/* Ô chọn tìm kiếm giảng viên */}
                     <div className="relative">
                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2 ml-1">
                             Chọn giảng viên
                         </label>
                         <LecturerSelect
-                            lecturers={instructors.map(ins => ({ id: ins.id, fullName: ins.name }))}
+                            lecturers={formattedLecturers}
                             value={selectedLecturerId}
-                            onChange={(id) => setSelectedLecturerId(id)}
+                            onChange={setSelectedLecturerId}
                             isLoading={isLoading}
                             disabled={isSubmitting}
                             placeholder="Gõ để tìm kiếm giảng viên..."
@@ -90,6 +114,7 @@ export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
                     </div>
                 </div>
 
+                {/* Chân trang Button Điều khiển */}
                 <div className="p-5 border-t border-gray-100 bg-gray-50/80 rounded-b-2xl flex justify-end gap-3">
                     <button
                         onClick={onClose}
@@ -114,4 +139,6 @@ export const AssignLecturerModal: React.FC<AssignLecturerModalProps> = ({
             </div>
         </div>
     );
-};
+});
+
+AssignLecturerModal.displayName = "AssignLecturerModal";

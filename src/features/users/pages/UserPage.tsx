@@ -1,24 +1,29 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { toast } from "react-toastify";
+import { Plus } from "lucide-react";
+
 import { useDebounce } from "@/hooks/useDebounce";
 import { userService } from "../services/user.service";
-import { type User, type Role, type Department, type RoleDropdown } from "../types";
+import { type User, type Department, type RoleDropdown } from "../types";
+
 import { UserFilter } from "../components/UserFilter";
 import { UserTable } from "../components/UserTable";
-import { UserDetailModal } from "../components/UserDetailModal";
-import { UserFormModal } from "../components/UserFormModal";
-import { UserEditModal } from "../components/UserEditModal";
-import { Plus } from "lucide-react";
-import { LockUserModal } from "../components/LockUserModal";
-import { UnlockUserModal } from "../components/UnlockUserModal";
+
+const UserDetailModal = lazy(() => import("../components/UserDetailModal").then(m => ({ default: m.UserDetailModal })));
+const UserFormModal = lazy(() => import("../components/UserFormModal").then(m => ({ default: m.UserFormModal })));
+const UserEditModal = lazy(() => import("../components/UserEditModal").then(m => ({ default: m.UserEditModal })));
+const LockUserModal = lazy(() => import("../components/LockUserModal").then(m => ({ default: m.LockUserModal })));
+const UnlockUserModal = lazy(() => import("../components/UnlockUserModal").then(m => ({ default: m.UnlockUserModal })));
 
 export const UserPage: React.FC = () => {
+    // --- STATE ---
     const [users, setUsers] = useState<User[]>([]);
     const [roles, setRoles] = useState<RoleDropdown[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    
+    // Filter & Pagination States
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedRoleCode, setSelectedRoleCode] = useState<string>("");
     const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null);
@@ -26,6 +31,7 @@ export const UserPage: React.FC = () => {
     const [totalPages, setTotalPages] = useState<number>(0);
     const pageSize = 10;
 
+    // Modal States
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -35,6 +41,7 @@ export const UserPage: React.FC = () => {
 
     const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
+    // --- EFFECTS ---
     useEffect(() => {
         const fetchDropdownData = async () => {
             try {
@@ -46,12 +53,9 @@ export const UserPage: React.FC = () => {
                 setDepartments(deptsData);
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu cấu hình hệ thống:", error);
-                toast.error(
-                    "Không thể tải dữ liệu bộ lọc vai trò hoặc khoa học.",
-                );
+                toast.error("Không thể tải dữ liệu bộ lọc vai trò hoặc khoa học.");
             }
         };
-
         fetchDropdownData();
     }, []);
 
@@ -72,9 +76,7 @@ export const UserPage: React.FC = () => {
             setTotalPages(response.totalPages);
         } catch (error) {
             console.error("Lỗi gọi API lấy danh sách người dùng:", error);
-            toast.error(
-                "Đã xảy ra lỗi khi lấy danh sách người dùng từ hệ thống.",
-            );
+            toast.error("Đã xảy ra lỗi khi lấy danh sách người dùng từ hệ thống.");
         } finally {
             setIsLoading(false);
         }
@@ -84,21 +86,24 @@ export const UserPage: React.FC = () => {
         fetchUsers();
     }, [fetchUsers]);
 
-    const handleSearchChange = (value: string) => {
+    
+    // Filter Handlers
+    const handleSearchChange = useCallback((value: string) => {
         setSearchTerm(value);
         setCurrentPage(0);
-    };
+    }, []);
 
-    const handleRoleChange = (code: string) => {
+    const handleRoleChange = useCallback((code: string) => {
         setSelectedRoleCode(code);
         setCurrentPage(0);
-    };
+    }, []);
 
-    const handleDeptChange = (id: number | null) => {
+    const handleDeptChange = useCallback((id: number | null) => {
         setSelectedDeptId(id);
         setCurrentPage(0);
-    };
+    }, []);
 
+    // View Modal Handlers
     const handleViewDetail = useCallback((id: number) => {
         setSelectedUserId(id);
         setIsViewModalOpen(true);
@@ -109,6 +114,7 @@ export const UserPage: React.FC = () => {
         setSelectedUserId(null);
     }, []);
 
+    // Create Modal Handlers
     const handleOpenCreateModal = useCallback(() => {
         setIsCreateModalOpen(true);
     }, []);
@@ -122,6 +128,7 @@ export const UserPage: React.FC = () => {
         fetchUsers();
     }, [fetchUsers]);
 
+    // Edit Modal Handlers
     const handleEditUser = useCallback((id: number) => {
         setIsViewModalOpen(false);
         setSelectedUserId(id);
@@ -137,17 +144,29 @@ export const UserPage: React.FC = () => {
         fetchUsers();
     }, [fetchUsers]);
 
-    const handleToggleLockUser = (id: number, currentStatus: boolean) => {
+    // Lock/Unlock Handlers
+    const handleToggleLockUser = useCallback((id: number, currentStatus: boolean) => {
         setSelectedUserId(id);
         if (currentStatus) {
             setIsLockModalOpen(true);
         } else {
             setIsUnlockModalOpen(true);
         }
-    };
+    }, []);
+
+    const handleCloseLockModal = useCallback(() => {
+        setIsLockModalOpen(false);
+        setSelectedUserId(null);
+    }, []);
+
+    const handleCloseUnlockModal = useCallback(() => {
+        setIsUnlockModalOpen(false);
+        setSelectedUserId(null);
+    }, []);
 
     return (
         <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50/50">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -179,6 +198,7 @@ export const UserPage: React.FC = () => {
                 onDeptChange={handleDeptChange}
             />
 
+            {/* Bảng dữ liệu */}
             <div className="flex-1 relative">
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10 rounded-xl border border-gray-100">
@@ -195,52 +215,58 @@ export const UserPage: React.FC = () => {
                     users={users}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={setCurrentPage} 
                     onView={handleViewDetail}
                     onEdit={handleEditUser}
                     onToggleLock={handleToggleLockUser}
                 />
             </div>
 
-            <UserDetailModal
-                isOpen={isViewModalOpen}
-                onClose={handleCloseViewModal}
-                userId={selectedUserId}
-                onEdit={handleEditUser}
-            />
+            <Suspense fallback={null}>
+                {isViewModalOpen && (
+                    <UserDetailModal
+                        isOpen={isViewModalOpen}
+                        onClose={handleCloseViewModal}
+                        userId={selectedUserId}
+                        onEdit={handleEditUser}
+                    />
+                )}
 
-            <UserFormModal
-                isOpen={isCreateModalOpen}
-                onClose={handleCloseCreateModal}
-                onSuccess={handleCreateSuccess}
-            />
+                {isCreateModalOpen && (
+                    <UserFormModal
+                        isOpen={isCreateModalOpen}
+                        onClose={handleCloseCreateModal}
+                        onSuccess={handleCreateSuccess}
+                    />
+                )}
 
-            <UserEditModal
-                isOpen={isEditModalOpen}
-                onClose={handleCloseEditModal}
-                userId={selectedUserId}
-                onSuccess={handleEditSuccess}
-            />
+                {isEditModalOpen && (
+                    <UserEditModal
+                        isOpen={isEditModalOpen}
+                        onClose={handleCloseEditModal}
+                        userId={selectedUserId}
+                        onSuccess={handleEditSuccess}
+                    />
+                )}
 
-            <LockUserModal
-                isOpen={isLockModalOpen}
-                onClose={() => {
-                    setIsLockModalOpen(false);
-                    setSelectedUserId(null);
-                }}
-                onSuccess={fetchUsers}
-                userId={selectedUserId}
-            />
+                {isLockModalOpen && (
+                    <LockUserModal
+                        isOpen={isLockModalOpen}
+                        onClose={handleCloseLockModal}
+                        onSuccess={fetchUsers}
+                        userId={selectedUserId}
+                    />
+                )}
 
-            <UnlockUserModal
-                isOpen={isUnlockModalOpen}
-                onClose={() => {
-                    setIsUnlockModalOpen(false);
-                    setSelectedUserId(null);
-                }}
-                onSuccess={fetchUsers}
-                userId={selectedUserId}
-            />
+                {isUnlockModalOpen && (
+                    <UnlockUserModal
+                        isOpen={isUnlockModalOpen}
+                        onClose={handleCloseUnlockModal}
+                        onSuccess={fetchUsers}
+                        userId={selectedUserId}
+                    />
+                )}
+            </Suspense>
         </div>
     );
 };

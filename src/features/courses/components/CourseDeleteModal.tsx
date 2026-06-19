@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { courseService } from "../services/course.service";
@@ -11,6 +10,14 @@ interface CourseDeleteModalProps {
     courseInfo: { id: number; name: string; code: string } | null;
 }
 
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export const CourseDeleteModal: React.FC<CourseDeleteModalProps> = ({
     isOpen,
     onClose,
@@ -18,6 +25,29 @@ export const CourseDeleteModal: React.FC<CourseDeleteModalProps> = ({
     courseInfo,
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isMounted = useRef(true);
+
+    // Theo dõi vòng đời để tránh cập nhật state khi component đã unmount
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        };
+    }, []);
+
+    // Hỗ trợ đóng modal bằng phím Escape
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && isOpen && !isSubmitting) {
+                onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, isSubmitting, onClose]);
 
     const handleDelete = async () => {
         if (!courseInfo) return;
@@ -28,11 +58,14 @@ export const CourseDeleteModal: React.FC<CourseDeleteModalProps> = ({
             toast.success(`Xóa môn học "${courseInfo.name}" thành công!`);
             onSuccess();
             onClose();
-        } catch (error: any) {
-            const errorMsg = error.response?.data?.message || "Đã xảy ra lỗi khi xóa môn học.";
+        } catch (error) {
+            const apiError = error as ApiError;
+            const errorMsg = apiError.response?.data?.message || "Đã xảy ra lỗi khi xóa môn học.";
             toast.error(errorMsg);
         } finally {
-            setIsSubmitting(false);
+            if (isMounted.current) {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -40,10 +73,12 @@ export const CourseDeleteModal: React.FC<CourseDeleteModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            {/* Vùng nhấn ngoài để đóng modal */}
             <div className="absolute inset-0" onClick={!isSubmitting ? onClose : undefined} />
 
             <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
                 <button
+                    type="button"
                     onClick={onClose}
                     disabled={isSubmitting}
                     className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none disabled:opacity-50"

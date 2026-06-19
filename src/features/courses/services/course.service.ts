@@ -11,32 +11,31 @@ import {
     type UpdateCoursePayload,
 } from "../types";
 
+/**
+ * Loại bỏ giá trị rỗng trước khi gửi query params
+ */
+const cleanQueryParams = <T extends object>(params: T) =>
+    Object.fromEntries(
+        Object.entries(params).filter(
+            ([, value]) =>
+                value !== null && value !== undefined && value !== "",
+        ),
+    );
+
 export const courseService = {
     getCourses: async (
         params: CourseFilterParams,
     ): Promise<PageResponse<Course>> => {
-        const cleanParams = Object.fromEntries(
-            Object.entries(params).filter(
-                ([value]) => value !== null && value !== "",
-            ),
-        );
-
         return (await apiClient.get("/courses", {
-            params: cleanParams,
+            params: cleanQueryParams(params),
         })) as PageResponse<Course>;
     },
 
     getApprovalCourses: async (
         params: CourseFilterParams,
     ): Promise<PageResponse<Course>> => {
-        const cleanParams = Object.fromEntries(
-            Object.entries(params).filter(
-                ([value]) => value !== null && value !== "",
-            ),
-        );
-
         return (await apiClient.get("/courses/approved", {
-            params: cleanParams,
+            params: cleanQueryParams(params),
         })) as PageResponse<Course>;
     },
 
@@ -47,14 +46,8 @@ export const courseService = {
     getCourseProposals: async (
         params: CourseProposalFilterParams,
     ): Promise<PageResponse<Course>> => {
-        const cleanParams = Object.fromEntries(
-            Object.entries(params).filter(
-                ([value]) => value !== null && value !== "",
-            ),
-        );
-
         return (await apiClient.get("/courses", {
-            params: cleanParams,
+            params: cleanQueryParams(params),
         })) as PageResponse<Course>;
     },
 
@@ -66,10 +59,12 @@ export const courseService = {
 
     getDepartments: async (): Promise<Department[]> => {
         return (await apiClient.get("/departments", {
-            params: { isActive: true },
+            params: {
+                isActive: true,
+            },
         })) as Department[];
     },
-    
+
     approveCourse: async (payload: CourseApprovePayload): Promise<Course> => {
         return (await apiClient.post("/courses/approve", payload)) as Course;
     },

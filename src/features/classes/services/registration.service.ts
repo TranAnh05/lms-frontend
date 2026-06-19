@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from "@/services/apiClient";
 import { type PageResponse } from "../types";
 import {
@@ -19,46 +18,58 @@ export const registrationService = {
         size: number;
     }): Promise<PageResponse<RegistrationPeriodResponse>> => {
         const cleanParams = Object.fromEntries(
-            Object.entries(params).filter(([v]) => v !== undefined && v !== null && v !== "")
+            Object.entries(params).filter(
+                ([, value]) =>
+                    value !== undefined && value !== null && value !== "",
+            ),
         );
-        const response: any = await apiClient.get("/registration-management/periods", { params: cleanParams });
-        return response.data || response;
+
+        return apiClient.get<never, PageResponse<RegistrationPeriodResponse>>(
+            "/registration-management/periods",
+            { params: cleanParams },
+        );
     },
 
     getSemesters: async (): Promise<SemesterResponse[]> => {
-        const response: any = await apiClient.get("/semesters/all");
-        return response.data || response;
+        return apiClient.get<never, SemesterResponse[]>("/semesters/all");
     },
 
     getDepartments: async (): Promise<DepartmentResponse[]> => {
-        const response: any = await apiClient.get("/departments");
-        return response.data || response;
+        return apiClient.get<never, DepartmentResponse[]>("/departments");
     },
 
     getPendingClasses: async (
         semesterId: number,
-        departmentIds: number[]
+        departmentIds: number[],
     ): Promise<ClassPendingResponse[]> => {
         const params = {
             semesterId,
             departmentId: departmentIds.join(","),
         };
-        const response: any = await apiClient.get("/registration-management/pending-classes", { params });
-        return response.data || response;
+        return apiClient.get<never, ClassPendingResponse[]>(
+            "/registration-management/pending-classes",
+            { params },
+        );
     },
 
-    createRegistrationPeriod: async (payload: CreateRegistrationPayload): Promise<void> => {
-        await apiClient.post("/registration-periods/open", payload);
+    createRegistrationPeriod: async (
+        payload: CreateRegistrationPayload,
+    ): Promise<void> => {
+        return apiClient.post<never, void>(
+            "/registration-periods/open",
+            payload,
+        );
     },
 
-   getRegistrationPeriodDetail: async (
-        id: number
+    getRegistrationPeriodDetail: async (
+        id: number,
     ): Promise<RegistrationPeriodDetailResponse> => {
-        const response: any = await apiClient.get(`/registration-management/periods/${id}`);
-        return response.data || response;
+        return apiClient.get<never, RegistrationPeriodDetailResponse>(
+            `/registration-management/periods/${id}`,
+        );
     },
 
     closeRegistrationPeriod: async (id: number): Promise<void> => {
-        await apiClient.put(`/registration-periods/${id}/close`);
+        return apiClient.put<never, void>(`/registration-periods/${id}/close`);
     },
 };

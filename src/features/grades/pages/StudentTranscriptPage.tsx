@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Loader2, FileSpreadsheet, ListTree, Shrink } from "lucide-react";
 import { toast } from "react-toastify";
 import { gradeService } from "../services/grade.service";
@@ -8,31 +7,55 @@ import { GradeOverviewCard } from "../components/GradeOverviewCard";
 import { SemesterGradeTable } from "../components/SemesterGradeTable";
 
 export const StudentTranscriptPage: React.FC = () => {
-    const [transcript, setTranscript] = useState<TranscriptResponseDto | null>(null);
+    const [transcript, setTranscript] = useState<TranscriptResponseDto | null>(
+        null,
+    );
     const [isLoading, setIsLoading] = useState(true);
-    const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
+    const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(
+        new Set(),
+    );
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchTranscript = async () => {
             try {
                 setIsLoading(true);
                 const data = await gradeService.getAcademicTranscript();
+
+                // Ngan cap nhat trang thai neu component da unmount
+                if (!isMounted) return;
+
                 setTranscript(data);
-                
+
                 if (data.semesters && data.semesters.length > 0) {
-                    setExpandedSemesters(new Set([data.semesters[0].semesterId]));
+                    setExpandedSemesters(
+                        new Set([data.semesters[0].semesterId]),
+                    );
                 }
-            } catch (error) {
-                toast.error("Không thể tải bảng điểm. Vui lòng thử lại sau.");
+            } catch {
+                if (isMounted) {
+                    toast.error(
+                        "Không thể tải bảng điểm. Vui lòng thử lại sau.",
+                    );
+                }
             } finally {
-                setIsLoading(false);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
         };
 
         fetchTranscript();
+
+        // Don dep flag khi huy dang ky component
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
-    const toggleSemester = (semesterId: number) => {
+    // Ghi nho tham chieu ham de tranh tao lai phuong thuc khi component cha render lai
+    const toggleSemester = useCallback((semesterId: number) => {
         setExpandedSemesters((prev) => {
             const next = new Set(prev);
             if (next.has(semesterId)) {
@@ -42,23 +65,27 @@ export const StudentTranscriptPage: React.FC = () => {
             }
             return next;
         });
-    };
+    }, []);
 
-    const handleExpandAll = () => {
+    const handleExpandAll = useCallback(() => {
         if (transcript?.semesters) {
-            setExpandedSemesters(new Set(transcript.semesters.map((s) => s.semesterId)));
+            setExpandedSemesters(
+                new Set(transcript.semesters.map((s) => s.semesterId)),
+            );
         }
-    };
+    }, [transcript]);
 
-    const handleCollapseAll = () => {
+    const handleCollapseAll = useCallback(() => {
         setExpandedSemesters(new Set());
-    };
+    }, []);
 
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Đang tải bảng điểm học tập...</p>
+                <p className="text-gray-500 font-medium">
+                    Đang tải bảng điểm học tập...
+                </p>
             </div>
         );
     }
@@ -69,8 +96,13 @@ export const StudentTranscriptPage: React.FC = () => {
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
                     <FileSpreadsheet className="w-10 h-10" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Chưa có dữ liệu bảng điểm</h2>
-                <p className="text-gray-500">Dữ liệu quá trình học tập của bạn hiện đang trống hoặc chưa được cập nhật.</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    Chưa có dữ liệu bảng điểm
+                </h2>
+                <p className="text-gray-500">
+                    Dữ liệu quá trình học tập của bạn hiện đang trống hoặc chưa
+                    được cập nhật.
+                </p>
             </div>
         );
     }
@@ -82,7 +114,8 @@ export const StudentTranscriptPage: React.FC = () => {
                     Bảng điểm quá trình học tập
                 </h1>
                 <p className="text-sm text-gray-500 mt-2">
-                    Theo dõi chi tiết điểm số và số tín chỉ tích lũy qua từng học kỳ.
+                    Theo dõi chi tiết điểm số và số tín chỉ tích lũy qua từng
+                    học kỳ.
                 </p>
             </header>
 
@@ -90,17 +123,19 @@ export const StudentTranscriptPage: React.FC = () => {
 
             <div className="mt-8">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">Chi tiết các học kỳ</h2>
-                    
+                    <h2 className="text-xl font-bold text-gray-900">
+                        Chi tiết các học kỳ
+                    </h2>
+
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button
                             onClick={handleExpandAll}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                         >
                             <ListTree className="w-4 h-4" />
                             Mở rộng
                         </button>
-                        <button 
+                        <button
                             onClick={handleCollapseAll}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-rose-600 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                         >
@@ -112,10 +147,12 @@ export const StudentTranscriptPage: React.FC = () => {
 
                 <div className="space-y-5">
                     {transcript.semesters.map((semester) => (
-                        <SemesterGradeTable 
+                        <SemesterGradeTable
                             key={semester.semesterId}
                             semesterTranscript={semester}
-                            isExpanded={expandedSemesters.has(semester.semesterId)}
+                            isExpanded={expandedSemesters.has(
+                                semester.semesterId,
+                            )}
                             onToggle={() => toggleSemester(semester.semesterId)}
                         />
                     ))}

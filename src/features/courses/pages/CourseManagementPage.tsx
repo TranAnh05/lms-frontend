@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import { BookOpen } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -23,18 +23,36 @@ export const CourseManagementPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const pageSize = 10;
-    
-    // State quản lý Modal Xem chi tiết
-    const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
-    const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
-    // State quản lý Modal Sửa môn học
+    // Kiểm soát trạng thái mounted và phiên request để tránh race condition
+    const isMountedRef = useRef<boolean>(true);
+    const requestVersionRef = useRef<number>(0);
+
+    // Quản lý trạng thái Modal Xem chi tiết
+    const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
+    const [selectedCourseId, setSelectedCourseId] = useState<number | null>(
+        null,
+    );
+
+    // Quản lý trạng thái Modal Sửa môn học
     const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
     const [editCourseId, setEditCourseId] = useState<number | null>(null);
 
-    // State quản lý Modal Xóa môn học
+    // Quản lý trạng thái Modal Xóa môn học
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-    const [courseToDelete, setCourseToDelete] = useState<{ id: number; name: string; code: string } | null>(null);
+    const [courseToDelete, setCourseToDelete] = useState<{
+        id: number;
+        name: string;
+        code: string;
+    } | null>(null);
+
+    // Theo dõi vòng đời component để tránh memory leak
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     // Tải danh sách khoa phụ trách cho bộ lọc
     useEffect(() => {
@@ -44,19 +62,28 @@ export const CourseManagementPage: React.FC = () => {
                     undefined,
                     true,
                 )) as unknown as Department[];
-                setDepartments(departmentsData);
+
+                if (isMountedRef.current) {
+                    setDepartments(departmentsData);
+                }
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu Khoa:", error);
-                toast.error("Không thể tải danh sách Khoa. Vui lòng tải lại trang.");
+                if (isMountedRef.current) {
+                    toast.error(
+                        "Không thể tải danh sách Khoa. Vui lòng tải lại trang.",
+                    );
+                }
             }
         };
 
         fetchDropdownData();
     }, []);
 
-    // Tải danh sách môn học theo bộ lọc và phân trang
+    // Tải danh sách môn học theo bộ lọc và phân trang có bảo vệ phiên request
     const fetchCoursesData = useCallback(async () => {
+        const currentVersion = ++requestVersionRef.current;
         setIsLoading(true);
+
         try {
             const response = await courseService.getApprovalCourses({
                 keyword: debouncedSearchTerm.trim(),
@@ -67,13 +94,30 @@ export const CourseManagementPage: React.FC = () => {
                 sortDirection: "desc",
             });
 
-            setCourses(response.content);
-            setTotalPages(response.totalPages);
+            if (
+                isMountedRef.current &&
+                currentVersion === requestVersionRef.current
+            ) {
+                setCourses(response.content);
+                setTotalPages(response.totalPages);
+            }
         } catch (error) {
             console.error("Lỗi gọi API lấy danh sách môn học:", error);
-            toast.error("Đã xảy ra lỗi khi lấy danh sách môn học. Vui lòng thử lại.");
+            if (
+                isMountedRef.current &&
+                currentVersion === requestVersionRef.current
+            ) {
+                toast.error(
+                    "Đã xảy ra lỗi khi lấy danh sách môn học. Vui lòng thử lại.",
+                );
+            }
         } finally {
-            setIsLoading(false);
+            if (
+                isMountedRef.current &&
+                currentVersion === requestVersionRef.current
+            ) {
+                setIsLoading(false);
+            }
         }
     }, [debouncedSearchTerm, selectedDeptId, currentPage]);
 
@@ -81,17 +125,18 @@ export const CourseManagementPage: React.FC = () => {
         fetchCoursesData();
     }, [fetchCoursesData]);
 
-    const handleSearchChange = (value: string) => {
+    // Xử lý thay đổi bộ lọc tìm kiếm và khoa phụ trách
+    const handleSearchChange = useCallback((value: string) => {
         setSearchTerm(value);
         setCurrentPage(0);
-    };
+    }, []);
 
-    const handleDeptChange = (id: number | null) => {
+    const handleDeptChange = useCallback((id: number | null) => {
         setSelectedDeptId(id);
         setCurrentPage(0);
-    };
+    }, []);
 
-    // Xử lý mở Modal xem chi tiết
+    // Xử lý đóng mở Modal xem chi tiết
     const handleViewDetail = useCallback((id: number) => {
         setSelectedCourseId(id);
         setIsViewModalOpen(true);
@@ -102,7 +147,7 @@ export const CourseManagementPage: React.FC = () => {
         setSelectedCourseId(null);
     }, []);
 
-    // Xử lý mở Modal cập nhật thông tin
+    // Xử lý đóng mở Modal cập nhật thông tin
     const handleEditCourse = useCallback((id: number) => {
         setEditCourseId(id);
         setIsFormModalOpen(true);
@@ -113,14 +158,21 @@ export const CourseManagementPage: React.FC = () => {
         setEditCourseId(null);
     }, []);
 
-    // Xử lý mở Modal xác nhận xóa
-    const handleDeleteCourse = useCallback((id: number) => {
-        const targetCourse = courses.find((c) => c.id === id);
-        if (targetCourse) {
-            setCourseToDelete({ id: targetCourse.id, name: targetCourse.name, code: targetCourse.code });
-            setIsDeleteModalOpen(true);
-        }
-    }, [courses]);
+    // Xử lý đóng mở Modal xác nhận xóa
+    const handleDeleteCourse = useCallback(
+        (id: number) => {
+            const targetCourse = courses.find((c) => c.id === id);
+            if (targetCourse) {
+                setCourseToDelete({
+                    id: targetCourse.id,
+                    name: targetCourse.name,
+                    code: targetCourse.code,
+                });
+                setIsDeleteModalOpen(true);
+            }
+        },
+        [courses],
+    );
 
     const handleCloseDeleteModal = useCallback(() => {
         setIsDeleteModalOpen(false);
@@ -132,10 +184,12 @@ export const CourseManagementPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                        <BookOpen className="w-7 h-7 text-blue-600" /> Quản lý Môn học
+                        <BookOpen className="w-7 h-7 text-blue-600" /> Quản lý
+                        Môn học
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        Tra cứu, cập nhật và quản lý danh mục các môn học đang được đào tạo trong trường.
+                        Tra cứu, cập nhật và quản lý danh mục các môn học đang
+                        được đào tạo trong trường.
                     </p>
                 </div>
             </div>
@@ -171,7 +225,7 @@ export const CourseManagementPage: React.FC = () => {
                 />
             </div>
 
-            {/* Các Modals */}
+            {/* Các thành phần Modals chức năng */}
             <CourseDetailModal
                 isOpen={isViewModalOpen}
                 onClose={handleCloseViewModal}

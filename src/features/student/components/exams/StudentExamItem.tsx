@@ -1,7 +1,11 @@
-import React from "react";
+import React, { memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, FileQuestion, PlayCircle, ArrowRightCircle } from "lucide-react";
-import clsx from "clsx";
+import {
+    Clock,
+    FileQuestion,
+    PlayCircle,
+    ArrowRightCircle,
+} from "lucide-react";
 import { type StudentExamBasic, type ExamType } from "../../types";
 
 interface StudentExamItemProps {
@@ -9,17 +13,29 @@ interface StudentExamItemProps {
 }
 
 const TYPE_CONFIG: Record<ExamType, { label: string; color: string }> = {
-    REGULAR: { label: "Thường xuyên", color: "bg-blue-50 text-blue-700 border-blue-200" },
-    MIDTERM: { label: "Giữa kỳ", color: "bg-amber-50 text-amber-700 border-amber-200" },
-    FINAL: { label: "Cuối kỳ", color: "bg-rose-50 text-rose-700 border-rose-200" },
+    REGULAR: {
+        label: "Thường xuyên",
+        color: "bg-blue-50 text-blue-700 border-blue-200",
+    },
+    MIDTERM: {
+        label: "Giữa kỳ",
+        color: "bg-amber-50 text-amber-700 border-amber-200",
+    },
+    FINAL: {
+        label: "Cuối kỳ",
+        color: "bg-rose-50 text-rose-700 border-rose-200",
+    },
 };
 
-export const StudentExamItem: React.FC<StudentExamItemProps> = ({ exam }) => {
+export const StudentExamItem = memo(({ exam }: StudentExamItemProps) => {
     const navigate = useNavigate();
-    const typeConfig = TYPE_CONFIG[exam.examType] || TYPE_CONFIG.REGULAR;
 
-    const isCompleted = exam.attemptStatus === "COMPLETED" || exam.attemptStatus === "FORCED";
-    const isLocked = exam.status === "CREATED" || (exam.status === "CLOSED" && !isCompleted);
+    // Dung nullish coalescing de fallback an toan
+    const typeConfig = TYPE_CONFIG[exam.examType] ?? TYPE_CONFIG.REGULAR;
+
+    // Cac trang thai logic cua bai thi
+    const isCompleted =
+        exam.attemptStatus === "COMPLETED" || exam.attemptStatus === "FORCED";
     const canTakeExam = exam.status === "OPEN" && !isCompleted;
     const isResume = exam.attemptStatus === "IN_PROGRESS";
 
@@ -28,6 +44,28 @@ export const StudentExamItem: React.FC<StudentExamItemProps> = ({ exam }) => {
             navigate(`/student/exams/${exam.id}/take`, { state: { exam } });
         }
     };
+
+    // Khoi tao gia tri UI mac dinh cho Button (Trang thai Lam bai)
+    let buttonText = "Làm bài";
+    let buttonIcon: React.ReactNode = <PlayCircle className="w-4 h-4" />;
+    let buttonStyles =
+        "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20";
+
+    // Phang hoa logic de tinh toan UI cho Button dua tren trang thai
+    if (!canTakeExam) {
+        buttonIcon = null;
+        buttonStyles = "bg-gray-100 text-gray-400 cursor-not-allowed";
+        buttonText = isCompleted
+            ? "Đã hoàn thành"
+            : exam.status === "CLOSED"
+              ? "Đã đóng"
+              : "Chưa mở";
+    } else if (isResume) {
+        buttonText = "Tiếp tục";
+        buttonIcon = <ArrowRightCircle className="w-4 h-4" />;
+        buttonStyles =
+            "bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20";
+    }
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden">
@@ -42,10 +80,9 @@ export const StudentExamItem: React.FC<StudentExamItemProps> = ({ exam }) => {
                             <h3 className="text-lg font-bold text-gray-900 leading-snug">
                                 {exam.title}
                             </h3>
-                            <span className={clsx(
-                                "px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide border",
-                                typeConfig.color
-                            )}>
+                            <span
+                                className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide border ${typeConfig.color}`}
+                            >
                                 {typeConfig.label}
                             </span>
                         </div>
@@ -74,32 +111,14 @@ export const StudentExamItem: React.FC<StudentExamItemProps> = ({ exam }) => {
                 <button
                     onClick={handleActionClick}
                     disabled={!canTakeExam}
-                    className={clsx(
-                        "flex items-center justify-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all focus:outline-none w-full sm:w-auto",
-                        canTakeExam
-                            ? isResume 
-                                ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20" 
-                                : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    )}
+                    className={`flex items-center justify-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all focus:outline-none w-full sm:w-auto ${buttonStyles}`}
                 >
-                    {isCompleted ? (
-                        <>Đã hoàn thành</>
-                    ) : isLocked ? (
-                        <>{exam.status === "CLOSED" ? "Đã đóng" : "Chưa mở"}</>
-                    ) : isResume ? (
-                        <>
-                            <ArrowRightCircle className="w-4 h-4" />
-                            Tiếp tục
-                        </>
-                    ) : (
-                        <>
-                            <PlayCircle className="w-4 h-4" />
-                            Làm bài
-                        </>
-                    )}
+                    {buttonIcon}
+                    {buttonText}
                 </button>
             </div>
         </div>
     );
-};
+});
+
+StudentExamItem.displayName = "StudentExamItem";

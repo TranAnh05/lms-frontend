@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
+import axios from "axios";
 import { AlertTriangle, Loader2, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { majorService } from "../services/major.service";
@@ -8,78 +8,109 @@ interface MajorDeleteModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    majorInfo: { id: number; name: string; code: string } | null;
+    majorInfo: {
+        id: number;
+        name: string;
+        code: string;
+    } | null;
 }
 
-export const MajorDeleteModal: React.FC<MajorDeleteModalProps> = ({
+const DEFAULT_ERROR_MESSAGE =
+    "Đã xảy ra lỗi khi xóa ngành học.";
+
+export const MajorDeleteModal: React.FC<
+    MajorDeleteModalProps
+> = ({
     isOpen,
     onClose,
     onSuccess,
     majorInfo,
 }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitting, setIsSubmitting] =
+        useState(false);
+
+    if (!isOpen || !majorInfo) {
+        return null;
+    }
+
+    const majorDisplayName = `${majorInfo.name} (${majorInfo.code})`;
+
+    const handleClose = () => {
+        if (!isSubmitting) {
+            onClose();
+        }
+    };
 
     const handleDelete = async () => {
-        if (!majorInfo) return;
-
         setIsSubmitting(true);
+
         try {
-            await majorService.deleteMajor(majorInfo.id);
-            toast.success(`Đã xóa ngành học "${majorInfo.name}" thành công!`);
+            await majorService.deleteMajor(
+                majorInfo.id,
+            );
+
+            toast.success(
+                `Đã xóa ngành học "${majorInfo.name}" thành công!`,
+            );
+
             onSuccess();
             onClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage =
-                error.response?.data?.message ||
-                "Đã xảy ra lỗi khi xóa ngành học.";
-            toast.error(errorMessage);
+                axios.isAxiosError(error)
+                    ? error.response?.data?.message
+                    : null;
+
+            toast.error(
+                errorMessage ||
+                    DEFAULT_ERROR_MESSAGE,
+            );
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (!isOpen || !majorInfo) return null;
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div
                 className="absolute inset-0"
-                onClick={!isSubmitting ? onClose : undefined}
+                onClick={handleClose}
             />
 
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="relative flex flex-col w-full max-w-md overflow-hidden bg-white shadow-xl rounded-2xl animate-in zoom-in-95 duration-200">
                 <button
-                    onClick={onClose}
+                    type="button"
+                    onClick={handleClose}
                     disabled={isSubmitting}
-                    className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none disabled:opacity-50"
+                    className="absolute p-1.5 text-gray-400 transition-colors rounded-lg top-4 right-4 hover:text-gray-700 hover:bg-gray-100 focus:outline-none disabled:opacity-50"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
-                <div className="p-6 sm:p-8 flex flex-col items-center text-center mt-2">
-                    <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mb-5 shrink-0 shadow-sm border border-rose-50">
+                <div className="flex flex-col items-center p-6 mt-2 text-center sm:p-8">
+                    <div className="flex items-center justify-center w-14 h-14 mb-5 border rounded-full shadow-sm bg-rose-100 border-rose-50 shrink-0">
                         <AlertTriangle className="w-7 h-7 text-rose-600" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="mb-2 text-xl font-bold text-gray-900">
                         Xác nhận xóa ngành học
                     </h3>
 
-                    <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                    <p className="mb-6 text-sm leading-relaxed text-gray-500">
                         Bạn có chắc chắn muốn xóa ngành{" "}
                         <strong className="text-gray-800">
-                            {majorInfo.name} ({majorInfo.code})
+                            {majorDisplayName}
                         </strong>{" "}
                         không? Hành động này sẽ đưa ngành học vào trạng thái xóa
                         và không thể hiển thị trên hệ thống.
                     </p>
 
-                    <div className="flex items-center justify-center gap-3 w-full">
+                    <div className="flex items-center justify-center w-full gap-3">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             disabled={isSubmitting}
-                            className="flex-1 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors focus:outline-none disabled:opacity-50"
+                            className="flex-1 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
                         >
                             Hủy bỏ
                         </button>
@@ -88,7 +119,7 @@ export const MajorDeleteModal: React.FC<MajorDeleteModalProps> = ({
                             type="button"
                             onClick={handleDelete}
                             disabled={isSubmitting}
-                            className="flex-1 px-5 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 rounded-xl transition-all shadow-sm focus:outline-none flex items-center justify-center gap-2"
+                            className="flex items-center justify-center flex-1 gap-2 px-5 py-2.5 text-sm font-bold text-white transition-all rounded-xl shadow-sm bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400"
                         >
                             {isSubmitting ? (
                                 <>
