@@ -1,5 +1,5 @@
 import apiClient from "@/services/apiClient";
-import { type ChangePasswordPayload, type UserProfileResponse } from "../types";
+import { type ApiResponse, type ChangePasswordPayload, type UserProfileResponse } from "../types";
 
 export const profileService = {
     getCurrentProfile: async (): Promise<UserProfileResponse> => {
@@ -10,11 +10,13 @@ export const profileService = {
         const formData = new FormData();
         formData.append("file", file);
 
-        return apiClient.put<never, string>("/profile/avatar", formData, {
+        const response = await apiClient.put<never, ApiResponse<string>>("/profile/avatar", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
         });
+        
+        return response?.data ? response.data : (response as unknown as string);
     },
 
     changePassword: async (payload: ChangePasswordPayload): Promise<string> => {
