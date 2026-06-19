@@ -30,7 +30,7 @@ export const StudentClassTabs: React.FC<StudentClassTabsProps> = memo(
             <div className="bg-white px-4 sm:px-6 border-b border-gray-200">
                 {/* Bo sung aria-label va role de trinh doc man hinh nhan dien dung layout tablist */}
                 <div
-                    className="flex items-center gap-6 overflow-x-auto custom-scrollbar"
+                    className="flex items-center gap-6"
                     role="tablist"
                     aria-label="Thanh điều hướng lớp học"
                 >

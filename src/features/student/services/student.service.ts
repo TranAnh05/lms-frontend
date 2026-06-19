@@ -78,13 +78,24 @@ export const studentService = {
     },
 
     downloadMaterial: async (materialId: number): Promise<Blob> => {
-        const response = (await apiClient.get(
+        const response = await apiClient.get<never, unknown>(
             `/classes/materials/${materialId}/download`,
             {
                 responseType: "blob",
             },
-        )) as { data: Blob };
+        );
 
-        return response.data;
+        if (response && typeof response === "object" && "data" in response) {
+            const wrapped = response as { data: unknown };
+            if (wrapped.data instanceof Blob) {
+                return wrapped.data;
+            }
+        }
+
+        if (response instanceof Blob) {
+            return response;
+        }
+
+        return response as Blob;
     },
 };
